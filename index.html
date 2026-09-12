@@ -30,7 +30,7 @@
             height: 70px;
             display: flex;
             align-items: center;
-            gap: 25px;
+            gap: 12px;
             padding: 0 6%;
             background: #080e1b;
             border-bottom: 1px solid #18304d;
@@ -78,6 +78,10 @@
             background: #101d30;
             color: white;
             border: 1px solid #29435f;
+        }
+
+        .dark:hover {
+            background: #16263d;
         }
 
         main {
@@ -216,6 +220,31 @@
             margin-top: 8px;
         }
 
+        .forgot {
+            display: block;
+            width: 100%;
+            margin-top: 14px;
+            background: none;
+            border: none;
+            color: #55b6ff;
+            padding: 5px;
+        }
+
+        .forgot:hover {
+            color: white;
+        }
+
+        .user-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .username-display {
+            color: #55b6ff;
+            font-weight: bold;
+        }
+
         footer {
             padding: 40px 6%;
             border-top: 1px solid #18304d;
@@ -266,6 +295,10 @@
                 flex-direction: column;
             }
 
+            .username-display {
+                display: none;
+            }
+
         }
 
     </style>
@@ -285,19 +318,7 @@
         <a href="#sobre">Sobre</a>
     </nav>
 
-    <button
-        class="dark"
-        onclick="abrirLogin()"
-    >
-        Entrar
-    </button>
-
-    <button
-        class="blue"
-        onclick="abrirCadastro()"
-    >
-        Criar conta
-    </button>
+    <div id="authArea"></div>
 
 </header>
 
@@ -407,13 +428,9 @@
 
 
 <footer>
-
     SlaxStore © 2026
-
 </footer>
 
-
-<!-- MODAL -->
 
 <div
     id="modal"
@@ -423,13 +440,130 @@
     <div
         class="modal-box"
         id="modalBox"
-    >
+    ></div>
 
-        <h2 id="modalTitle">
+</div>
+
+
+<script>
+
+let modo = "register";
+
+let emailVerificacao = "";
+
+
+/* ================================
+   ÁREA DE AUTENTICAÇÃO DO HEADER
+================================ */
+
+function atualizarAuthArea() {
+
+    const area =
+        document.getElementById("authArea");
+
+    const usuario =
+        localStorage.getItem("slax_user");
+
+    if (usuario) {
+
+        try {
+
+            const dados =
+                JSON.parse(usuario);
+
+            area.innerHTML = `
+
+                <div class="user-area">
+
+                    <span class="username-display">
+                        ${dados.username}
+                    </span>
+
+                    <button
+                        class="dark"
+                        onclick="logout()"
+                    >
+                        Sair
+                    </button>
+
+                </div>
+
+            `;
+
+        } catch {
+
+            localStorage.removeItem("slax_user");
+            localStorage.removeItem("slax_token");
+
+            mostrarBotoesLogin();
+
+        }
+
+        return;
+    }
+
+    mostrarBotoesLogin();
+}
+
+
+function mostrarBotoesLogin() {
+
+    const area =
+        document.getElementById("authArea");
+
+    area.innerHTML = `
+
+        <button
+            class="dark"
+            onclick="abrirLogin()"
+        >
+            Entrar
+        </button>
+
+        <button
+            class="blue"
+            onclick="abrirCadastro()"
+        >
+            Criar conta
+        </button>
+
+    `;
+}
+
+
+/* ================================
+   LOGOUT
+================================ */
+
+function logout() {
+
+    localStorage.removeItem("slax_token");
+    localStorage.removeItem("slax_user");
+
+    atualizarAuthArea();
+
+    alert("Você saiu da sua conta.");
+}
+
+
+/* ================================
+   ABRIR CADASTRO
+================================ */
+
+function abrirCadastro() {
+
+    modo = "register";
+
+    const box =
+        document.getElementById("modalBox");
+
+    box.innerHTML = `
+
+        <h2>
             Criar conta
         </h2>
 
-        <p id="modalDescription">
+        <p>
             Crie sua conta na SlaxStore.
         </p>
 
@@ -455,7 +589,7 @@
             class="blue full"
             onclick="enviarFormulario()"
         >
-            Continuar
+            Criar conta
         </button>
 
         <button
@@ -470,140 +604,141 @@
             class="message"
         ></div>
 
-    </div>
+    `;
 
-</div>
-
-
-<script>
-
-let modo = "register";
-
-let emailVerificacao = "";
-
-
-/*
-========================================
-ABRIR CADASTRO
-========================================
-*/
-
-function abrirCadastro() {
-
-    modo = "register";
-
-    document.getElementById("modalTitle")
-        .textContent = "Criar conta";
-
-    document.getElementById("modalDescription")
-        .textContent =
-        "Crie sua conta na SlaxStore.";
-
-    document.getElementById("username")
-        .style.display = "block";
-
-    document.getElementById("password")
-        .style.display = "block";
-
-    document.getElementById("email")
-        .style.display = "block";
-
-    document.getElementById("message")
-        .textContent = "";
-
-    document.getElementById("modal")
+    document
+        .getElementById("modal")
         .classList.add("active");
 }
 
 
-/*
-========================================
-ABRIR LOGIN
-========================================
-*/
+/* ================================
+   ABRIR LOGIN
+================================ */
 
 function abrirLogin() {
 
     modo = "login";
 
-    document.getElementById("modalTitle")
-        .textContent = "Entrar";
+    const box =
+        document.getElementById("modalBox");
 
-    document.getElementById("modalDescription")
-        .textContent =
-        "Entre na sua conta SlaxStore.";
+    box.innerHTML = `
 
-    document.getElementById("username")
-        .style.display = "none";
+        <h2>
+            Entrar
+        </h2>
 
-    document.getElementById("password")
-        .style.display = "block";
+        <p>
+            Entre na sua conta SlaxStore.
+        </p>
 
-    document.getElementById("email")
-        .style.display = "block";
+        <input
+            id="email"
+            type="email"
+            placeholder="E-mail"
+        >
 
-    document.getElementById("message")
-        .textContent = "";
+        <input
+            id="password"
+            type="password"
+            placeholder="Senha"
+        >
 
-    document.getElementById("modal")
+        <button
+            class="blue full"
+            onclick="enviarFormulario()"
+        >
+            Entrar
+        </button>
+
+        <button
+            class="forgot"
+            onclick="abrirEsqueciSenha()"
+        >
+            Esqueci minha senha
+        </button>
+
+        <button
+            class="dark close"
+            onclick="fecharModal()"
+        >
+            Fechar
+        </button>
+
+        <div
+            id="message"
+            class="message"
+        ></div>
+
+    `;
+
+    document
+        .getElementById("modal")
         .classList.add("active");
 }
 
 
-/*
-========================================
-FECHAR MODAL
-========================================
-*/
+/* ================================
+   FECHAR MODAL
+================================ */
 
 function fecharModal() {
 
-    document.getElementById("modal")
+    document
+        .getElementById("modal")
         .classList.remove("active");
 
 }
 
 
-/*
-========================================
-CADASTRO / LOGIN
-========================================
-*/
+/* ================================
+   LOGIN / CADASTRO
+================================ */
 
 async function enviarFormulario() {
 
-    const username =
-        document.getElementById("username")
-            .value.trim();
-
     const email =
-        document.getElementById("email")
-            .value.trim();
+        document
+            .getElementById("email")
+            .value
+            .trim();
 
     const password =
-        document.getElementById("password")
+        document
+            .getElementById("password")
             .value;
 
     const message =
-        document.getElementById("message");
+        document
+            .getElementById("message");
+
+
+    let username = "";
+
+    if (modo === "register") {
+
+        username =
+            document
+                .getElementById("username")
+                .value
+                .trim();
+
+        if (!username) {
+
+            message.textContent =
+                "Digite seu nome de usuário.";
+
+            return;
+        }
+
+    }
 
 
     if (!email || !password) {
 
         message.textContent =
             "Preencha o e-mail e a senha.";
-
-        return;
-    }
-
-
-    if (
-        modo === "register" &&
-        !username
-    ) {
-
-        message.textContent =
-            "Digite seu nome de usuário.";
 
         return;
     }
@@ -667,15 +802,12 @@ async function enviarFormulario() {
         }
 
 
-        /*
-        ================================
-        CADASTRO
-        ================================
-        */
+        /* CADASTRO */
 
         if (modo === "register") {
 
-            emailVerificacao = email;
+            emailVerificacao =
+                email;
 
             mostrarVerificacao();
 
@@ -683,11 +815,7 @@ async function enviarFormulario() {
         }
 
 
-        /*
-        ================================
-        LOGIN
-        ================================
-        */
+        /* LOGIN */
 
         localStorage.setItem(
             "slax_token",
@@ -704,11 +832,14 @@ async function enviarFormulario() {
             "Login realizado com sucesso!";
 
 
+        atualizarAuthArea();
+
+
         setTimeout(() => {
 
             fecharModal();
 
-        }, 1000);
+        }, 800);
 
 
     } catch (error) {
@@ -723,17 +854,14 @@ async function enviarFormulario() {
 }
 
 
-/*
-========================================
-TELA DE VERIFICAÇÃO
-========================================
-*/
+/* ================================
+   VERIFICAÇÃO DE E-MAIL
+================================ */
 
 function mostrarVerificacao() {
 
     const box =
         document.getElementById("modalBox");
-
 
     box.innerHTML = `
 
@@ -742,8 +870,7 @@ function mostrarVerificacao() {
         </h2>
 
         <p>
-            Enviamos um código de 6 números
-            para:
+            Enviamos um código de 6 números para:
             <br><br>
 
             <strong>
@@ -779,24 +906,24 @@ function mostrarVerificacao() {
         ></div>
 
     `;
-
 }
 
 
-/*
-========================================
-VERIFICAR E-MAIL
-========================================
-*/
+/* ================================
+   VERIFICAR E-MAIL
+================================ */
 
 async function verificarEmail() {
 
     const codigo =
-        document.getElementById("codigo")
-            .value.trim();
+        document
+            .getElementById("codigo")
+            .value
+            .trim();
 
     const message =
-        document.getElementById("message");
+        document
+            .getElementById("message");
 
 
     if (!codigo) {
@@ -858,6 +985,304 @@ async function verificarEmail() {
 
             abrirLogin();
 
+        }, 1000);
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        message.textContent =
+            "Não foi possível conectar ao servidor.";
+
+    }
+
+}
+
+
+/* ================================
+   ESQUECI MINHA SENHA
+================================ */
+
+function abrirEsqueciSenha() {
+
+    modo = "forgot";
+
+    const box =
+        document.getElementById("modalBox");
+
+    box.innerHTML = `
+
+        <h2>
+            Esqueci minha senha
+        </h2>
+
+        <p>
+            Digite o e-mail da sua conta.
+            Enviaremos um código para recuperar
+            o acesso.
+        </p>
+
+        <input
+            id="email"
+            type="email"
+            placeholder="E-mail da conta"
+        >
+
+        <button
+            class="blue full"
+            onclick="solicitarRecuperacao()"
+        >
+            Enviar código
+        </button>
+
+        <button
+            class="dark close"
+            onclick="abrirLogin()"
+        >
+            Voltar para login
+        </button>
+
+        <div
+            id="message"
+            class="message"
+        ></div>
+
+    `;
+}
+
+
+/* ================================
+   SOLICITAR RECUPERAÇÃO
+================================ */
+
+async function solicitarRecuperacao() {
+
+    const email =
+        document
+            .getElementById("email")
+            .value
+            .trim();
+
+    const message =
+        document
+            .getElementById("message");
+
+
+    if (!email) {
+
+        message.textContent =
+            "Digite seu e-mail.";
+
+        return;
+    }
+
+
+    try {
+
+        message.textContent =
+            "Enviando código...";
+
+
+        const resposta =
+            await fetch(
+                "/api/auth/forgot-password",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+                            email
+                        })
+                }
+            );
+
+
+        const dados =
+            await resposta.json();
+
+
+        if (!resposta.ok) {
+
+            message.textContent =
+                dados.error ||
+                "Não foi possível enviar o código.";
+
+            return;
+        }
+
+
+        emailVerificacao = email;
+
+        mostrarRedefinirSenha();
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        message.textContent =
+            "Não foi possível conectar ao servidor.";
+
+    }
+
+}
+
+
+/* ================================
+   REDEFINIR SENHA
+================================ */
+
+function mostrarRedefinirSenha() {
+
+    const box =
+        document.getElementById("modalBox");
+
+    box.innerHTML = `
+
+        <h2>
+            Criar nova senha
+        </h2>
+
+        <p>
+            Digite o código recebido no seu e-mail
+            e escolha uma nova senha.
+        </p>
+
+        <input
+            id="codigo"
+            type="text"
+            inputmode="numeric"
+            maxlength="6"
+            placeholder="Código de 6 números"
+        >
+
+        <input
+            id="novaSenha"
+            type="password"
+            placeholder="Nova senha"
+        >
+
+        <button
+            class="blue full"
+            onclick="redefinirSenha()"
+        >
+            Alterar senha
+        </button>
+
+        <button
+            class="dark close"
+            onclick="abrirLogin()"
+        >
+            Voltar para login
+        </button>
+
+        <div
+            id="message"
+            class="message"
+        ></div>
+
+    `;
+}
+
+
+/* ================================
+   ENVIAR NOVA SENHA
+================================ */
+
+async function redefinirSenha() {
+
+    const codigo =
+        document
+            .getElementById("codigo")
+            .value
+            .trim();
+
+    const novaSenha =
+        document
+            .getElementById("novaSenha")
+            .value;
+
+    const message =
+        document
+            .getElementById("message");
+
+
+    if (!codigo || !novaSenha) {
+
+        message.textContent =
+            "Preencha o código e a nova senha.";
+
+        return;
+    }
+
+
+    if (novaSenha.length < 8) {
+
+        message.textContent =
+            "A nova senha precisa ter pelo menos 8 caracteres.";
+
+        return;
+    }
+
+
+    try {
+
+        message.textContent =
+            "Alterando senha...";
+
+
+        const resposta =
+            await fetch(
+                "/api/auth/reset-password",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+                            email:
+                                emailVerificacao,
+                            code:
+                                codigo,
+                            newPassword:
+                                novaSenha
+                        })
+                }
+            );
+
+
+        const dados =
+            await resposta.json();
+
+
+        if (!resposta.ok) {
+
+            message.textContent =
+                dados.error ||
+                "Não foi possível alterar a senha.";
+
+            return;
+        }
+
+
+        message.textContent =
+            "Senha alterada com sucesso!";
+
+
+        setTimeout(() => {
+
+            abrirLogin();
+
         }, 1200);
 
 
@@ -873,11 +1298,9 @@ async function verificarEmail() {
 }
 
 
-/*
-========================================
-FECHAR CLICANDO FORA
-========================================
-*/
+/* ================================
+   CLICAR FORA DO MODAL
+================================ */
 
 document
     .getElementById("modal")
@@ -895,6 +1318,13 @@ document
 
         }
     );
+
+
+/* ================================
+   VERIFICAR LOGIN AO ABRIR O SITE
+================================ */
+
+atualizarAuthArea();
 
 </script>
 
