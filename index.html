@@ -2,1125 +2,1605 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>SlaxStore</title>
-
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            background: #090909;
-            color: #fff;
-            min-height: 100vh;
-        }
-
-        button,
-        input,
-        textarea,
-        select {
-            font: inherit;
-        }
-
-        button {
-            cursor: pointer;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        header {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: rgba(9, 9, 9, .96);
-            border-bottom: 1px solid #242424;
-            backdrop-filter: blur(15px);
-        }
-
-        .nav {
-            max-width: 1250px;
-            margin: auto;
-            min-height: 70px;
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .logo {
-            color: #ff6a00;
-            font-size: 25px;
-            font-weight: 900;
-            text-decoration: none;
-            white-space: nowrap;
-        }
-
-        .search-box {
-            flex: 1;
-            position: relative;
-        }
-
-        .search-box input {
-            width: 100%;
-            height: 43px;
-            background: #151515;
-            border: 1px solid #2b2b2b;
-            border-radius: 12px;
-            color: #fff;
-            outline: none;
-            padding: 0 15px;
-        }
-
-        .search-box input:focus {
-            border-color: #ff6a00;
-        }
-
-        .nav-buttons {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        button {
-            border: 0;
-            border-radius: 10px;
-            padding: 10px 15px;
-            color: white;
-            background: #202020;
-        }
-
-        button:hover {
-            filter: brightness(1.15);
-        }
-
-        .primary {
-            background: #ff6a00;
-            color: #fff;
-            font-weight: 700;
-        }
-
-        .danger {
-            background: #b91c1c;
-        }
-
-        .container {
-            width: min(1250px, calc(100% - 30px));
-            margin: auto;
-        }
-
-        .hero {
-            margin-top: 30px;
-            padding: 45px 30px;
-            border: 1px solid #292929;
-            border-radius: 22px;
-            background:
-                radial-gradient(
-                    circle at top right,
-                    rgba(255,106,0,.18),
-                    transparent 35%
-                ),
-                #111;
-        }
-
-        .hero h1 {
-            font-size: clamp(30px, 6vw, 55px);
-            margin-bottom: 10px;
-        }
-
-        .hero h1 span {
-            color: #ff6a00;
-        }
-
-        .hero p {
-            color: #aaa;
-            max-width: 650px;
-            line-height: 1.6;
-        }
-
-        .categories {
-            display: flex;
-            gap: 9px;
-            overflow-x: auto;
-            padding: 25px 0 5px;
-            scrollbar-width: none;
-        }
-
-        .categories::-webkit-scrollbar {
-            display: none;
-        }
-
-        .category {
-            white-space: nowrap;
-            border: 1px solid #292929;
-        }
-
-        .category.active,
-        .category:hover {
-            background: #ff6a00;
-            border-color: #ff6a00;
-        }
-
-        .section-title {
-            margin: 35px 0 18px;
-            font-size: 25px;
-        }
-
-        .products-grid {
-            display: grid;
-            grid-template-columns:
-                repeat(auto-fill, minmax(220px, 1fr));
-            gap: 18px;
-            padding-bottom: 60px;
-        }
-
-        .product-card {
-            overflow: hidden;
-            background: #111;
-            border: 1px solid #292929;
-            border-radius: 16px;
-            transition: transform .2s, border-color .2s;
-        }
-
-        .product-card:hover {
-            transform: translateY(-3px);
-            border-color: #ff6a00;
-        }
-
-        .product-image {
-            height: 180px;
-            background: #191919;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        .product-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .no-image {
-            color: #666;
-        }
-
-        .product-info {
-            padding: 16px;
-        }
-
-        .product-info h3 {
-            font-size: 18px;
-            margin-bottom: 8px;
-        }
-
-        .product-info p {
-            color: #888;
-            min-height: 38px;
-            font-size: 13px;
-            line-height: 1.4;
-            margin-bottom: 12px;
-        }
-
-        .product-info strong {
-            color: #ff6a00;
-            display: block;
-            font-size: 20px;
-            margin-bottom: 13px;
-        }
-
-        .product-info button {
-            width: 100%;
-        }
-
-        .loading,
-        .empty {
-            grid-column: 1 / -1;
-            padding: 45px;
-            text-align: center;
-            color: #888;
-        }
-
-        footer {
-            border-top: 1px solid #242424;
-            padding: 30px 20px;
-            text-align: center;
-            color: #666;
-        }
-
-        /* MODAIS */
-
-        .modal {
-            position: fixed;
-            inset: 0;
-            z-index: 1000;
-            background: rgba(0,0,0,.78);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 18px;
-            overflow-y: auto;
-        }
-
-        .modal-box {
-            width: min(500px, 100%);
-            max-height: calc(100vh - 36px);
-            overflow-y: auto;
-            background: #111;
-            border: 1px solid #303030;
-            border-radius: 18px;
-            padding: 25px;
-            box-shadow: 0 20px 70px rgba(0,0,0,.5);
-        }
-
-        .modal-box.large {
-            width: min(700px, 100%);
-        }
-
-        .modal-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 15px;
-            margin-bottom: 22px;
-        }
-
-        .modal-header h2 {
-            font-size: 24px;
-        }
-
-        .close {
-            width: 38px;
-            height: 38px;
-            padding: 0;
-            border-radius: 50%;
-            font-size: 22px;
-            background: #222;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 7px;
-            color: #bbb;
-            font-size: 14px;
-        }
-
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
-            width: 100%;
-            background: #191919;
-            border: 1px solid #303030;
-            color: #fff;
-            outline: none;
-            border-radius: 10px;
-            padding: 12px;
-        }
-
-        .form-group input:focus,
-        .form-group textarea:focus,
-        .form-group select:focus {
-            border-color: #ff6a00;
-        }
-
-        .form-group textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-
-        .form-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .form-actions button {
-            flex: 1;
-        }
-
-        .message {
-            display: none;
-            padding: 11px;
-            border-radius: 9px;
-            margin-bottom: 15px;
-            font-size: 14px;
-        }
-
-        .message.error {
-            display: block;
-            background: rgba(220,38,38,.15);
-            border: 1px solid #7f1d1d;
-            color: #fca5a5;
-        }
-
-        .message.success {
-            display: block;
-            background: rgba(22,163,74,.15);
-            border: 1px solid #166534;
-            color: #86efac;
-        }
-
-        .switch {
-            text-align: center;
-            margin-top: 18px;
-            color: #888;
-        }
-
-        .switch button {
-            background: transparent;
-            color: #ff6a00;
-            padding: 0;
-        }
-
-        .verify-code {
-            text-align: center;
-            letter-spacing: 8px;
-            font-size: 25px !important;
-        }
-
-        .profile-box {
-            text-align: center;
-        }
-
-        .profile-avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: #ff6a00;
-            margin: 0 auto 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 30px;
-            font-weight: 900;
-        }
-
-        .profile-email {
-            color: #888;
-            margin-top: 5px;
-        }
-
-        .balance {
-            margin: 25px 0;
-            padding: 18px;
-            border-radius: 14px;
-            background: #191919;
-        }
-
-        .balance span {
-            display: block;
-            color: #888;
-            font-size: 13px;
-            margin-bottom: 5px;
-        }
-
-        .balance strong {
-            color: #ff6a00;
-            font-size: 28px;
-        }
-
-        .product-detail-image {
-            width: 100%;
-            max-height: 350px;
-            object-fit: cover;
-            border-radius: 14px;
-            background: #191919;
-            margin-bottom: 20px;
-        }
-
-        .product-detail-price {
-            color: #ff6a00;
-            font-size: 30px;
-            font-weight: 900;
-            margin: 15px 0;
-        }
-
-        .product-detail-description {
-            color: #aaa;
-            line-height: 1.6;
-            white-space: pre-wrap;
-        }
-
-        @media (max-width: 700px) {
-            .nav {
-                flex-wrap: wrap;
-            }
-
-            .logo {
-                order: 1;
-            }
-
-            .nav-buttons {
-                order: 2;
-                margin-left: auto;
-            }
-
-            .search-box {
-                order: 3;
-                flex-basis: 100%;
-            }
-
-            .hero {
-                padding: 30px 20px;
-            }
-
-            .products-grid {
-                grid-template-columns:
-                    repeat(2, minmax(0, 1fr));
-                gap: 10px;
-            }
-
-            .product-image {
-                height: 140px;
-            }
-
-            .product-info {
-                padding: 12px;
-            }
-
-            .product-info h3 {
-                font-size: 15px;
-            }
-
-            .product-info strong {
-                font-size: 17px;
-            }
-
-            .product-info p {
-                display: none;
-            }
-
-            .nav-buttons button {
-                padding: 9px 10px;
-                font-size: 12px;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<meta name="theme-color" content="#087cff">
+<meta name="description" content="SlaxStore - Marketplace digital">
+
+<title>SlaxStore</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+:root{
+    --blue:#087cff;
+    --blue2:#005bd8;
+    --blue3:#00a8ff;
+    --bg:#060a10;
+    --card:#0d131d;
+    --card2:#111a27;
+    --border:#1c2b40;
+    --text:#f5f8ff;
+    --muted:#8493a8;
+    --green:#20d47a;
+    --red:#ff4d5e;
+    --shadow:0 20px 60px rgba(0,0,0,.35);
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
+body{
+    font-family:Inter,Arial,Helvetica,sans-serif;
+    background:
+        radial-gradient(circle at 50% -10%,rgba(8,124,255,.14),transparent 35%),
+        var(--bg);
+    color:var(--text);
+    min-height:100vh;
+}
+
+body.modal-open{
+    overflow:hidden;
+}
+
+button,
+input,
+textarea,
+select{
+    font:inherit;
+}
+
+button{
+    cursor:pointer;
+    border:0;
+}
+
+a{
+    color:inherit;
+}
+
+.hidden{
+    display:none!important;
+}
+
+/* HEADER */
+
+header{
+    position:sticky;
+    top:0;
+    z-index:500;
+    background:rgba(6,10,16,.88);
+    border-bottom:1px solid var(--border);
+    backdrop-filter:blur(20px);
+}
+
+.nav{
+    width:min(1350px,calc(100% - 28px));
+    min-height:72px;
+    margin:auto;
+    display:flex;
+    align-items:center;
+    gap:14px;
+}
+
+.logo{
+    text-decoration:none;
+    font-size:25px;
+    font-weight:950;
+    letter-spacing:-1px;
+    color:white;
+    white-space:nowrap;
+}
+
+.logo span{
+    color:var(--blue);
+}
+
+.search-box{
+    flex:1;
+    position:relative;
+}
+
+.search-box input{
+    width:100%;
+    height:45px;
+    padding:0 17px 0 43px;
+    color:white;
+    background:#0c131e;
+    border:1px solid var(--border);
+    border-radius:13px;
+    outline:none;
+    transition:.2s;
+}
+
+.search-box input:focus{
+    border-color:var(--blue);
+    box-shadow:0 0 0 3px rgba(8,124,255,.12);
+}
+
+.search-icon{
+    position:absolute;
+    left:15px;
+    top:50%;
+    transform:translateY(-50%);
+    color:#718198;
+    pointer-events:none;
+}
+
+.nav-buttons{
+    display:flex;
+    gap:8px;
+    align-items:center;
+}
+
+.btn{
+    min-height:42px;
+    padding:0 15px;
+    border-radius:11px;
+    color:white;
+    background:#142033;
+    border:1px solid var(--border);
+    transition:.18s;
+}
+
+.btn:hover{
+    transform:translateY(-1px);
+    filter:brightness(1.15);
+}
+
+.primary{
+    background:linear-gradient(135deg,var(--blue),var(--blue2));
+    border-color:#1688ff;
+    font-weight:800;
+    box-shadow:0 7px 25px rgba(8,124,255,.18);
+}
+
+.danger{
+    background:#38151b;
+    border:1px solid #63232c;
+    color:#ff7d88;
+}
+
+.success{
+    background:#0d3023;
+    border:1px solid #165e43;
+    color:#61e69f;
+}
+
+/* CONTAINER */
+
+.container{
+    width:min(1350px,calc(100% - 28px));
+    margin:auto;
+}
+
+/* HERO */
+
+.hero{
+    margin-top:28px;
+    padding:55px 38px;
+    border:1px solid var(--border);
+    border-radius:24px;
+    overflow:hidden;
+    position:relative;
+    background:
+        radial-gradient(circle at 85% 15%,rgba(0,168,255,.2),transparent 28%),
+        radial-gradient(circle at 15% 100%,rgba(8,124,255,.12),transparent 35%),
+        linear-gradient(135deg,#0b1421,#09101a);
+    box-shadow:var(--shadow);
+}
+
+.hero:after{
+    content:"";
+    position:absolute;
+    width:300px;
+    height:300px;
+    right:-150px;
+    bottom:-170px;
+    border-radius:50%;
+    background:rgba(8,124,255,.12);
+    filter:blur(30px);
+}
+
+.hero-content{
+    position:relative;
+    z-index:2;
+}
+
+.hero-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding:7px 11px;
+    border-radius:30px;
+    background:rgba(8,124,255,.12);
+    border:1px solid rgba(8,124,255,.3);
+    color:#65b7ff;
+    font-size:13px;
+    font-weight:800;
+    margin-bottom:17px;
+}
+
+.hero h1{
+    max-width:750px;
+    font-size:clamp(34px,6vw,62px);
+    line-height:1.02;
+    letter-spacing:-2px;
+    margin-bottom:17px;
+}
+
+.hero h1 span{
+    color:var(--blue);
+}
+
+.hero p{
+    max-width:680px;
+    color:#91a0b4;
+    line-height:1.65;
+    font-size:16px;
+}
+
+.hero-actions{
+    display:flex;
+    gap:10px;
+    margin-top:25px;
+}
+
+/* CATEGORIES */
+
+.categories{
+    display:flex;
+    gap:9px;
+    overflow-x:auto;
+    padding:24px 0 5px;
+    scrollbar-width:none;
+}
+
+.categories::-webkit-scrollbar{
+    display:none;
+}
+
+.category{
+    white-space:nowrap;
+    padding:10px 15px;
+    border-radius:11px;
+    color:#9eacc0;
+    background:#0c131e;
+    border:1px solid var(--border);
+}
+
+.category:hover,
+.category.active{
+    color:white;
+    background:rgba(8,124,255,.16);
+    border-color:var(--blue);
+}
+
+/* STATS */
+
+.stats{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+    margin-top:20px;
+}
+
+.stat{
+    padding:18px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:15px;
+}
+
+.stat strong{
+    display:block;
+    font-size:22px;
+    margin-bottom:4px;
+}
+
+.stat span{
+    color:var(--muted);
+    font-size:13px;
+}
+
+/* SECTION */
+
+.section-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:15px;
+    margin:35px 0 18px;
+}
+
+.section-title{
+    font-size:25px;
+}
+
+/* PRODUCTS */
+
+.products-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
+    gap:17px;
+    padding-bottom:70px;
+}
+
+.product-card{
+    overflow:hidden;
+    background:linear-gradient(180deg,#0d141f,#0a1018);
+    border:1px solid var(--border);
+    border-radius:17px;
+    transition:.2s;
+}
+
+.product-card:hover{
+    transform:translateY(-4px);
+    border-color:#176dbd;
+    box-shadow:0 18px 45px rgba(0,0,0,.3);
+}
+
+.product-image{
+    height:185px;
+    background:#111a26;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+}
+
+.product-image img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.no-image{
+    color:#607086;
+}
+
+.product-info{
+    padding:16px;
+}
+
+.product-info h3{
+    font-size:17px;
+    margin-bottom:8px;
+}
+
+.product-info p{
+    color:#78889e;
+    font-size:13px;
+    line-height:1.45;
+    min-height:38px;
+    margin-bottom:12px;
+}
+
+.product-price{
+    color:#4fa8ff;
+    font-size:21px;
+    font-weight:900;
+    margin-bottom:13px;
+}
+
+.product-meta{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    color:#68788d;
+    font-size:12px;
+    margin-bottom:12px;
+}
+
+.product-info .btn{
+    width:100%;
+}
+
+.loading,
+.empty{
+    grid-column:1/-1;
+    padding:60px 20px;
+    text-align:center;
+    color:#718097;
+    border:1px dashed var(--border);
+    border-radius:16px;
+}
+
+/* MODAL */
+
+.modal{
+    position:fixed;
+    inset:0;
+    z-index:1000;
+    background:rgba(0,0,0,.78);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:18px;
+    overflow-y:auto;
+    backdrop-filter:blur(8px);
+}
+
+.modal-box{
+    width:min(510px,100%);
+    max-height:calc(100vh - 36px);
+    overflow-y:auto;
+    padding:25px;
+    background:#0b121c;
+    border:1px solid #21324a;
+    border-radius:19px;
+    box-shadow:0 30px 100px rgba(0,0,0,.65);
+}
+
+.modal-box.large{
+    width:min(720px,100%);
+}
+
+.modal-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:15px;
+    margin-bottom:22px;
+}
+
+.modal-header h2{
+    font-size:24px;
+}
+
+.close{
+    width:38px;
+    height:38px;
+    padding:0;
+    border-radius:50%;
+    color:#b7c4d6;
+    background:#141f2e;
+    border:1px solid var(--border);
+    font-size:21px;
+}
+
+.close:hover{
+    background:#1b2b40;
+}
+
+/* FORMS */
+
+.form-group{
+    margin-bottom:15px;
+}
+
+.form-group label{
+    display:block;
+    color:#a9b6c8;
+    font-size:13px;
+    font-weight:700;
+    margin-bottom:7px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select{
+    width:100%;
+    padding:12px;
+    color:white;
+    background:#0d1723;
+    border:1px solid #203149;
+    border-radius:11px;
+    outline:none;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus{
+    border-color:var(--blue);
+    box-shadow:0 0 0 3px rgba(8,124,255,.1);
+}
+
+.form-group textarea{
+    min-height:105px;
+    resize:vertical;
+}
+
+.form-actions{
+    display:flex;
+    gap:10px;
+    margin-top:20px;
+}
+
+.form-actions>*{
+    flex:1;
+}
+
+.message{
+    display:none;
+    padding:11px;
+    border-radius:10px;
+    margin-bottom:15px;
+    font-size:14px;
+}
+
+.message.error{
+    display:block;
+    background:rgba(255,77,94,.1);
+    border:1px solid #6b252d;
+    color:#ff9ba4;
+}
+
+.message.success{
+    display:block;
+    background:rgba(32,212,122,.1);
+    border:1px solid #165d42;
+    color:#76e8a8;
+}
+
+.switch{
+    text-align:center;
+    margin-top:18px;
+    color:#75849a;
+}
+
+.switch button{
+    background:transparent;
+    color:#4fa8ff;
+    padding:0;
+    font-weight:700;
+}
+
+.remember{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    color:#8795a9;
+    font-size:13px;
+    margin:12px 0;
+}
+
+.remember input{
+    accent-color:var(--blue);
+}
+
+/* PROFILE */
+
+.profile-box{
+    text-align:center;
+}
+
+.profile-avatar{
+    width:82px;
+    height:82px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin:0 auto 15px;
+    background:linear-gradient(135deg,var(--blue3),var(--blue2));
+    font-size:30px;
+    font-weight:900;
+}
+
+.profile-email{
+    color:#728197;
+    margin-top:5px;
+}
+
+.balance{
+    margin:22px 0 14px;
+    padding:20px;
+    border-radius:15px;
+    background:linear-gradient(135deg,#0e1c2d,#0a1420);
+    border:1px solid var(--border);
+}
+
+.balance span{
+    display:block;
+    color:#77869b;
+    font-size:13px;
+    margin-bottom:6px;
+}
+
+.balance strong{
+    color:#55adff;
+    font-size:30px;
+}
+
+.balance-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:9px;
+    margin-bottom:12px;
+}
+
+/* PRODUCT DETAIL */
+
+.product-detail-image{
+    width:100%;
+    max-height:360px;
+    object-fit:cover;
+    border-radius:14px;
+    margin-bottom:20px;
+    background:#111a26;
+}
+
+.product-detail-price{
+    color:#4fa8ff;
+    font-size:31px;
+    font-weight:950;
+    margin:14px 0;
+}
+
+.product-detail-description{
+    color:#9aa8ba;
+    line-height:1.65;
+    white-space:pre-wrap;
+}
+
+.seller-box{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:13px;
+    margin-top:18px;
+    border:1px solid var(--border);
+    border-radius:12px;
+}
+
+.seller-avatar{
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#12345b;
+    color:#67b8ff;
+    font-weight:900;
+}
+
+/* WITHDRAW */
+
+.withdraw-info{
+    padding:13px;
+    margin-bottom:17px;
+    border-radius:12px;
+    background:#0d1723;
+    border:1px solid var(--border);
+    color:#8291a6;
+    font-size:13px;
+    line-height:1.5;
+}
+
+.withdraw-limit{
+    color:#57afff;
+    font-weight:800;
+}
+
+/* FOOTER */
+
+footer{
+    border-top:1px solid var(--border);
+    padding:32px 20px;
+    text-align:center;
+    color:#59687c;
+}
+
+.footer-logo{
+    color:white;
+    font-weight:900;
+    margin-bottom:7px;
+}
+
+.footer-logo span{
+    color:var(--blue);
+}
+
+/* MOBILE */
+
+@media(max-width:760px){
+
+    .nav{
+        flex-wrap:wrap;
+        padding:11px 0;
+    }
+
+    .logo{
+        order:1;
+    }
+
+    .nav-buttons{
+        order:2;
+        margin-left:auto;
+    }
+
+    .search-box{
+        order:3;
+        flex-basis:100%;
+    }
+
+    .hero{
+        padding:34px 22px;
+        margin-top:20px;
+    }
+
+    .hero h1{
+        font-size:38px;
+        letter-spacing:-1.5px;
+    }
+
+    .stats{
+        grid-template-columns:1fr;
+    }
+
+    .products-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:10px;
+    }
+
+    .product-image{
+        height:135px;
+    }
+
+    .product-info{
+        padding:12px;
+    }
+
+    .product-info h3{
+        font-size:14px;
+    }
+
+    .product-info p{
+        display:none;
+    }
+
+    .product-price{
+        font-size:17px;
+    }
+
+    .nav-buttons .btn{
+        padding:0 10px;
+        min-height:39px;
+        font-size:12px;
+    }
+
+    .hero-actions{
+        flex-direction:column;
+    }
+
+    .balance-actions{
+        grid-template-columns:1fr;
+    }
+}
+
+@media(max-width:380px){
+
+    .products-grid{
+        grid-template-columns:1fr;
+    }
+
+    .product-image{
+        height:190px;
+    }
+}
+</style>
 </head>
 
 <body>
 
 <header>
-    <nav class="nav">
+<nav class="nav">
 
-        <a href="#" class="logo">
-            SlaxStore
-        </a>
+    <a href="#" class="logo">
+        Slax<span>Store</span>
+    </a>
 
-        <div class="search-box">
-            <input
-                id="searchInput"
-                type="search"
-                placeholder="Pesquisar produtos..."
-                autocomplete="off"
-            >
-        </div>
+    <div class="search-box">
+        <span class="search-icon">⌕</span>
+        <input
+            id="searchInput"
+            type="search"
+            placeholder="Pesquisar produtos..."
+            autocomplete="off"
+        >
+    </div>
 
-        <div class="nav-buttons">
+    <div class="nav-buttons">
 
-            <button
-                id="loginButton"
-                type="button"
-                class="primary"
-            >
-                Entrar
-            </button>
+        <button
+            id="loginButton"
+            class="btn primary"
+            type="button"
+        >
+            Entrar
+        </button>
 
-            <button
-                id="profileButton"
-                type="button"
-                style="display:none"
-            >
-                Perfil
-            </button>
+        <button
+            id="profileButton"
+            class="btn"
+            type="button"
+            style="display:none"
+        >
+            Perfil
+        </button>
 
-            <button
-                id="logoutButton"
-                type="button"
-                class="danger"
-                style="display:none"
-            >
-                Sair
-            </button>
+        <button
+            id="logoutButton"
+            class="btn danger"
+            type="button"
+            style="display:none"
+        >
+            Sair
+        </button>
 
-        </div>
+    </div>
 
-    </nav>
+</nav>
 </header>
+
 
 <main class="container">
 
-    <section class="hero">
+<section class="hero">
+
+    <div class="hero-content">
+
+        <div class="hero-badge">
+            ● Marketplace digital
+        </div>
 
         <h1>
-            Bem-vindo à
-            <span>SlaxStore</span>
+            Compre e venda
+            <span>do seu jeito.</span>
         </h1>
 
         <p>
-            Encontre produtos, publique seus próprios
-            anúncios e compre diretamente pela plataforma.
+            Bem-vindo à SlaxStore. Encontre produtos digitais,
+            publique seus próprios anúncios e acompanhe suas
+            compras e seu saldo em um só lugar.
         </p>
 
-    </section>
+        <div class="hero-actions">
 
-    <div class="categories">
+            <button
+                class="btn primary"
+                type="button"
+                onclick="rolarProdutos()"
+            >
+                Explorar produtos
+            </button>
 
-        <button
-            class="category active"
-            data-category=""
-            type="button"
-        >
-            Todos
-        </button>
+            <button
+                id="heroSellButton"
+                class="btn"
+                type="button"
+                onclick="abrirCriarAnuncio()"
+            >
+                Começar a vender
+            </button>
 
-        <button
-            class="category"
-            data-category="Jogos"
-            type="button"
-        >
-            Jogos
-        </button>
-
-        <button
-            class="category"
-            data-category="Roblox"
-            type="button"
-        >
-            Roblox
-        </button>
-
-        <button
-            class="category"
-            data-category="Minecraft"
-            type="button"
-        >
-            Minecraft
-        </button>
-
-        <button
-            class="category"
-            data-category="Contas"
-            type="button"
-        >
-            Contas
-        </button>
-
-        <button
-            class="category"
-            data-category="Itens"
-            type="button"
-        >
-            Itens
-        </button>
-
-        <button
-            class="category"
-            data-category="Outros"
-            type="button"
-        >
-            Outros
-        </button>
+        </div>
 
     </div>
 
-    <h2 class="section-title">
-        Produtos
-    </h2>
+</section>
 
-    <section
-        id="productsGrid"
-        class="products-grid"
-    >
-        <div class="loading">
-            Carregando produtos...
-        </div>
-    </section>
+
+<div class="stats">
+
+    <div class="stat">
+        <strong>Compra segura</strong>
+        <span>Pagamento integrado ao sistema.</span>
+    </div>
+
+    <div class="stat">
+        <strong>Venda fácil</strong>
+        <span>Publique seus anúncios rapidamente.</span>
+    </div>
+
+    <div class="stat">
+        <strong>Saldo Slax</strong>
+        <span>Acompanhe seus ganhos pelo perfil.</span>
+    </div>
+
+</div>
+
+
+<div class="categories">
+
+    <button class="category active"
+        data-category="" type="button">
+        Todos
+    </button>
+
+    <button class="category"
+        data-category="Jogos" type="button">
+        Jogos
+    </button>
+
+    <button class="category"
+        data-category="Roblox" type="button">
+        Roblox
+    </button>
+
+    <button class="category"
+        data-category="Minecraft" type="button">
+        Minecraft
+    </button>
+
+    <button class="category"
+        data-category="Contas" type="button">
+        Contas
+    </button>
+
+    <button class="category"
+        data-category="Itens" type="button">
+        Itens
+    </button>
+
+    <button class="category"
+        data-category="Outros" type="button">
+        Outros
+    </button>
+
+</div>
+
+
+<div class="section-head">
+    <h2 class="section-title">
+        Produtos em destaque
+    </h2>
+</div>
+
+
+<section
+    id="productsGrid"
+    class="products-grid"
+>
+    <div class="loading">
+        Carregando produtos...
+    </div>
+</section>
 
 </main>
 
+
 <footer>
-    SlaxStore © 2026
+
+    <div class="footer-logo">
+        Slax<span>Store</span>
+    </div>
+
+    <p>
+        Marketplace digital © 2026 SlaxStore
+    </p>
+
 </footer>
 
 
-<!-- LOGIN / CADASTRO -->
+<!-- LOGIN -->
 
-<div
-    id="authModal"
-    class="modal hidden"
->
+<div id="authModal" class="modal hidden">
 
-    <div class="modal-box">
+<div class="modal-box">
 
-        <div class="modal-header">
+    <div class="modal-header">
 
-            <h2 id="authTitle">
-                Entrar
-            </h2>
+        <h2 id="authTitle">
+            Entrar
+        </h2>
 
-            <button
-                class="close"
-                type="button"
-                data-close-modal="authModal"
-            >
-                ×
-            </button>
-
-        </div>
-
-        <div
-            id="authMessage"
-            class="message"
-        ></div>
-
-        <form id="authForm">
-
-            <div
-                id="usernameField"
-                class="form-group hidden"
-            >
-                <label for="username">
-                    Nome de usuário
-                </label>
-
-                <input
-                    id="username"
-                    type="text"
-                    autocomplete="username"
-                    placeholder="Seu nome"
-                >
-            </div>
-
-            <div class="form-group">
-
-                <label for="email">
-                    E-mail
-                </label>
-
-                <input
-                    id="email"
-                    type="email"
-                    autocomplete="email"
-                    placeholder="seu@email.com"
-                    required
-                >
-
-            </div>
-
-            <div class="form-group">
-
-                <label for="password">
-                    Senha
-                </label>
-
-                <input
-                    id="password"
-                    type="password"
-                    autocomplete="current-password"
-                    placeholder="Sua senha"
-                    required
-                >
-
-            </div>
-
-            <button
-                id="authSubmit"
-                class="primary"
-                type="submit"
-                style="width:100%"
-            >
-                Entrar
-            </button>
-
-        </form>
-
-        <div class="switch">
-
-            <span id="authSwitchText">
-                Ainda não tem uma conta?
-            </span>
-
-            <button
-                id="authSwitch"
-                type="button"
-            >
-                Criar conta
-            </button>
-
-        </div>
+        <button
+            class="close"
+            type="button"
+            data-close-modal="authModal"
+        >
+            ×
+        </button>
 
     </div>
+
+    <div
+        id="authMessage"
+        class="message"
+    ></div>
+
+    <form id="authForm">
+
+        <div
+            id="usernameField"
+            class="form-group hidden"
+        >
+
+            <label for="username">
+                Nome de usuário
+            </label>
+
+            <input
+                id="username"
+                type="text"
+                autocomplete="username"
+                placeholder="Seu nome"
+            >
+
+        </div>
+
+        <div class="form-group">
+
+            <label for="email">
+                E-mail
+            </label>
+
+            <input
+                id="email"
+                type="email"
+                autocomplete="email"
+                placeholder="seu@email.com"
+                required
+            >
+
+        </div>
+
+        <div class="form-group">
+
+            <label for="password">
+                Senha
+            </label>
+
+            <input
+                id="password"
+                type="password"
+                autocomplete="current-password"
+                placeholder="Sua senha"
+                required
+            >
+
+        </div>
+
+        <label
+            id="rememberContainer"
+            class="remember"
+        >
+            <input
+                id="rememberLogin"
+                type="checkbox"
+                checked
+            >
+            Lembrar meu login neste dispositivo
+        </label>
+
+        <button
+            id="authSubmit"
+            class="btn primary"
+            type="submit"
+            style="width:100%"
+        >
+            Entrar
+        </button>
+
+    </form>
+
+    <div class="switch">
+
+        <span id="authSwitchText">
+            Ainda não tem uma conta?
+        </span>
+
+        <button
+            id="authSwitch"
+            type="button"
+        >
+            Criar conta
+        </button>
+
+    </div>
+
+</div>
 
 </div>
 
 
 <!-- VERIFICAÇÃO -->
 
-<div
-    id="verifyModal"
-    class="modal hidden"
->
+<div id="verifyModal" class="modal hidden">
 
-    <div class="modal-box">
+<div class="modal-box">
 
-        <div class="modal-header">
+    <div class="modal-header">
 
-            <h2>
-                Verificar e-mail
-            </h2>
-
-            <button
-                class="close"
-                type="button"
-                data-close-modal="verifyModal"
-            >
-                ×
-            </button>
-
-        </div>
-
-        <p
-            id="verifyEmailText"
-            style="color:#aaa; margin-bottom:20px"
-        >
-            Enviamos um código para seu e-mail.
-        </p>
-
-        <div
-            id="verifyMessage"
-            class="message"
-        ></div>
-
-        <form id="verifyForm">
-
-            <div class="form-group">
-
-                <label for="verificationCode">
-                    Código
-                </label>
-
-                <input
-                    id="verificationCode"
-                    class="verify-code"
-                    type="text"
-                    inputmode="numeric"
-                    maxlength="8"
-                    placeholder="000000"
-                    required
-                >
-
-            </div>
-
-            <button
-                class="primary"
-                type="submit"
-                style="width:100%"
-            >
-                Verificar
-            </button>
-
-        </form>
+        <h2>Verificar e-mail</h2>
 
         <button
-            id="resendCode"
+            class="close"
             type="button"
-            style="width:100%; margin-top:10px"
+            data-close-modal="verifyModal"
         >
-            Reenviar código
+            ×
         </button>
 
     </div>
+
+    <p
+        id="verifyEmailText"
+        style="color:#8291a6;margin-bottom:20px"
+    >
+        Enviamos um código para seu e-mail.
+    </p>
+
+    <div
+        id="verifyMessage"
+        class="message"
+    ></div>
+
+    <form id="verifyForm">
+
+        <div class="form-group">
+
+            <label for="verificationCode">
+                Código recebido
+            </label>
+
+            <input
+                id="verificationCode"
+                type="text"
+                inputmode="numeric"
+                maxlength="8"
+                placeholder="000000"
+                required
+            >
+
+        </div>
+
+        <button
+            class="btn primary"
+            type="submit"
+            style="width:100%"
+        >
+            Verificar conta
+        </button>
+
+    </form>
+
+    <button
+        id="resendCode"
+        class="btn"
+        type="button"
+        style="width:100%;margin-top:10px"
+    >
+        Reenviar código
+    </button>
+
+</div>
 
 </div>
 
 
 <!-- PERFIL -->
 
-<div
-    id="profileModal"
-    class="modal hidden"
->
+<div id="profileModal" class="modal hidden">
 
-    <div class="modal-box profile-box">
+<div class="modal-box profile-box">
 
-        <div class="modal-header">
+    <div class="modal-header">
 
-            <h2>
-                Meu perfil
-            </h2>
-
-            <button
-                class="close"
-                type="button"
-                data-close-modal="profileModal"
-            >
-                ×
-            </button>
-
-        </div>
-
-        <div class="profile-avatar">
-            S
-        </div>
-
-        <h2 id="profileUsername">
-            Usuário
-        </h2>
-
-        <p
-            id="profileEmail"
-            class="profile-email"
-        ></p>
-
-        <div class="balance">
-
-            <span>
-                Saldo
-            </span>
-
-            <strong id="profileBalance">
-                R$ 0,00
-            </strong>
-
-        </div>
+        <h2>Minha conta</h2>
 
         <button
-            class="danger"
+            class="close"
             type="button"
-            onclick="sair()"
-            style="width:100%"
+            data-close-modal="profileModal"
         >
-            Sair da conta
+            ×
         </button>
 
     </div>
 
+    <div
+        id="profileAvatar"
+        class="profile-avatar"
+    >
+        S
+    </div>
+
+    <h2 id="profileUsername">
+        Usuário
+    </h2>
+
+    <p
+        id="profileEmail"
+        class="profile-email"
+    ></p>
+
+    <div class="balance">
+
+        <span>Saldo disponível</span>
+
+        <strong id="profileBalance">
+            R$ 0,00
+        </strong>
+
+    </div>
+
+    <div class="balance-actions">
+
+        <button
+            id="withdrawButton"
+            class="btn primary"
+            type="button"
+        >
+            Resgatar saldo
+        </button>
+
+        <button
+            id="profileSellButton"
+            class="btn"
+            type="button"
+        >
+            Vender produto
+        </button>
+
+    </div>
+
+    <button
+        class="btn danger"
+        type="button"
+        onclick="sair()"
+        style="width:100%"
+    >
+        Sair da conta
+    </button>
+
+</div>
+
 </div>
 
 
-<!-- CRIAR PRODUTO -->
+<!-- RESGATE -->
+
+<div id="withdrawModal" class="modal hidden">
+
+<div class="modal-box">
+
+    <div class="modal-header">
+
+        <h2>Resgatar saldo</h2>
+
+        <button
+            class="close"
+            type="button"
+            data-close-modal="withdrawModal"
+        >
+            ×
+        </button>
+
+    </div>
+
+    <div class="withdraw-info">
+
+        O valor mínimo para resgate é
+        <span class="withdraw-limit">
+            R$ 2,00
+        </span>.
+
+        Digite o valor que deseja solicitar.
+        O processamento do pagamento é feito
+        pelo servidor da SlaxStore.
+
+    </div>
+
+    <div
+        id="withdrawMessage"
+        class="message"
+    ></div>
+
+    <form id="withdrawForm">
+
+        <div class="form-group">
+
+            <label for="withdrawAmount">
+                Valor do resgate
+            </label>
+
+            <input
+                id="withdrawAmount"
+                type="number"
+                min="2"
+                step="0.01"
+                placeholder="2,00"
+                required
+            >
+
+        </div>
+
+        <div class="form-group">
+
+            <label for="withdrawMethod">
+                Método de recebimento
+            </label>
+
+            <select id="withdrawMethod">
+
+                <option value="pix">
+                    PIX
+                </option>
+
+            </select>
+
+        </div>
+
+        <div class="form-group">
+
+            <label for="withdrawKey">
+                Chave PIX
+            </label>
+
+            <input
+                id="withdrawKey"
+                type="text"
+                placeholder="Digite sua chave PIX"
+                autocomplete="off"
+                required
+            >
+
+        </div>
+
+        <div class="form-actions">
+
+            <button
+                class="btn"
+                type="button"
+                data-close-modal="withdrawModal"
+            >
+                Cancelar
+            </button>
+
+            <button
+                class="btn primary"
+                type="submit"
+            >
+                Solicitar resgate
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+</div>
+
+
+<!-- CRIAR ANÚNCIO -->
 
 <div
     id="createProductModal"
     class="modal hidden"
 >
 
-    <div class="modal-box large">
+<div class="modal-box large">
 
-        <div class="modal-header">
+    <div class="modal-header">
 
-            <h2>
-                Criar anúncio
-            </h2>
+        <h2>Publicar anúncio</h2>
+
+        <button
+            class="close"
+            type="button"
+            data-close-modal="createProductModal"
+        >
+            ×
+        </button>
+
+    </div>
+
+    <div
+        id="createProductMessage"
+        class="message"
+    ></div>
+
+    <form id="createProductForm">
+
+        <div class="form-group">
+
+            <label for="productName">
+                Nome do produto
+            </label>
+
+            <input
+                id="productName"
+                type="text"
+                maxlength="120"
+                placeholder="Ex.: Item raro"
+                required
+            >
+
+        </div>
+
+        <div class="form-group">
+
+            <label for="productDescription">
+                Descrição
+            </label>
+
+            <textarea
+                id="productDescription"
+                maxlength="3000"
+                placeholder="Explique exatamente o que o comprador receberá..."
+            ></textarea>
+
+        </div>
+
+        <div class="form-group">
+
+            <label for="productPrice">
+                Preço em reais
+            </label>
+
+            <input
+                id="productPrice"
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="10,00"
+                required
+            >
+
+        </div>
+
+        <div class="form-group">
+
+            <label for="productCategory">
+                Categoria
+            </label>
+
+            <select id="productCategory">
+
+                <option value="Roblox">
+                    Roblox
+                </option>
+
+                <option value="Jogos">
+                    Jogos
+                </option>
+
+                <option value="Minecraft">
+                    Minecraft
+                </option>
+
+                <option value="Contas">
+                    Contas
+                </option>
+
+                <option value="Itens">
+                    Itens
+                </option>
+
+                <option value="Outros">
+                    Outros
+                </option>
+
+            </select>
+
+        </div>
+
+        <div class="form-group">
+
+            <label for="productImage">
+                URL da imagem
+            </label>
+
+            <input
+                id="productImage"
+                type="url"
+                placeholder="https://..."
+            >
+
+        </div>
+
+        <div class="form-actions">
 
             <button
-                class="close"
+                class="btn"
                 type="button"
                 data-close-modal="createProductModal"
             >
-                ×
+                Cancelar
+            </button>
+
+            <button
+                class="btn primary"
+                type="submit"
+            >
+                Publicar anúncio
             </button>
 
         </div>
 
-        <div
-            id="createProductMessage"
-            class="message"
-        ></div>
+    </form>
 
-        <form id="createProductForm">
-
-            <div class="form-group">
-
-                <label for="productName">
-                    Nome do produto
-                </label>
-
-                <input
-                    id="productName"
-                    type="text"
-                    placeholder="Nome do produto"
-                    required
-                >
-
-            </div>
-
-            <div class="form-group">
-
-                <label for="productDescription">
-                    Descrição
-                </label>
-
-                <textarea
-                    id="productDescription"
-                    placeholder="Descreva seu produto..."
-                ></textarea>
-
-            </div>
-
-            <div class="form-group">
-
-                <label for="productPrice">
-                    Preço em reais
-                </label>
-
-                <input
-                    id="productPrice"
-                    type="number"
-                    min="0.01"
-                    step="0.01"
-                    placeholder="10,00"
-                    required
-                >
-
-            </div>
-
-            <div class="form-group">
-
-                <label for="productCategory">
-                    Categoria
-                </label>
-
-                <select id="productCategory">
-
-                    <option value="Outros">
-                        Outros
-                    </option>
-
-                    <option value="Jogos">
-                        Jogos
-                    </option>
-
-                    <option value="Roblox">
-                        Roblox
-                    </option>
-
-                    <option value="Minecraft">
-                        Minecraft
-                    </option>
-
-                    <option value="Contas">
-                        Contas
-                    </option>
-
-                    <option value="Itens">
-                        Itens
-                    </option>
-
-                </select>
-
-            </div>
-
-            <div class="form-group">
-
-                <label for="productImage">
-                    URL da imagem
-                </label>
-
-                <input
-                    id="productImage"
-                    type="url"
-                    placeholder="https://..."
-                >
-
-            </div>
-
-            <div class="form-actions">
-
-                <button
-                    type="button"
-                    data-close-modal="createProductModal"
-                >
-                    Cancelar
-                </button>
-
-                <button
-                    type="submit"
-                    class="primary"
-                >
-                    Publicar anúncio
-                </button>
-
-            </div>
-
-        </form>
-
-    </div>
+</div>
 
 </div>
 
 
 <!-- PRODUTO -->
 
-<div
-    id="productModal"
-    class="modal hidden"
->
+<div id="productModal" class="modal hidden">
 
-    <div class="modal-box large">
+<div class="modal-box large">
 
-        <div class="modal-header">
+    <div class="modal-header">
 
-            <h2>
-                Produto
-            </h2>
-
-            <button
-                class="close"
-                type="button"
-                data-close-modal="productModal"
-            >
-                ×
-            </button>
-
-        </div>
-
-        <img
-            id="productModalImage"
-            class="product-detail-image"
-            alt="Produto"
-            style="display:none"
-        >
-
-        <h2 id="productModalName">
-            Produto
-        </h2>
-
-        <div
-            id="productModalPrice"
-            class="product-detail-price"
-        >
-            R$ 0,00
-        </div>
-
-        <p
-            id="productModalDescription"
-            class="product-detail-description"
-        ></p>
+        <h2>Detalhes do produto</h2>
 
         <button
-            id="buyProductButton"
-            class="primary"
+            class="close"
             type="button"
-            style="width:100%; margin-top:25px"
+            data-close-modal="productModal"
         >
-            Comprar
+            ×
         </button>
 
     </div>
+
+    <img
+        id="productModalImage"
+        class="product-detail-image"
+        alt="Produto"
+        style="display:none"
+    >
+
+    <h2 id="productModalName">
+        Produto
+    </h2>
+
+    <div
+        id="productModalPrice"
+        class="product-detail-price"
+    >
+        R$ 0,00
+    </div>
+
+    <p
+        id="productModalDescription"
+        class="product-detail-description"
+    ></p>
+
+    <div
+        id="sellerBox"
+        class="seller-box"
+    >
+        <div
+            id="sellerAvatar"
+            class="seller-avatar"
+        >
+            S
+        </div>
+
+        <div>
+            <small style="color:#68788d">
+                Vendedor
+            </small>
+
+            <div id="sellerName">
+                SlaxStore
+            </div>
+        </div>
+    </div>
+
+    <button
+        id="buyProductButton"
+        class="btn primary"
+        type="button"
+        style="width:100%;margin-top:20px"
+    >
+        Comprar agora
+    </button>
+
+</div>
 
 </div>
 
@@ -1128,7 +1608,38 @@
 <script>
 "use strict";
 
+/*
+    SLAXSTORE FRONTEND
+    ==================
+
+    Este arquivo trabalha com a API do seu servidor.
+
+    Endpoints utilizados:
+
+    POST /api/auth/register
+    POST /api/auth/login
+    POST /api/auth/logout
+    GET  /api/auth/me
+    POST /api/auth/verify-email
+    POST /api/auth/resend-code
+
+    GET  /api/products
+    GET  /api/products/search
+    GET  /api/products/:id
+    POST /api/products
+    POST /api/products/:id/buy
+
+    POST /api/wallet/withdraw
+
+    IMPORTANTE:
+    O endpoint de resgate precisa existir no backend
+    para o saque ser realmente processado.
+*/
+
 const API_URL = window.location.origin;
+
+const TOKEN_KEY = "slaxstore_token";
+const EMAIL_KEY = "slaxstore_saved_email";
 
 let usuario = null;
 let authMode = "login";
@@ -1139,52 +1650,76 @@ let searchTimer = null;
 
 const $ = id => document.getElementById(id);
 
-function token() {
-    return localStorage.getItem("slaxstore_token") || "";
+
+/* =========================
+   TOKEN / LOGIN
+========================= */
+
+function token(){
+    return localStorage.getItem(TOKEN_KEY) || "";
 }
 
-function salvarToken(value) {
-    if (value) {
-        localStorage.setItem(
-            "slaxstore_token",
-            value
-        );
-    }
-}
+function salvarToken(value){
+    if(!value) return;
 
-function removerToken() {
-    localStorage.removeItem(
-        "slaxstore_token"
+    localStorage.setItem(
+        TOKEN_KEY,
+        value
     );
 }
 
-function texto(value) {
+function removerToken(){
+    localStorage.removeItem(TOKEN_KEY);
+}
+
+function salvarEmailLogin(email){
+    if(!email) return;
+
+    localStorage.setItem(
+        EMAIL_KEY,
+        email
+    );
+}
+
+function emailSalvo(){
+    return localStorage.getItem(
+        EMAIL_KEY
+    ) || "";
+}
+
+
+/* =========================
+   UTILIDADES
+========================= */
+
+function texto(value){
     return String(value ?? "");
 }
 
-function escapeHTML(value) {
+function escapeHTML(value){
     return texto(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
 }
 
-function dinheiro(cents) {
+function dinheiro(cents){
     return (
         Number(cents || 0) / 100
     ).toLocaleString(
         "pt-BR",
         {
-            style: "currency",
-            currency: "BRL"
+            style:"currency",
+            currency:"BRL"
         }
     );
 }
 
-function mostrar(elemento, mostrar = true) {
-    if (!elemento) return;
+function mostrar(elemento, mostrar=true){
+
+    if(!elemento) return;
 
     elemento.classList.toggle(
         "hidden",
@@ -1195,43 +1730,85 @@ function mostrar(elemento, mostrar = true) {
         mostrar ? "" : "none";
 }
 
-function abrirModal(id) {
+function abrirModal(id){
+
     const elemento = $(id);
 
-    if (!elemento) return false;
+    if(!elemento)
+        return false;
 
-    mostrar(elemento, true);
+    mostrar(elemento,true);
+
+    document.body.classList.add(
+        "modal-open"
+    );
+
     return true;
 }
 
-function fecharModal(id) {
+function fecharModal(id){
+
     const elemento = $(id);
 
-    if (!elemento) return;
+    if(!elemento)
+        return;
 
-    mostrar(elemento, false);
+    mostrar(elemento,false);
+
+    const algumAberto =
+        [...document.querySelectorAll(".modal")]
+        .some(modal =>
+            !modal.classList.contains("hidden")
+        );
+
+    if(!algumAberto){
+        document.body.classList.remove(
+            "modal-open"
+        );
+    }
 }
 
 function mensagem(
     elemento,
     msg,
-    tipo = "error"
-) {
-    if (!elemento) {
+    tipo="error"
+){
+
+    if(!elemento){
         alert(msg);
         return;
     }
 
-    elemento.textContent = msg;
+    elemento.textContent =
+        msg;
+
     elemento.className =
         "message " + tipo;
-    elemento.style.display = "block";
+
+    elemento.style.display =
+        "block";
 }
+
+function limparMensagem(elemento){
+
+    if(!elemento)
+        return;
+
+    elemento.textContent = "";
+    elemento.className = "message";
+    elemento.style.display = "none";
+}
+
+
+/* =========================
+   API
+========================= */
 
 async function api(
     endpoint,
-    options = {}
-) {
+    options={}
+){
+
     const headers = {
         ...(options.body
             ? {
@@ -1242,39 +1819,64 @@ async function api(
         ...(options.headers || {})
     };
 
-    const authToken = token();
+    const authToken =
+        token();
 
-    if (authToken) {
+    if(authToken){
+
         headers.Authorization =
             "Bearer " + authToken;
     }
 
-    const resposta =
-        await fetch(
-            API_URL + endpoint,
-            {
-                ...options,
-                credentials: "include",
-                headers
-            }
+    let resposta;
+
+    try{
+
+        resposta =
+            await fetch(
+                API_URL + endpoint,
+                {
+                    ...options,
+                    credentials:"include",
+                    headers
+                }
+            );
+
+    }catch{
+
+        throw new Error(
+            "Não foi possível conectar ao servidor."
         );
+    }
 
     let dados = {};
 
-    try {
+    try{
+
         dados =
             await resposta.json();
-    } catch {
+
+    }catch{
+
         dados = {};
     }
 
-    if (!resposta.ok) {
+    if(!resposta.ok){
 
-        if (
+        /*
+            Só removemos o token quando o servidor
+            realmente informa que ele não é válido.
+
+            Isso evita apagar o login local por erros
+            temporários de rede ou servidor.
+        */
+
+        if(
             resposta.status === 401 &&
             !endpoint.includes("/login") &&
             !endpoint.includes("/register")
-        ) {
+        ){
+
             usuario = null;
             removerToken();
             atualizarInterface();
@@ -1291,17 +1893,25 @@ async function api(
 }
 
 
-/* SESSÃO */
+/* =========================
+   SESSÃO
+========================= */
 
-async function verificarSessao() {
+async function verificarSessao(){
 
-    if (!token()) {
+    const authToken =
+        token();
+
+    if(!authToken){
+
         usuario = null;
+
         atualizarInterface();
+
         return;
     }
 
-    try {
+    try{
 
         const resposta =
             await api(
@@ -1313,24 +1923,53 @@ async function verificarSessao() {
             resposta.usuario ||
             null;
 
-        if (!usuario) {
+        /*
+            Se o backend respondeu normalmente,
+            mas não mandou usuário, o token não
+            pode ser considerado uma sessão válida.
+        */
+
+        if(!usuario){
+
             removerToken();
         }
 
-    } catch {
+    }catch(erro){
 
-        usuario = null;
-        removerToken();
+        /*
+            Não apagamos o token em erro de rede.
+            Isso é importante para não "deslogar"
+            o usuário sozinho.
+        */
 
+        if(
+            String(erro.message)
+            .toLowerCase()
+            .includes("não foi possível conectar")
+        ){
+            return;
+        }
+
+        /*
+            Se o api() já recebeu 401,
+            o token já foi removido.
+        */
+
+        usuario =
+            token()
+                ? usuario
+                : null;
     }
 
     atualizarInterface();
 }
 
 
-/* INTERFACE */
+/* =========================
+   INTERFACE
+========================= */
 
-function atualizarInterface() {
+function atualizarInterface(){
 
     const loginButton =
         $("loginButton");
@@ -1341,60 +1980,92 @@ function atualizarInterface() {
     const logoutButton =
         $("logoutButton");
 
-    if (usuario) {
+    const heroSellButton =
+        $("heroSellButton");
 
-        if (loginButton)
+    if(usuario){
+
+        if(loginButton)
             loginButton.style.display =
                 "none";
 
-        if (profileButton)
+        if(profileButton)
             profileButton.style.display =
                 "";
 
-        if (logoutButton)
+        if(logoutButton)
             logoutButton.style.display =
                 "";
+
+        if(heroSellButton)
+            heroSellButton.textContent =
+                "Publicar produto";
 
         criarBotaoVender();
 
-    } else {
+        atualizarAvatar();
 
-        if (loginButton)
+    }else{
+
+        if(loginButton)
             loginButton.style.display =
                 "";
 
-        if (profileButton)
+        if(profileButton)
             profileButton.style.display =
                 "none";
 
-        if (logoutButton)
+        if(logoutButton)
             logoutButton.style.display =
                 "none";
+
+        if(heroSellButton)
+            heroSellButton.textContent =
+                "Começar a vender";
 
         const vender =
             $("slaxSellButton");
 
-        if (vender)
+        if(vender)
             vender.remove();
     }
 }
 
-function criarBotaoVender() {
+function atualizarAvatar(){
 
-    if (!usuario) return;
+    const avatar =
+        $("profileAvatar");
 
-    if ($("slaxSellButton"))
+    if(!avatar || !usuario)
         return;
 
-    const nav =
-        document.querySelector(".nav");
+    const nome =
+        usuario.username ||
+        usuario.nome ||
+        "S";
 
-    if (!nav) return;
+    avatar.textContent =
+        nome.charAt(0).toUpperCase();
+}
+
+function criarBotaoVender(){
+
+    if(!usuario)
+        return;
+
+    if($("slaxSellButton"))
+        return;
+
+    const navButtons =
+        document.querySelector(
+            ".nav-buttons"
+        );
+
+    if(!navButtons)
+        return;
 
     const botao =
-        document.createElement(
-            "button"
-        );
+        document.createElement("button");
 
     botao.id =
         "slaxSellButton";
@@ -1406,26 +2077,30 @@ function criarBotaoVender() {
         "Vender";
 
     botao.className =
-        "primary";
+        "btn primary";
 
     botao.addEventListener(
         "click",
         abrirCriarAnuncio
     );
 
-    nav.querySelector(
-        ".nav-buttons"
-    ).appendChild(botao);
+    navButtons.insertBefore(
+        botao,
+        navButtons.firstChild
+    );
 }
 
 
-/* LOGIN */
+/* =========================
+   LOGIN / CADASTRO
+========================= */
 
 function abrirAuth(
-    modo = "login"
-) {
+    modo="login"
+){
 
-    authMode = modo;
+    authMode =
+        modo;
 
     const title =
         $("authTitle");
@@ -1442,14 +2117,16 @@ function abrirAuth(
     const switchButton =
         $("authSwitch");
 
-    if (title) {
+    const remember =
+        $("rememberContainer");
+
+    if(title)
         title.textContent =
             modo === "register"
                 ? "Criar conta"
                 : "Entrar";
-    }
 
-    if (usernameField) {
+    if(usernameField){
 
         usernameField.classList.toggle(
             "hidden",
@@ -1462,36 +2139,51 @@ function abrirAuth(
                 : "none";
     }
 
-    if (submit) {
-
+    if(submit)
         submit.textContent =
             modo === "register"
                 ? "Criar conta"
                 : "Entrar";
-    }
 
-    if (switchText) {
-
+    if(switchText)
         switchText.textContent =
             modo === "register"
                 ? "Já possui uma conta?"
                 : "Ainda não tem uma conta?";
-    }
 
-    if (switchButton) {
-
+    if(switchButton)
         switchButton.textContent =
             modo === "register"
                 ? "Entrar"
                 : "Criar conta";
-    }
 
-    const msg =
-        $("authMessage");
+    if(remember)
+        remember.style.display =
+            modo === "register"
+                ? "none"
+                : "";
 
-    if (msg) {
-        msg.textContent = "";
-        msg.style.display = "none";
+    limparMensagem(
+        $("authMessage")
+    );
+
+    /*
+        Preenche automaticamente o último e-mail
+        usado neste dispositivo.
+    */
+
+    if(modo === "login"){
+
+        const email =
+            emailSalvo();
+
+        if(email &&
+            $("email") &&
+            !$("email").value
+        ){
+            $("email").value =
+                email;
+        }
     }
 
     abrirModal(
@@ -1499,7 +2191,7 @@ function abrirAuth(
     );
 }
 
-function alternarAuth() {
+function alternarAuth(){
 
     abrirAuth(
         authMode === "login"
@@ -1508,12 +2200,13 @@ function alternarAuth() {
     );
 }
 
-function configurarLogin() {
+function configurarLogin(){
 
     const form =
         $("authForm");
 
-    if (!form) return;
+    if(!form)
+        return;
 
     form.addEventListener(
         "submit",
@@ -1524,35 +2217,38 @@ function configurarLogin() {
             const msg =
                 $("authMessage");
 
-            try {
+            limparMensagem(msg);
+
+            try{
 
                 const email =
                     ($("email")?.value || "")
-                        .trim()
-                        .toLowerCase();
+                    .trim()
+                    .toLowerCase();
 
                 const password =
                     $("password")?.value || "";
 
-                if (!email)
+                if(!email)
                     throw new Error(
                         "Digite seu e-mail."
                     );
 
-                if (!password)
+                if(!password)
                     throw new Error(
                         "Digite sua senha."
                     );
 
-                if (
-                    authMode === "register"
-                ) {
+                if(
+                    authMode ===
+                    "register"
+                ){
 
                     const username =
                         ($("username")?.value || "")
-                            .trim();
+                        .trim();
 
-                    if (!username)
+                    if(!username)
                         throw new Error(
                             "Digite seu nome de usuário."
                         );
@@ -1563,7 +2259,7 @@ function configurarLogin() {
                     await api(
                         "/api/auth/register",
                         {
-                            method: "POST",
+                            method:"POST",
                             body:
                                 JSON.stringify({
                                     username,
@@ -1576,16 +2272,14 @@ function configurarLogin() {
                     const textoVerificacao =
                         $("verifyEmailText");
 
-                    if (textoVerificacao)
+                    if(textoVerificacao)
                         textoVerificacao.textContent =
                             "Enviamos um código para " +
                             email + ".";
 
-                    const codigo =
-                        $("verificationCode");
-
-                    if (codigo)
-                        codigo.value = "";
+                    if($("verificationCode"))
+                        $("verificationCode").value =
+                            "";
 
                     fecharModal(
                         "authModal"
@@ -1598,11 +2292,12 @@ function configurarLogin() {
                     return;
                 }
 
+
                 const resposta =
                     await api(
                         "/api/auth/login",
                         {
-                            method: "POST",
+                            method:"POST",
                             body:
                                 JSON.stringify({
                                     email,
@@ -1611,22 +2306,56 @@ function configurarLogin() {
                         }
                     );
 
-                if (!resposta.token)
+                if(!resposta.token)
                     throw new Error(
-                        "O servidor não enviou o token."
+                        "O servidor não enviou o token de login."
                     );
+
+                /*
+                    O token fica no localStorage.
+                    Portanto o login continua depois de
+                    fechar/reabrir a página, desde que o
+                    servidor aceite esse token.
+                */
 
                 salvarToken(
                     resposta.token
                 );
 
+                salvarEmailLogin(
+                    email
+                );
+
                 usuario =
                     resposta.user ||
-                    resposta.usuario;
+                    resposta.usuario ||
+                    null;
 
-                if (!usuario)
+                if(!usuario){
+
+                    /*
+                        Alguns backends retornam apenas o
+                        token. Nesse caso buscamos o usuário.
+                    */
+
+                    try{
+
+                        const me =
+                            await api(
+                                "/api/auth/me"
+                            );
+
+                        usuario =
+                            me.user ||
+                            me.usuario ||
+                            null;
+
+                    }catch{}
+                }
+
+                if(!usuario)
                     throw new Error(
-                        "Usuário não retornado pelo servidor."
+                        "Login realizado, mas o servidor não retornou o usuário."
                     );
 
                 fecharModal(
@@ -1635,13 +2364,16 @@ function configurarLogin() {
 
                 atualizarInterface();
 
+                await carregarPerfil();
+
                 await carregarProdutos();
 
-            } catch (erro) {
+            }catch(erro){
 
                 mensagem(
                     msg,
-                    erro.message
+                    erro.message ||
+                    "Não foi possível entrar."
                 );
             }
         }
@@ -1649,25 +2381,29 @@ function configurarLogin() {
 }
 
 
-/* VERIFICAÇÃO */
+/* =========================
+   VERIFICAÇÃO
+========================= */
 
-async function verificarCodigo() {
+async function verificarCodigo(){
 
     const codigo =
         ($("verificationCode")?.value || "")
-            .trim();
+        .trim();
 
     const msg =
         $("verifyMessage");
 
-    try {
+    limparMensagem(msg);
 
-        if (!emailParaVerificacao)
+    try{
+
+        if(!emailParaVerificacao)
             throw new Error(
                 "E-mail de verificação não encontrado."
             );
 
-        if (!codigo)
+        if(!codigo)
             throw new Error(
                 "Digite o código recebido."
             );
@@ -1676,17 +2412,18 @@ async function verificarCodigo() {
             await api(
                 "/api/auth/verify-email",
                 {
-                    method: "POST",
+                    method:"POST",
                     body:
                         JSON.stringify({
                             email:
                                 emailParaVerificacao,
-                            code: codigo
+                            code:
+                                codigo
                         })
                 }
             );
 
-        if (resposta.token)
+        if(resposta.token)
             salvarToken(
                 resposta.token
             );
@@ -1696,17 +2433,28 @@ async function verificarCodigo() {
             resposta.usuario ||
             null;
 
+        if(
+            usuario?.email
+        ){
+            salvarEmailLogin(
+                usuario.email
+            );
+        }
+
         fecharModal(
             "verifyModal"
         );
 
-        emailParaVerificacao = "";
+        emailParaVerificacao =
+            "";
 
         atualizarInterface();
 
+        await carregarPerfil();
+
         await carregarProdutos();
 
-    } catch (erro) {
+    }catch(erro){
 
         mensagem(
             msg,
@@ -1716,14 +2464,16 @@ async function verificarCodigo() {
     }
 }
 
-async function reenviarCodigo() {
+async function reenviarCodigo(){
 
     const msg =
         $("verifyMessage");
 
-    try {
+    limparMensagem(msg);
 
-        if (!emailParaVerificacao)
+    try{
+
+        if(!emailParaVerificacao)
             throw new Error(
                 "E-mail não encontrado."
             );
@@ -1731,7 +2481,7 @@ async function reenviarCodigo() {
         await api(
             "/api/auth/resend-code",
             {
-                method: "POST",
+                method:"POST",
                 body:
                     JSON.stringify({
                         email:
@@ -1746,7 +2496,7 @@ async function reenviarCodigo() {
             "success"
         );
 
-    } catch (erro) {
+    }catch(erro){
 
         mensagem(
             msg,
@@ -1757,22 +2507,28 @@ async function reenviarCodigo() {
 }
 
 
-/* LOGOUT */
+/* =========================
+   LOGOUT
+========================= */
 
-async function sair() {
+async function sair(){
 
-    try {
+    try{
 
-        await api(
-            "/api/auth/logout",
-            {
-                method: "POST"
-            }
-        );
+        if(token()){
 
-    } catch {}
+            await api(
+                "/api/auth/logout",
+                {
+                    method:"POST"
+                }
+            );
+        }
 
-    usuario = null;
+    }catch{}
+
+    usuario =
+        null;
 
     removerToken();
 
@@ -1786,84 +2542,264 @@ async function sair() {
 }
 
 
-/* PERFIL */
+/* =========================
+   PERFIL
+========================= */
 
-async function abrirPerfil() {
+async function carregarPerfil(){
 
-    if (!usuario) {
-        abrirAuth("login");
+    if(!usuario)
         return;
-    }
 
-    $("profileUsername").textContent =
-        usuario.username ||
-        usuario.nome ||
-        "Usuário";
-
-    $("profileEmail").textContent =
-        usuario.email ||
-        "";
-
-    $("profileBalance").textContent =
-        dinheiro(
-            usuario.balance ||
-            usuario.saldo ||
-            0
-        );
-
-    abrirModal(
-        "profileModal"
-    );
-}
-
-async function carregarPerfil() {
-
-    if (!usuario) return;
-
-    try {
+    try{
 
         const resposta =
             await api(
                 "/api/auth/me"
             );
 
-        usuario =
+        const novoUsuario =
             resposta.user ||
-            resposta.usuario ||
-            usuario;
+            resposta.usuario;
+
+        if(novoUsuario){
+
+            usuario =
+                novoUsuario;
+
+            if(usuario.email)
+                salvarEmailLogin(
+                    usuario.email
+                );
+        }
 
         atualizarInterface();
 
-    } catch {
+    }catch(erro){
 
-        usuario = null;
+        /*
+            Erro de rede não deve deslogar.
+        */
 
-        removerToken();
+        if(
+            String(erro.message)
+            .toLowerCase()
+            .includes("conectar")
+        ){
+            return;
+        }
 
-        atualizarInterface();
+        if(!token()){
+
+            usuario = null;
+
+            atualizarInterface();
+        }
+    }
+}
+
+async function abrirPerfil(){
+
+    if(!usuario){
+
+        abrirAuth("login");
+
+        return;
+    }
+
+    await carregarPerfil();
+
+    const nome =
+        usuario.username ||
+        usuario.nome ||
+        "Usuário";
+
+    $("profileUsername").textContent =
+        nome;
+
+    $("profileEmail").textContent =
+        usuario.email || "";
+
+    $("profileBalance").textContent =
+        dinheiro(
+            usuario.balance ??
+            usuario.saldo ??
+            0
+        );
+
+    atualizarAvatar();
+
+    abrirModal(
+        "profileModal"
+    );
+}
+
+
+/* =========================
+   RESGATE DE SALDO
+========================= */
+
+function abrirResgate(){
+
+    if(!usuario){
+
+        abrirAuth("login");
+
+        return;
+    }
+
+    limparMensagem(
+        $("withdrawMessage")
+    );
+
+    if($("withdrawAmount"))
+        $("withdrawAmount").value = "";
+
+    if($("withdrawKey"))
+        $("withdrawKey").value = "";
+
+    abrirModal(
+        "withdrawModal"
+    );
+}
+
+async function solicitarResgate(event){
+
+    event.preventDefault();
+
+    if(!usuario){
+
+        fecharModal(
+            "withdrawModal"
+        );
+
+        abrirAuth("login");
+
+        return;
+    }
+
+    const msg =
+        $("withdrawMessage");
+
+    limparMensagem(msg);
+
+    try{
+
+        const valor =
+            Number(
+                $("withdrawAmount")?.value || 0
+            );
+
+        const chavePix =
+            ($("withdrawKey")?.value || "")
+            .trim();
+
+        const metodo =
+            $("withdrawMethod")?.value ||
+            "pix";
+
+        if(valor < 2)
+            throw new Error(
+                "O valor mínimo para resgate é R$ 2,00."
+            );
+
+        if(!chavePix)
+            throw new Error(
+                "Digite sua chave PIX."
+            );
+
+        const saldoCentavos =
+            Number(
+                usuario.balance ??
+                usuario.saldo ??
+                0
+            );
+
+        const valorCentavos =
+            Math.round(
+                valor * 100
+            );
+
+        if(valorCentavos > saldoCentavos)
+            throw new Error(
+                "Você não possui saldo suficiente."
+            );
+
+        const resposta =
+            await api(
+                "/api/wallet/withdraw",
+                {
+                    method:"POST",
+                    body:
+                        JSON.stringify({
+                            amount:
+                                valorCentavos,
+                            method:
+                                metodo,
+                            pixKey:
+                                chavePix
+                        })
+                }
+            );
+
+        mensagem(
+            msg,
+            resposta.message ||
+            "Solicitação de resgate enviada!",
+            "success"
+        );
+
+        /*
+            Atualiza o saldo depois do pedido.
+        */
+
+        await carregarPerfil();
+
+        setTimeout(
+            () => {
+
+                fecharModal(
+                    "withdrawModal"
+                );
+
+                abrirPerfil();
+
+            },
+            1200
+        );
+
+    }catch(erro){
+
+        mensagem(
+            msg,
+            erro.message ||
+            "Não foi possível solicitar o resgate."
+        );
     }
 }
 
 
-/* PRODUTOS */
+/* =========================
+   PRODUTOS
+========================= */
 
-async function carregarProdutos() {
+async function carregarProdutos(){
 
     const container =
         $("productsGrid");
 
-    if (!container)
+    if(!container)
         return;
 
     container.innerHTML =
         '<div class="loading">Carregando produtos...</div>';
 
-    try {
+    try{
 
         let endpoint =
             "/api/products";
 
-        if (categoriaAtual) {
+        if(categoriaAtual){
 
             endpoint +=
                 "?category=" +
@@ -1894,7 +2830,7 @@ async function carregarProdutos() {
             produtos
         );
 
-    } catch (erro) {
+    }catch(erro){
 
         container.innerHTML =
             '<div class="empty">' +
@@ -1908,15 +2844,15 @@ async function carregarProdutos() {
 
 function renderizarProdutos(
     produtos
-) {
+){
 
     const container =
         $("productsGrid");
 
-    if (!container)
+    if(!container)
         return;
 
-    if (!produtos.length) {
+    if(!produtos.length){
 
         container.innerHTML =
             '<div class="empty">' +
@@ -1951,9 +2887,15 @@ function renderizarProdutos(
                     "";
 
                 const preco =
-                    produto.price ||
-                    produto.preco ||
+                    produto.price ??
+                    produto.preco ??
                     0;
+
+                const vendedor =
+                    produto.sellerUsername ||
+                    produto.sellerName ||
+                    produto.seller?.username ||
+                    "Vendedor";
 
                 return `
                     <article
@@ -1968,6 +2910,7 @@ function renderizarProdutos(
                                         <img
                                             src="${escapeHTML(imagem)}"
                                             alt="${escapeHTML(nome)}"
+                                            loading="lazy"
                                         >
                                       `
                                     : `
@@ -1991,14 +2934,32 @@ function renderizarProdutos(
                                 )}
                             </p>
 
-                            <strong>
+                            <div class="product-meta">
+
+                                <span>
+                                    ${escapeHTML(
+                                        vendedor
+                                    )}
+                                </span>
+
+                                <span>
+                                    ${escapeHTML(
+                                        produto.category ||
+                                        produto.categoria ||
+                                        "Outros"
+                                    )}
+                                </span>
+
+                            </div>
+
+                            <div class="product-price">
                                 ${dinheiro(preco)}
-                            </strong>
+                            </div>
 
                             <button
                                 type="button"
-                                class="primary"
-                                onclick="abrirProduto('${escapeHTML(id)}')"
+                                class="btn primary"
+                                data-product-id="${escapeHTML(id)}"
                             >
                                 Ver produto
                             </button>
@@ -2008,17 +2969,40 @@ function renderizarProdutos(
                     </article>
                 `;
             }
-        ).join("");
+        )
+        .join("");
+
+    container
+        .querySelectorAll(
+            "[data-product-id]"
+        )
+        .forEach(
+            botao => {
+
+                botao.addEventListener(
+                    "click",
+                    () => {
+
+                        abrirProduto(
+                            botao.dataset.productId
+                        );
+                    }
+                );
+            }
+        );
 }
 
 
-/* DETALHES DO PRODUTO */
+/* =========================
+   DETALHES
+========================= */
 
-async function abrirProduto(id) {
+async function abrirProduto(id){
 
-    if (!id) return;
+    if(!id)
+        return;
 
-    try {
+    try{
 
         const resposta =
             await api(
@@ -2031,11 +3015,14 @@ async function abrirProduto(id) {
             resposta.produto ||
             resposta;
 
+        const nome =
+            produtoAtual.name ||
+            produtoAtual.nome ||
+            "Produto";
+
         $("productModalName")
             .textContent =
-                produtoAtual.name ||
-                produtoAtual.nome ||
-                "Produto";
+                nome;
 
         $("productModalDescription")
             .textContent =
@@ -2046,8 +3033,8 @@ async function abrirProduto(id) {
         $("productModalPrice")
             .textContent =
                 dinheiro(
-                    produtoAtual.price ||
-                    produtoAtual.preco ||
+                    produtoAtual.price ??
+                    produtoAtual.preco ??
                     0
                 );
 
@@ -2060,12 +3047,15 @@ async function abrirProduto(id) {
             produtoAtual.imagem ||
             "";
 
-        if (url) {
+        if(url){
 
-            imagem.src = url;
-            imagem.style.display = "";
+            imagem.src =
+                url;
 
-        } else {
+            imagem.style.display =
+                "";
+
+        }else{
 
             imagem.removeAttribute(
                 "src"
@@ -2075,11 +3065,27 @@ async function abrirProduto(id) {
                 "none";
         }
 
+        const vendedor =
+            produtoAtual.sellerUsername ||
+            produtoAtual.sellerName ||
+            produtoAtual.seller?.username ||
+            "Vendedor";
+
+        $("sellerName")
+            .textContent =
+                vendedor;
+
+        $("sellerAvatar")
+            .textContent =
+                vendedor
+                    .charAt(0)
+                    .toUpperCase();
+
         abrirModal(
             "productModal"
         );
 
-    } catch (erro) {
+    }catch(erro){
 
         alert(
             erro.message ||
@@ -2089,22 +3095,22 @@ async function abrirProduto(id) {
 }
 
 
-/* COMPRA */
+/* =========================
+   COMPRA
+========================= */
 
-async function comprarProduto() {
+async function comprarProduto(){
 
-    if (!produtoAtual)
+    if(!produtoAtual)
         return;
 
-    if (!usuario) {
+    if(!usuario){
 
         fecharModal(
             "productModal"
         );
 
-        abrirAuth(
-            "login"
-        );
+        abrirAuth("login");
 
         return;
     }
@@ -2113,7 +3119,16 @@ async function comprarProduto() {
         produtoAtual.id ||
         produtoAtual._id;
 
-    try {
+    if(!id){
+
+        alert(
+            "Produto inválido."
+        );
+
+        return;
+    }
+
+    try{
 
         const resposta =
             await api(
@@ -2121,11 +3136,11 @@ async function comprarProduto() {
                 encodeURIComponent(id) +
                 "/buy",
                 {
-                    method: "POST"
+                    method:"POST"
                 }
             );
 
-        if (resposta.user)
+        if(resposta.user)
             usuario =
                 resposta.user;
 
@@ -2142,7 +3157,7 @@ async function comprarProduto() {
 
         await carregarProdutos();
 
-    } catch (erro) {
+    }catch(erro){
 
         alert(
             erro.message ||
@@ -2152,18 +3167,29 @@ async function comprarProduto() {
 }
 
 
-/* PESQUISA */
+/* =========================
+   PESQUISA
+========================= */
 
-async function pesquisarProdutos(
-    valor
-) {
+async function pesquisarProdutos(valor){
 
     const busca =
-        String(valor || "").trim();
+        String(valor || "")
+        .trim();
 
-    if (!busca) {
+    if(!busca){
 
         categoriaAtual = "";
+
+        document
+            .querySelectorAll(".category")
+            .forEach(botao => {
+
+                botao.classList.toggle(
+                    "active",
+                    botao.dataset.category === ""
+                );
+            });
 
         await carregarProdutos();
 
@@ -2173,10 +3199,13 @@ async function pesquisarProdutos(
     const container =
         $("productsGrid");
 
+    if(!container)
+        return;
+
     container.innerHTML =
         '<div class="loading">Pesquisando...</div>';
 
-    try {
+    try{
 
         const resposta =
             await api(
@@ -2199,7 +3228,7 @@ async function pesquisarProdutos(
             produtos
         );
 
-    } catch (erro) {
+    }catch(erro){
 
         container.innerHTML =
             '<div class="empty">' +
@@ -2211,12 +3240,12 @@ async function pesquisarProdutos(
     }
 }
 
-function configurarPesquisa() {
+function configurarPesquisa(){
 
     const campo =
         $("searchInput");
 
-    if (!campo)
+    if(!campo)
         return;
 
     campo.addEventListener(
@@ -2230,9 +3259,11 @@ function configurarPesquisa() {
             searchTimer =
                 setTimeout(
                     () => {
+
                         pesquisarProdutos(
                             event.target.value
                         );
+
                     },
                     300
                 );
@@ -2241,11 +3272,13 @@ function configurarPesquisa() {
 }
 
 
-/* CATEGORIAS */
+/* =========================
+   CATEGORIAS
+========================= */
 
 function selecionarCategoria(
     categoria
-) {
+){
 
     categoriaAtual =
         String(
@@ -2267,10 +3300,16 @@ function selecionarCategoria(
             }
         );
 
+    const busca =
+        $("searchInput");
+
+    if(busca)
+        busca.value = "";
+
     carregarProdutos();
 }
 
-function configurarCategorias() {
+function configurarCategorias(){
 
     document
         .querySelectorAll(
@@ -2293,11 +3332,13 @@ function configurarCategorias() {
 }
 
 
-/* CRIAR ANÚNCIO */
+/* =========================
+   CRIAR ANÚNCIO
+========================= */
 
-function abrirCriarAnuncio() {
+function abrirCriarAnuncio(){
 
-    if (!usuario) {
+    if(!usuario){
 
         abrirAuth("login");
 
@@ -2307,32 +3348,23 @@ function abrirCriarAnuncio() {
     const form =
         $("createProductForm");
 
-    if (form)
+    if(form)
         form.reset();
 
-    const msg =
-        $("createProductMessage");
-
-    if (msg) {
-
-        msg.textContent = "";
-
-        msg.style.display =
-            "none";
-    }
+    limparMensagem(
+        $("createProductMessage")
+    );
 
     abrirModal(
         "createProductModal"
     );
 }
 
-async function criarAnuncio(
-    event
-) {
+async function criarAnuncio(event){
 
     event.preventDefault();
 
-    if (!usuario) {
+    if(!usuario){
 
         abrirAuth("login");
 
@@ -2342,36 +3374,41 @@ async function criarAnuncio(
     const msg =
         $("createProductMessage");
 
-    try {
+    limparMensagem(msg);
+
+    try{
 
         const nome =
             $("productName")
-                .value.trim();
+            .value
+            .trim();
 
         const descricao =
             $("productDescription")
-                .value.trim();
+            .value
+            .trim();
 
         const preco =
             Number(
                 $("productPrice")
-                    .value
+                .value
             );
 
         const categoria =
             $("productCategory")
-                .value;
+            .value;
 
         const imagem =
             $("productImage")
-                .value.trim();
+            .value
+            .trim();
 
-        if (!nome)
+        if(!nome)
             throw new Error(
                 "Digite o nome do produto."
             );
 
-        if (!preco || preco <= 0)
+        if(!preco || preco <= 0)
             throw new Error(
                 "Digite um preço válido."
             );
@@ -2380,10 +3417,10 @@ async function criarAnuncio(
             await api(
                 "/api/products",
                 {
-                    method: "POST",
+                    method:"POST",
                     body:
                         JSON.stringify({
-                            name: nome,
+                            name:nome,
                             description:
                                 descricao,
                             price:
@@ -2401,7 +3438,7 @@ async function criarAnuncio(
         mensagem(
             msg,
             resposta.message ||
-            "Produto criado com sucesso!",
+            "Produto publicado com sucesso!",
             "success"
         );
 
@@ -2410,7 +3447,7 @@ async function criarAnuncio(
 
         await carregarProdutos();
 
-    } catch (erro) {
+    }catch(erro){
 
         mensagem(
             msg,
@@ -2421,9 +3458,11 @@ async function criarAnuncio(
 }
 
 
-/* BOTÕES */
+/* =========================
+   BOTÕES
+========================= */
 
-function configurarBotoes() {
+function configurarBotoes(){
 
     $("loginButton")
         ?.addEventListener(
@@ -2472,6 +3511,37 @@ function configurarBotoes() {
             comprarProduto
         );
 
+    $("withdrawButton")
+        ?.addEventListener(
+            "click",
+            abrirResgate
+        );
+
+    $("profileSellButton")
+        ?.addEventListener(
+            "click",
+            () => {
+
+                fecharModal(
+                    "profileModal"
+                );
+
+                abrirCriarAnuncio();
+            }
+        );
+
+    $("withdrawForm")
+        ?.addEventListener(
+            "submit",
+            solicitarResgate
+        );
+
+    $("createProductForm")
+        ?.addEventListener(
+            "submit",
+            criarAnuncio
+        );
+
     document
         .querySelectorAll(
             "[data-close-modal]"
@@ -2502,10 +3572,11 @@ function configurarBotoes() {
                     "click",
                     event => {
 
-                        if (
+                        if(
                             event.target ===
                             modal
-                        ) {
+                        ){
+
                             fecharModal(
                                 modal.id
                             );
@@ -2514,18 +3585,33 @@ function configurarBotoes() {
                 );
             }
         );
-
-    $("createProductForm")
-        ?.addEventListener(
-            "submit",
-            criarAnuncio
-        );
 }
 
 
-/* INICIALIZAÇÃO */
+/* =========================
+   SCROLL
+========================= */
 
-async function iniciarSlaxStore() {
+function rolarProdutos(){
+
+    const produtos =
+        $("productsGrid");
+
+    if(produtos){
+
+        produtos.scrollIntoView({
+            behavior:"smooth",
+            block:"start"
+        });
+    }
+}
+
+
+/* =========================
+   INICIALIZAÇÃO
+========================= */
+
+async function iniciarSlaxStore(){
 
     configurarLogin();
 
@@ -2535,25 +3621,49 @@ async function iniciarSlaxStore() {
 
     configurarBotoes();
 
+    /*
+        Inicializa todos os modais fechados.
+    */
+
+    document
+        .querySelectorAll(".modal")
+        .forEach(
+            modal => {
+
+                mostrar(
+                    modal,
+                    false
+                );
+            }
+        );
+
+    /*
+        Primeiro recupera o login salvo.
+    */
+
     await verificarSessao();
+
+    /*
+        Depois carrega os produtos.
+    */
 
     await carregarProdutos();
 }
 
-if (
+
+if(
     document.readyState ===
     "loading"
-) {
+){
 
     document.addEventListener(
         "DOMContentLoaded",
         iniciarSlaxStore
     );
 
-} else {
+}else{
 
     iniciarSlaxStore();
-
 }
 </script>
 
