@@ -1,97 +1,254 @@
-const https = require("https");
+const nodemailer = require("nodemailer");
 
-function enviarCodigo(email, codigo) {
-    return new Promise((resolve, reject) => {
-        const dados = JSON.stringify({
-            sender: {
-                name: "SlaxStore",
-                email: process.env.SMTP_USER
-            },
+const verificationCodes = new Map();
 
-            to: [
-                {
-                    email
-                }
-            ],
+function generateCode() {
+return String(
+Math.floor(
+100000 +
+Math.random() * 900000
+)
+);
+}
 
-            subject: "Seu código de verificação — SlaxStore",
+function createTransport() {
+const host =
+process.env.SMTP_HOST;
 
-            htmlContent: `
-                <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto">
-                    <h2>SlaxStore</h2>
+const user =
+process.env.SMTP_USER;
 
-                    <p>Seu código de verificação é:</p>
+const pass =
+process.env.SMTP_PASS;
 
-                    <h1 style="letter-spacing:6px">
-                        ${codigo}
-                    </h1>
+const port =
+Number(
+process.env.SMTP_PORT || 587
+);
 
-                    <p>
-                        Esse código expira em 15 minutos.
-                    </p>
+/*
 
-                    <p>
-                        Se você não solicitou esse código, ignore este e-mail.
-                    </p>
-                </div>
-            `
-        });
+* Se SMTP não estiver configurado,
+* o sistema funciona em modo de teste.
+  */
+  if (
+  !host ||
+  !user ||
+  !pass
+  ) {
+  return null;
+  }
 
-        const requisicao = https.request(
-            {
-                hostname: "api.brevo.com",
-                path: "/v3/smtp/email",
-                method: "POST",
+return nodemailer.createTransport({
+host,
+port,
 
-                headers: {
-                    accept: "application/json",
-                    "api-key": process.env.BREVO_API_KEY,
-                    "content-type": "application/json",
-                    "content-length": Buffer.byteLength(dados)
-                }
-            },
+```
+secure:
+  port === 465,
 
-            resposta => {
-                let respostaData = "";
+auth: {
+  user,
+  pass
+}
+```
 
-                resposta.on("data", parte => {
-                    respostaData += parte;
-                });
+});
+}
 
-                resposta.on("end", () => {
-                    if (
-                        resposta.statusCode >= 200 &&
-                        resposta.statusCode < 300
-                    ) {
-                        resolve();
-                        return;
-                    }
+async function sendVerificationCode(
+email
+) {
+const normalizedEmail =
+String(email)
+.trim()
+.toLowerCase();
 
-                    console.error(
-                        "Erro Brevo:",
-                        resposta.statusCode,
-                        respostaData
-                    );
+const code =
+generateCode();
 
-                    reject(
-                        new Error(
-                            "Falha ao enviar e-mail pela Brevo."
-                        )
-                    );
-                });
-            }
-        );
+verificationCodes.set(
+normalizedEmail,
+{
+code,
 
-        requisicao.on("error", erro => {
-            console.error("Erro de conexão com Brevo:", erro);
-            reject(erro);
-        });
+```
+  expiresAt:
+    Date.now() +
+    10 * 60 * 1000
+}
+```
 
-        requisicao.write(dados);
-        requisicao.end();
-    });
+);
+
+const transporter =
+createTransport();
+
+/*
+
+* MODO DE TESTE
+  */
+  if (!transporter) {
+  console.log("");
+  console.log(
+  "======================================"
+  );
+  console.log(
+  "SLAXSTORE - CÓDIGO DE VERIFICAÇÃO"
+  );
+  console.log(
+  `E-mail: ${normalizedEmail}`
+  );
+  console.log(
+  `Código: ${code}`
+  );
+  console.log(
+  "======================================"
+  );
+  console.log("");
+
+```
+return {
+```
+
+```
+  sent: false,
+  developmentCode: code
+};
+```
+
+}
+
+/*
+
+* ENVIO REAL
+  */
+  await transporter.sendMail({
+  from:
+  process.env.EMAIL_FROM ||
+  process.env.SMTP_USER,
+
+```
+to: normalizedEmail,
+```
+
+```
+subject:
+  "Código de verificação — SlaxStore",
+
+html: `
+  <!DOCTYPE html>
+  <html>
+  <body style="
+    margin:0;
+    padding:30px;
+    background:#060a10;
+    font-family:Arial,sans-serif;
+    color:#ffffff;
+  ">
+
+    <div style="
+      max-width:500px;
+      margin:auto;
+      background:#0d131d;
+      border:1px solid #1c2b40;
+      border-radius:18px;
+      padding:30px;
+      text-align:center;
+    ">
+
+      <h1 style="
+        color:#087cff;
+        margin-top:0;
+      ">
+        SlaxStore
+      </h1>
+
+      <p>
+        Use o código abaixo para
+        verificar seu e-mail:
+      </p>
+
+      <div style="
+        display:inline-block;
+        padding:18px 25px;
+        margin:20px 0;
+        border-radius:12px;
+        background:#111a27;
+        color:#ffffff;
+        font-size:32px;
+        font-weight:bold;
+        letter-spacing:8px;
+      ">
+        ${code}
+      </div>
+
+      <p style="
+        color:#8493a8;
+      ">
+        Este código expira em 10 minutos.
+      </p>
+
+    </div>
+
+  </body>
+  </html>
+`
+```
+
+});
+
+return {
+sent: true
+};
+}
+
+function verifyCode(
+email,
+code
+) {
+const normalizedEmail =
+String(email)
+.trim()
+.toLowerCase();
+
+const stored =
+verificationCodes.get(
+normalizedEmail
+);
+
+if (!stored) {
+return false;
+}
+
+if (
+Date.now() >
+stored.expiresAt
+) {
+verificationCodes.delete(
+normalizedEmail
+);
+
+```
+return false;
+```
+
+}
+
+const correct =
+stored.code ===
+String(code).trim();
+
+if (correct) {
+verificationCodes.delete(
+normalizedEmail
+);
+}
+
+return correct;
 }
 
 module.exports = {
-    enviarCodigo
+sendVerificationCode,
+verifyCode
 };
