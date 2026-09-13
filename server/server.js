@@ -2,177 +2,549 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
-const cookieParser = require("cookie-parser");
-const rateLimit = require("express-rate-limit");
 const path = require("path");
 
-require("./database");
+const {
+readDb,
+writeDb,
+nextId,
+now
+} = require("./server-database");
 
-const { router: auth } = require("./auth");
-const products = require("./products");
-const orders = require("./orders");
-const moderation = require("./moderation");
+const {
+register: registerAuth,
+authRequired,
+cleanUser
+} = require("./auth");
 
-const app = express();
+const {
+register: registerProducts
+} = require("./product");
 
-const PORT = process.env.PORT || 3000;
+const {
+register: registerOrders
+} = require("./orders");
 
-app.set("trust proxy", 1);
+const {
+register: registerModeration
+} = require("./moderation");
 
-app.disable("x-powered-by");
+const app =
+express();
+
+const PORT =
+Number(
+process.env.PORT || 3000
+);
 
 /*
- * CORS
- */
+
+* CORS
+  */
+  app.use(
+  cors({
+  origin: true,
+  credentials: false
+  })
+  );
+
+/*
+
+* BODY
+  */
+  app.use(
+  express.json({
+  limit: "5mb"
+  })
+  );
+
 app.use(
-    cors({
-        origin: true,
-        credentials: true
-    })
+express.urlencoded({
+extended: true
+})
 );
 
 /*
- * JSON
- */
-app.use(
-    express.json({
-        limit: "3mb"
-    })
-);
+
+* TESTE DA API
+  */
+  app.get(
+  "/api/health",
+  (_req, res) => {
+  res.json({
+  ok: true,
+  name: "SlaxStore API",
+  version: "1.0.0"
+  });
+  }
+  );
 
 /*
- * Cookies
- */
-app.use(cookieParser());
+
+* REGISTRA OS SISTEMAS
+  */
+  registerAuth(app);
+
+registerProducts(app);
+
+registerOrders(app);
+
+registerModeration(app);
 
 /*
- * Limite para autenticação
- */
-const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
 
-    max: 30,
+* PERFIL
+  */
+  app.get(
+  "/api/profile",
+  authRequired,
+  (req, res) => {
+  const db =
+  readDb();
 
-    standardHeaders: true,
+  const user =
+  db.users.find(
+  item =>
+  String(item.id) ===
+  String(req.auth.id)
+  );
 
-    legacyHeaders: false,
+  if (!user) {
+  return res.status(404).json({
+  error:
+  "Usuário não encontrado."
+  });
+  }
 
-    message: {
-        error: "Muitas tentativas. Aguarde alguns minutos."
-    }
-});
-
-/*
- * ROTAS DE AUTENTICAÇÃO
- */
-app.use(
-    "/api/auth",
-    authLimiter,
-    auth
-);
-
-/*
- * ROTAS DE PRODUTOS
- */
-app.use(
-    "/api/products",
-    products
-);
+  res.json({
+  user:
+  cleanUser(user)
+  });
+  }
+  );
 
 /*
- * ROTAS DE PEDIDOS
- */
-app.use(
-    "/api/orders",
-    orders
-);
+
+* SAQUE
+*
+* O index.html envia amount em CENTAVOS.
+*
+* Exemplo:
+*
+* R$ 2,00 = 200
+* R$ 10,00 = 1000
+  */
+  app.post(
+  "/api/wallet/withdraw",
+  authRequired,
+  (req, res) => {
+  const amount =
+  Number(
+  req.body.amount
+  );
+
+  const method =
+  String(
+  req.body.method ||
+  "PIX"
+  ).trim();
+
+  const pixKey =
+  String(
+  req.body.pixKey ||
+  ""
+  ).trim();
+
+  if (
+  !Number.isInteger(
+  amount
+  ) ||
+  amount < 200
+  ) {
+  return res.status(400).json({
+  error:
+  "O saque mínimo é R$ 2,00."
+  });
+  }
+
+  if (!pixKey) {
+  return res.status(400).json({
+  error:
+  "Informe sua chave PIX."
+  });
+  }
+
+  const db =
+  readDb();
+
+  const user =
+  db.users.find(
+  item =>
+  String(item.id) ===
+  String(req.auth.id)
+  );
+
+  if (!user) {
+  return res.status(404).json({
+  error:
+  "Usuário não encontrado."
+  });
+  }
+
+  if (
+  Number(user.balance || 0) <
+  amount
+  ) {
+  return res.status(400).json({
+  error:
+  "Saldo insuficiente."
+  });
+  }
+
+  /*
+
+  * Reserva o dinheiro imediatamente.
+  * O saque fica pendente.
+    */
+    user.balance -=
+    amount;
+
+  const withdrawal = {
+  id:
+  nextId(
+  db,
+  "withdrawal"
+  ),
+
+  userId:
+  user.id,
+
+  amount,
+
+  method,
+
+  pixKey,
+
+  status:
+  "pending",
+
+  createdAt:
+  now()
+  };
+
+  db.withdrawals.push(
+  withdrawal
+  );
+
+  writeDb(db);
+
+  res.json({
+  message:
+  "Saque solicitado com sucesso.",
+
+  withdrawal,
+
+  user:
+  cleanUser(user)
+  });
+  }
+  );
 
 /*
- * ROTAS DE MODERAÇÃO
- */
-app.use(
-    "/api/moderation",
-    moderation
-);
+
+* HISTÓRICO DE SAQUES
+  */
+  app.get(
+  "/api/wallet/withdrawals",
+  authRequired,
+  (req, res) => {
+  const db =
+  readDb();
+
+  const withdrawals =
+  db.withdrawals
+  .filter(
+  item =>
+  String(
+  item.userId
+  ) ===
+  String(
+  req.auth.id
+  )
+  )
+  .sort(
+  (a, b) =>
+  new Date(
+  b.createdAt
+  ) -
+  new Date(
+  a.createdAt
+  )
+  );
+
+  res.json({
+  withdrawals
+  });
+  }
+  );
 
 /*
- * STATUS DA API
- */
-app.get(
-    "/api",
-    (req, res) => {
-        res.json({
-            online: true,
-            name: "SlaxStore API",
-            version: "2.0.0"
-        });
-    }
-);
+
+* ADMIN - SAQUES
+  */
+  app.get(
+  "/api/admin/withdrawals",
+  authRequired,
+  (req, res) => {
+  const db =
+  readDb();
+
+  const admin =
+  db.users.find(
+  item =>
+  String(item.id) ===
+  String(req.auth.id)
+  );
+
+  if (
+  !admin ||
+  !admin.isAdmin
+  ) {
+  return res.status(403).json({
+  error:
+  "Acesso restrito à administração."
+  });
+  }
+
+  const withdrawals =
+  db.withdrawals.map(
+  withdrawal => {
+  const user =
+  db.users.find(
+  item =>
+  String(item.id) ===
+  String(
+  withdrawal.userId
+  )
+  );
+
+  ```
+     return {
+       ...withdrawal,
+
+       username:
+         user
+           ? user.username
+           : "Usuário",
+
+       email:
+         user
+           ? user.email
+           : ""
+     };
+   }
+  ```
+
+  );
+
+  res.json({
+  withdrawals
+  });
+  }
+  );
 
 /*
- * STATUS MAIS DETALHADO
- */
-app.get(
-    "/api/health",
-    (req, res) => {
-        res.json({
-            online: true,
-            service: "SlaxStore",
-            api: "2.0.0",
-            timestamp: new Date().toISOString()
-        });
-    }
-);
 
-/*
- * SITE FRONTEND
- */
-app.use(
-    express.static(
-        path.join(__dirname, "..")
+* ADMIN - ATUALIZAR SAQUE
+  */
+  app.patch(
+  "/api/admin/withdrawals/:id",
+  authRequired,
+  (req, res) => {
+  const db =
+  readDb();
+
+  const admin =
+  db.users.find(
+  item =>
+  String(item.id) ===
+  String(req.auth.id)
+  );
+
+  if (
+  !admin ||
+  !admin.isAdmin
+  ) {
+  return res.status(403).json({
+  error:
+  "Acesso restrito à administração."
+  });
+  }
+
+  const withdrawal =
+  db.withdrawals.find(
+  item =>
+  String(item.id) ===
+  String(req.params.id)
+  );
+
+  if (!withdrawal) {
+  return res.status(404).json({
+  error:
+  "Saque não encontrado."
+  });
+  }
+
+  const newStatus =
+  String(
+  req.body.status ||
+  withdrawal.status
+  );
+
+  const allowed =
+  [
+  "pending",
+  "processing",
+  "paid",
+  "rejected"
+  ];
+
+  if (
+  !allowed.includes(
+  newStatus
+  )
+  ) {
+  return res.status(400).json({
+  error:
+  "Status inválido."
+  });
+  }
+
+  /*
+
+  * Se um saque for rejeitado,
+  * devolve o valor ao saldo.
+    */
+    if (
+    withdrawal.status !==
+    "rejected" &&
+    newStatus ===
+    "rejected"
+    ) {
+    const user =
+    db.users.find(
+    item =>
+    String(item.id) ===
+    String(
+    withdrawal.userId
     )
-);
+    );
+
+  if (user) {
+  user.balance +=
+  Number(
+  withdrawal.amount
+  );
+  }
+  }
+
+  withdrawal.status =
+  newStatus;
+
+  writeDb(db);
+
+  res.json({
+  message:
+  "Saque atualizado.",
+
+  withdrawal
+  });
+  }
+  );
 
 /*
- * API 404
- */
-app.use(
-    "/api",
-    (req, res) => {
-        res.status(404).json({
-            error: "Rota não encontrada."
-        });
-    }
-);
+
+* ARQUIVOS DO SITE
+*
+* IMPORTANTE:
+* O index.html deve estar na mesma pasta
+* deste server.js.
+  */
+  app.use(
+  express.static(
+  __dirname
+  )
+  );
 
 /*
- * ERRO GLOBAL
- */
-app.use(
-    (err, req, res, next) => {
-        console.error(
-            "Erro não tratado:",
-            err
-        );
 
-        if (res.headersSent) {
-            return next(err);
-        }
+* Quando o usuário abre o domínio,
+* entrega o index.html.
+  */
+  app.get(
+  "*",
+  (req, res, next) => {
+  if (
+  req.path.startsWith(
+  "/api/"
+  )
+  ) {
+  return next();
+  }
 
-        res.status(500).json({
-            error: "Erro interno do servidor."
-        });
-    }
-);
+  res.sendFile(
+  path.join(
+  __dirname,
+  "index.html"
+  )
+  );
+  }
+  );
 
 /*
- * INICIAR SERVIDOR
- */
-app.listen(
-    PORT,
-    () => {
-        console.log(
-            `SlaxStore API online na porta ${PORT}`
-        );
-    }
-);
+
+* ERROS
+  */
+  app.use(
+  (error, _req, res, _next) => {
+  console.error(
+  "Erro interno:",
+  error
+  );
+
+  res.status(500).json({
+  error:
+  "Erro interno do servidor."
+  });
+  }
+  );
+
+/*
+
+* INICIAR
+  */
+  app.listen(
+  PORT,
+  () => {
+  console.log("");
+  console.log(
+  "======================================"
+  );
+  console.log(
+  "          SLAXSTORE ONLINE"
+  );
+  console.log(
+  "======================================"
+  );
+  console.log(
+  `Site: http://localhost:${PORT}`
+  );
+  console.log(
+  `API:  http://localhost:${PORT}/api/health`
+  );
+  console.log(
+  "======================================"
+  );
+  console.log("");
+  }
+  );
