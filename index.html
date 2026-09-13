@@ -1,964 +1,36 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>SlaxStore — Marketplace Gamer</title>
-
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        :root {
-            --bg: #05070d;
-            --panel: #0b101a;
-            --panel2: #101827;
-            --border: #1c2b42;
-            --blue: #1683ff;
-            --blue2: #0066ff;
-            --text: #f4f7ff;
-            --muted: #8c9ab0;
-            --danger: #ff405d;
-            --success: #25d989;
-        }
-
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            background:
-                radial-gradient(
-                    circle at 50% -20%,
-                    rgba(0, 119, 255, .18),
-                    transparent 40%
-                ),
-                var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-        }
-
-        button,
-        input,
-        textarea,
-        select {
-            font: inherit;
-        }
-
-        button {
-            cursor: pointer;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        header {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: rgba(5, 7, 13, .94);
-            backdrop-filter: blur(15px);
-            border-bottom: 1px solid var(--border);
-        }
-
-        .header-inner {
-            max-width: 1250px;
-            margin: auto;
-            padding: 15px 20px;
-            display: flex;
-            align-items: center;
-            gap: 18px;
-        }
-
-        .logo {
-            font-size: 25px;
-            font-weight: 900;
-            white-space: nowrap;
-        }
-
-        .logo span {
-            color: var(--blue);
-        }
-
-        .search {
-            flex: 1;
-        }
-
-        .search input {
-            width: 100%;
-            padding: 13px 17px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            background: #0b111d;
-            color: white;
-            outline: none;
-        }
-
-        .search input:focus {
-            border-color: var(--blue);
-        }
-
-        .nav {
-            display: flex;
-            gap: 7px;
-            align-items: center;
-        }
-
-        .nav button {
-            border: 0;
-            background: transparent;
-            color: var(--muted);
-            padding: 9px 11px;
-            border-radius: 8px;
-        }
-
-        .nav button:hover {
-            color: white;
-            background: #101827;
-        }
-
-        .primary {
-            background: var(--blue) !important;
-            color: white !important;
-            font-weight: bold;
-        }
-
-        .primary:hover {
-            background: var(--blue2) !important;
-        }
-
-        main {
-            max-width: 1250px;
-            margin: auto;
-            padding: 30px 20px 70px;
-        }
-
-        .hero {
-            padding: 55px 30px;
-            border: 1px solid var(--border);
-            border-radius: 18px;
-            background:
-                linear-gradient(
-                    135deg,
-                    rgba(16, 31, 54, .95),
-                    rgba(6, 10, 18, .95)
-                );
-            margin-bottom: 25px;
-        }
-
-        .hero h1 {
-            font-size: clamp(34px, 6vw, 60px);
-            line-height: 1;
-            margin-bottom: 16px;
-        }
-
-        .hero h1 span {
-            color: var(--blue);
-        }
-
-        .hero p {
-            color: var(--muted);
-            max-width: 650px;
-            line-height: 1.6;
-            margin-bottom: 22px;
-        }
-
-        .hero-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            border: 1px solid var(--border);
-            background: #0d1523;
-            color: white;
-            padding: 11px 17px;
-            border-radius: 9px;
-            font-weight: bold;
-        }
-
-        .btn:hover {
-            border-color: var(--blue);
-        }
-
-        .filters {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding-bottom: 5px;
-            margin-bottom: 20px;
-        }
-
-        .filter {
-            white-space: nowrap;
-            border: 1px solid var(--border);
-            background: #0b111d;
-            color: var(--muted);
-            padding: 10px 15px;
-            border-radius: 8px;
-        }
-
-        .filter.active,
-        .filter:hover {
-            background: rgba(22, 131, 255, .12);
-            border-color: var(--blue);
-            color: white;
-        }
-
-        .section-title {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .section-title h2 {
-            font-size: 22px;
-        }
-
-        .section-title span {
-            color: var(--muted);
-            font-size: 13px;
-        }
-
-        .products {
-            display: grid;
-            grid-template-columns:
-                repeat(auto-fill, minmax(220px, 1fr));
-            gap: 15px;
-        }
-
-        .product {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 13px;
-            overflow: hidden;
-            transition: .2s;
-        }
-
-        .product:hover {
-            transform: translateY(-3px);
-            border-color: #27558d;
-        }
-
-        .product-image {
-            width: 100%;
-            height: 150px;
-            background:
-                linear-gradient(
-                    135deg,
-                    #101a2c,
-                    #070b12
-                );
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #53627a;
-            overflow: hidden;
-        }
-
-        .product-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .product-content {
-            padding: 14px;
-        }
-
-        .product-category {
-            color: var(--blue);
-            font-size: 11px;
-            font-weight: bold;
-            text-transform: uppercase;
-            margin-bottom: 7px;
-        }
-
-        .product-title {
-            font-weight: bold;
-            margin-bottom: 8px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .product-description {
-            color: var(--muted);
-            font-size: 13px;
-            line-height: 1.4;
-            height: 37px;
-            overflow: hidden;
-            margin-bottom: 12px;
-        }
-
-        .product-bottom {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-        }
-
-        .price {
-            font-weight: 900;
-            font-size: 18px;
-        }
-
-        .buy {
-            background: var(--blue);
-            color: white;
-            border: 0;
-            padding: 8px 11px;
-            border-radius: 7px;
-            font-weight: bold;
-        }
-
-        .buy:hover {
-            background: var(--blue2);
-        }
-
-        .empty {
-            padding: 50px;
-            text-align: center;
-            color: var(--muted);
-            border: 1px dashed var(--border);
-            border-radius: 12px;
-            grid-column: 1 / -1;
-        }
-
-        .modal {
-            position: fixed;
-            inset: 0;
-            z-index: 500;
-            background: rgba(0, 0, 0, .75);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .modal-box {
-            width: 100%;
-            max-width: 460px;
-            max-height: 90vh;
-            overflow-y: auto;
-            background: #0a101b;
-            border: 1px solid var(--border);
-            border-radius: 15px;
-            padding: 24px;
-            box-shadow: 0 20px 70px rgba(0, 0, 0, .6);
-        }
-
-        .modal-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-
-        .modal-head h2 {
-            font-size: 22px;
-        }
-
-        .close {
-            border: 0;
-            background: transparent;
-            color: var(--muted);
-            font-size: 27px;
-        }
-
-        .form {
-            display: grid;
-            gap: 13px;
-        }
-
-        .form label {
-            color: #cbd5e5;
-            font-size: 13px;
-            font-weight: bold;
-        }
-
-        .form input,
-        .form textarea,
-        .form select {
-            width: 100%;
-            padding: 12px;
-            margin-top: 6px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: #070c14;
-            color: white;
-            outline: none;
-        }
-
-        .form textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-
-        .form input:focus,
-        .form textarea:focus,
-        .form select:focus {
-            border-color: var(--blue);
-        }
-
-        .message {
-            padding: 11px;
-            border-radius: 8px;
-            font-size: 13px;
-        }
-
-        .message.error {
-            background: rgba(255, 64, 93, .1);
-            color: #ff8295;
-            border: 1px solid rgba(255, 64, 93, .25);
-        }
-
-        .message.success {
-            background: rgba(37, 217, 137, .1);
-            color: #66e5ab;
-            border: 1px solid rgba(37, 217, 137, .25);
-        }
-
-        .profile {
-            display: grid;
-            grid-template-columns: 80px 1fr;
-            gap: 15px;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: #13233a;
-            border: 2px solid var(--blue);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .profile-info h3 {
-            margin-bottom: 4px;
-        }
-
-        .profile-info p {
-            color: var(--muted);
-            font-size: 13px;
-        }
-
-        footer {
-            border-top: 1px solid var(--border);
-            padding: 25px 20px;
-            color: var(--muted);
-            text-align: center;
-            font-size: 13px;
-        }
-
-        @media (max-width: 800px) {
-            .header-inner {
-                flex-wrap: wrap;
-            }
-
-            .search {
-                order: 3;
-                flex-basis: 100%;
-            }
-
-            .nav {
-                margin-left: auto;
-            }
-
-            .hero {
-                padding: 35px 20px;
-            }
-        }
-
-        @media (max-width: 500px) {
-            main {
-                padding: 20px 12px 50px;
-            }
-
-            .products {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 9px;
-            }
-
-            .product-image {
-                height: 110px;
-            }
-
-            .product-content {
-                padding: 10px;
-            }
-
-            .product-title {
-                font-size: 14px;
-            }
-
-            .price {
-                font-size: 15px;
-            }
-
-            .buy {
-                font-size: 11px;
-                padding: 7px;
-            }
-        }
-    </style>
-</head>
-
-<body>
-
-<header>
-    <div class="header-inner">
-
-        <div class="logo">
-            Slax<span>Store</span>
-        </div>
-
-        <div class="search">
-            <input
-                id="searchInput"
-                type="search"
-                placeholder="Pesquisar produtos..."
-            >
-        </div>
-
-        <nav class="nav">
-
-            <button onclick="carregarProdutos()">
-                Explorar
-            </button>
-
-            <button
-                id="loginButton"
-                class="primary"
-                onclick="abrirAuth('login')"
-            >
-                Entrar
-            </button>
-
-            <button
-                id="profileButton"
-                class="hidden"
-                onclick="abrirPerfil()"
-            >
-                Perfil
-            </button>
-
-            <button
-                id="logoutButton"
-                class="hidden"
-                onclick="logout()"
-            >
-                Sair
-            </button>
-
-        </nav>
-
-    </div>
-</header>
-
-<main>
-
-    <section class="hero">
-
-        <h1>
-            O marketplace<br>
-            <span>gamer.</span>
-        </h1>
-
-        <p>
-            Compre e venda produtos e serviços para jogos
-            em um marketplace feito para gamers.
-        </p>
-
-        <div class="hero-actions">
-
-            <button
-                class="btn primary"
-                onclick="
-                    document
-                    .getElementById('marketplace')
-                    .scrollIntoView({
-                        behavior:'smooth'
-                    })
-                "
-            >
-                Explorar produtos
-            </button>
-
-            <button
-                class="btn"
-                onclick="abrirAuth('register')"
-            >
-                Criar conta
-            </button>
-
-        </div>
-
-    </section>
-
-    <section id="marketplace">
-
-        <div class="filters">
-
-            <button
-                class="filter active"
-                data-category=""
-                onclick="selecionarCategoria(this)"
-            >
-                Todos
-            </button>
-
-            <button
-                class="filter"
-                data-category="Contas"
-                onclick="selecionarCategoria(this)"
-            >
-                Contas
-            </button>
-
-            <button
-                class="filter"
-                data-category="Itens"
-                onclick="selecionarCategoria(this)"
-            >
-                Itens
-            </button>
-
-            <button
-                class="filter"
-                data-category="Serviços"
-                onclick="selecionarCategoria(this)"
-            >
-                Serviços
-            </button>
-
-            <button
-                class="filter"
-                data-category="Outros"
-                onclick="selecionarCategoria(this)"
-            >
-                Outros
-            </button>
-
-        </div>
-
-        <div class="section-title">
-
-            <h2>
-                Produtos disponíveis
-            </h2>
-
-            <span id="productCount">
-                Carregando...
-            </span>
-
-        </div>
-
-        <div
-            id="products"
-            class="products"
-        ></div>
-
-    </section>
-
-</main>
-
-<footer>
-    SlaxStore © 2026 — Marketplace Gamer
-</footer>
-
-<!-- LOGIN / CADASTRO -->
-
-<div
-    id="authModal"
-    class="modal hidden"
->
-
-    <div class="modal-box">
-
-        <div class="modal-head">
-
-            <h2 id="authTitle">
-                Entrar
-            </h2>
-
-            <button
-                class="close"
-                onclick="fecharModal('authModal')"
-            >
-                ×
-            </button>
-
-        </div>
-
-        <form
-            id="authForm"
-            class="form"
-        >
-
-            <div
-                id="usernameField"
-                class="hidden"
-            >
-                <label>
-                    Usuário
-
-                    <input
-                        id="username"
-                        type="text"
-                        maxlength="30"
-                        autocomplete="username"
-                    >
-                </label>
-            </div>
-
-            <label>
-                E-mail
-
-                <input
-                    id="email"
-                    type="email"
-                    required
-                    autocomplete="email"
-                >
-            </label>
-
-            <label>
-                Senha
-
-                <input
-                    id="password"
-                    type="password"
-                    required
-                    minlength="6"
-                    autocomplete="current-password"
-                >
-            </label>
-
-            <div
-                id="authMessage"
-                class="hidden"
-            ></div>
-
-            <button
-                id="authSubmit"
-                class="btn primary"
-                type="submit"
-            >
-                Entrar
-            </button>
-
-        </form>
-
-        <div
-            style="
-                text-align:center;
-                margin-top:15px;
-                color:#8c9ab0;
-                font-size:13px;
-            "
-        >
-
-            <span id="authSwitchText">
-                Ainda não tem uma conta?
-            </span>
-
-            <button
-                id="authSwitch"
-                onclick="alternarAuth()"
-                style="
-                    border:0;
-                    background:none;
-                    color:#1683ff;
-                    cursor:pointer;
-                "
-            >
-                Criar conta
-            </button>
-
-        </div>
-
-    </div>
-
-</div>
-
-<!-- VERIFICAÇÃO -->
-
-<div
-    id="verifyModal"
-    class="modal hidden"
->
-
-    <div class="modal-box">
-
-        <div class="modal-head">
-
-            <h2>
-                Verificar e-mail
-            </h2>
-
-            <button
-                class="close"
-                onclick="fecharModal('verifyModal')"
-            >
-                ×
-            </button>
-
-        </div>
-
-        <p
-            id="verifyEmailText"
-            style="
-                color:#8c9ab0;
-                font-size:13px;
-                margin-bottom:15px;
-                line-height:1.5;
-            "
-        >
-        </p>
-
-        <form
-            id="verifyForm"
-            class="form"
-        >
-
-            <label>
-                Código recebido por e-mail
-
-                <input
-                    id="verificationCode"
-                    type="text"
-                    maxlength="6"
-                    minlength="6"
-                    inputmode="numeric"
-                    autocomplete="one-time-code"
-                    placeholder="000000"
-                    required
-                >
-            </label>
-
-            <div
-                id="verifyMessage"
-                class="hidden"
-            ></div>
-
-            <button
-                class="btn primary"
-                type="submit"
-            >
-                Verificar e-mail
-            </button>
-
-        </form>
-
-        <button
-            class="btn"
-            style="
-                width:100%;
-                margin-top:10px;
-            "
-            onclick="reenviarCodigo()"
-        >
-            Reenviar código
-        </button>
-
-    </div>
-
-</div>
-
-<!-- PRODUTO -->
-
-<div
-    id="productModal"
-    class="modal hidden"
->
-
-    <div class="modal-box">
-
-        <div class="modal-head">
-
-            <h2 id="productModalTitle">
-                Produto
-            </h2>
-
-            <button
-                class="close"
-                onclick="fecharModal('productModal')"
-            >
-                ×
-            </button>
-
-        </div>
-
-        <div id="productDetails"></div>
-
-    </div>
-
-</div>
-
-<!-- PERFIL -->
-
-<div
-    id="profileModal"
-    class="modal hidden"
->
-
-    <div class="modal-box">
-
-        <div class="modal-head">
-
-            <h2>
-                Meu perfil
-            </h2>
-
-            <button
-                class="close"
-                onclick="fecharModal('profileModal')"
-            >
-                ×
-            </button>
-
-        </div>
-
-        <div id="profileContent"></div>
-
-    </div>
-
-</div>
-
 <script>
-
 const API_URL = window.location.origin;
 
 let usuario = null;
 let authMode = "login";
 let categoriaAtual = "";
 let produtoAtual = null;
-
-/*
-    ESTE É O E-MAIL QUE ESTÁ SENDO VERIFICADO.
-    Ele fica separado do formulário de login.
-*/
 let emailParaVerificacao = "";
-
 let searchTimer = null;
+
+
+/* =========================
+   TOKEN / SESSÃO
+========================= */
+
+function obterToken() {
+    return localStorage.getItem("slaxstore_token") || "";
+}
+
+function salvarToken(token) {
+    if (token) {
+        localStorage.setItem(
+            "slaxstore_token",
+            token
+        );
+    }
+}
+
+function removerToken() {
+    localStorage.removeItem(
+        "slaxstore_token"
+    );
+}
 
 
 /* =========================
@@ -967,37 +39,51 @@ let searchTimer = null;
 
 async function api(endpoint, options = {}) {
 
-    const config = {
-        credentials: "include",
-        ...options,
-        headers: {
-            ...(options.body
-                ? {
-                    "Content-Type":
-                        "application/json"
-                }
-                : {}),
-            ...(options.headers || {})
-        }
+    const token = obterToken();
+
+    const headers = {
+        ...(options.body
+            ? {
+                "Content-Type":
+                    "application/json"
+            }
+            : {}),
+        ...(options.headers || {})
     };
 
-    const resposta =
-        await fetch(
-            API_URL + endpoint,
-            config
-        );
+    if (token) {
+        headers.Authorization =
+            "Bearer " + token;
+    }
+
+    const resposta = await fetch(
+        API_URL + endpoint,
+        {
+            ...options,
+            credentials: "include",
+            headers
+        }
+    );
 
     let dados = {};
 
     try {
-        dados =
-            await resposta.json();
+        dados = await resposta.json();
     } catch {
         dados = {};
     }
 
-    if (!resposta.ok) {
+    if (
+        resposta.status === 401 &&
+        endpoint !== "/api/auth/login" &&
+        endpoint !== "/api/auth/register"
+    ) {
+        usuario = null;
+        removerToken();
+        atualizarInterface();
+    }
 
+    if (!resposta.ok) {
         throw new Error(
             dados.error ||
             dados.message ||
@@ -1010,11 +96,10 @@ async function api(endpoint, options = {}) {
 
 
 /* =========================
-   SEGURANÇA HTML
+   HTML
 ========================= */
 
 function escapeHTML(valor) {
-
     return String(valor ?? "")
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
@@ -1029,7 +114,6 @@ function escapeHTML(valor) {
 ========================= */
 
 function dinheiro(cents) {
-
     return (
         Number(cents || 0) / 100
     ).toLocaleString(
@@ -1047,15 +131,12 @@ function dinheiro(cents) {
 ========================= */
 
 function abrirModal(id) {
-
     document
         .getElementById(id)
         .classList.remove("hidden");
 }
 
-
 function fecharModal(id) {
-
     document
         .getElementById(id)
         .classList.add("hidden");
@@ -1071,12 +152,10 @@ function mostrarMensagem(
     texto,
     tipo = "error"
 ) {
-
     elemento.className =
         "message " + tipo;
 
-    elemento.textContent =
-        texto;
+    elemento.textContent = texto;
 }
 
 
@@ -1118,8 +197,7 @@ function abrirAuth(modo) {
             "authMessage"
         );
 
-    message.className =
-        "hidden";
+    message.className = "hidden";
 
     if (modo === "register") {
 
@@ -1163,7 +241,6 @@ function abrirAuth(modo) {
 
 
 function alternarAuth() {
-
     abrirAuth(
         authMode === "login"
             ? "register"
@@ -1173,7 +250,7 @@ function alternarAuth() {
 
 
 /* =========================
-   SUBMIT LOGIN/CADASTRO
+   LOGIN / CADASTRO
 ========================= */
 
 document
@@ -1189,34 +266,23 @@ document
                     "authMessage"
                 );
 
-            message.className =
-                "hidden";
+            message.className = "hidden";
 
             try {
 
                 const email =
                     document
-                        .getElementById(
-                            "email"
-                        )
+                        .getElementById("email")
                         .value
                         .trim()
                         .toLowerCase();
 
                 const password =
                     document
-                        .getElementById(
-                            "password"
-                        )
+                        .getElementById("password")
                         .value;
 
-                /* =====================
-                   CADASTRO
-                ===================== */
-
-                if (
-                    authMode === "register"
-                ) {
+                if (authMode === "register") {
 
                     const username =
                         document
@@ -1227,17 +293,10 @@ document
                             .trim();
 
                     if (!username) {
-
                         throw new Error(
                             "Informe seu usuário."
                         );
                     }
-
-                    /*
-                        GUARDA O E-MAIL
-                        ANTES DE ABRIR
-                        O MODAL DE VERIFICAÇÃO.
-                    */
 
                     emailParaVerificacao =
                         email;
@@ -1247,7 +306,6 @@ document
                             "/api/auth/register",
                             {
                                 method: "POST",
-
                                 body:
                                     JSON.stringify({
                                         username,
@@ -1257,25 +315,13 @@ document
                             }
                         );
 
-                    mostrarMensagem(
-                        message,
-                        resposta.message ||
-                        "Conta criada. Verifique seu e-mail.",
-                        "success"
-                    );
-
-                    /*
-                        NÃO DEPENDEMOS MAIS
-                        DO INPUT DO LOGIN.
-                    */
-
                     document
                         .getElementById(
                             "verifyEmailText"
                         )
                         .textContent =
                         "Enviamos um código para " +
-                        emailParaVerificacao +
+                        email +
                         ".";
 
                     document
@@ -1284,35 +330,21 @@ document
                         )
                         .value = "";
 
-                    setTimeout(
-                        function() {
+                    fecharModal("authModal");
 
-                            fecharModal(
-                                "authModal"
-                            );
-
-                            abrirModal(
-                                "verifyModal"
-                            );
-
-                        },
-                        700
-                    );
+                    abrirModal("verifyModal");
 
                     return;
                 }
 
 
-                /* =====================
-                   LOGIN
-                ===================== */
+                /* LOGIN */
 
                 const resposta =
                     await api(
                         "/api/auth/login",
                         {
                             method: "POST",
-
                             body:
                                 JSON.stringify({
                                     email,
@@ -1321,16 +353,30 @@ document
                         }
                     );
 
+                if (!resposta.token) {
+                    throw new Error(
+                        "O servidor não retornou o token de login."
+                    );
+                }
+
+                salvarToken(
+                    resposta.token
+                );
+
                 usuario =
                     resposta.user ||
                     resposta.usuario ||
                     null;
 
+                if (!usuario) {
+                    throw new Error(
+                        "O servidor não retornou os dados do usuário."
+                    );
+                }
+
                 atualizarInterface();
 
-                fecharModal(
-                    "authModal"
-                );
+                fecharModal("authModal");
 
                 carregarProdutos();
 
@@ -1346,7 +392,7 @@ document
 
 
 /* =========================
-   VERIFICAR E-MAIL
+   VERIFICAÇÃO
 ========================= */
 
 document
@@ -1362,21 +408,9 @@ document
                     "verifyMessage"
                 );
 
-            message.className =
-                "hidden";
+            message.className = "hidden";
 
             try {
-
-                /*
-                    IMPORTANTE:
-                    usamos a variável salva
-                    durante o cadastro.
-                */
-
-                const email =
-                    emailParaVerificacao
-                        .trim()
-                        .toLowerCase();
 
                 const code =
                     document
@@ -1386,15 +420,7 @@ document
                         .value
                         .trim();
 
-                if (!email) {
-
-                    throw new Error(
-                        "O e-mail da verificação não foi encontrado. Faça o cadastro novamente."
-                    );
-                }
-
                 if (!/^\d{6}$/.test(code)) {
-
                     throw new Error(
                         "Informe um código de 6 números."
                     );
@@ -1405,10 +431,10 @@ document
                         "/api/auth/verify-email",
                         {
                             method: "POST",
-
                             body:
                                 JSON.stringify({
-                                    email,
+                                    email:
+                                        emailParaVerificacao,
                                     code
                                 })
                         }
@@ -1417,43 +443,32 @@ document
                 mostrarMensagem(
                     message,
                     resposta.message ||
-                    "E-mail verificado com sucesso!",
+                    "E-mail verificado com sucesso.",
                     "success"
                 );
 
-                setTimeout(
-                    function() {
+                setTimeout(() => {
 
-                        fecharModal(
-                            "verifyModal"
-                        );
+                    fecharModal(
+                        "verifyModal"
+                    );
 
-                        /*
-                            Coloca o e-mail
-                            automaticamente
-                            no login.
-                        */
+                    document
+                        .getElementById(
+                            "email"
+                        )
+                        .value =
+                        emailParaVerificacao;
 
-                        document
-                            .getElementById(
-                                "email"
-                            )
-                            .value =
-                            emailParaVerificacao;
+                    document
+                        .getElementById(
+                            "password"
+                        )
+                        .value = "";
 
-                        document
-                            .getElementById(
-                                "password"
-                            )
-                            .value = "";
+                    abrirAuth("login");
 
-                        abrirAuth(
-                            "login"
-                        );
-
-                    },
-                    1000
-                );
+                }, 1000);
 
             } catch (erro) {
 
@@ -1479,15 +494,9 @@ async function reenviarCodigo() {
 
     try {
 
-        const email =
-            emailParaVerificacao
-                .trim()
-                .toLowerCase();
-
-        if (!email) {
-
+        if (!emailParaVerificacao) {
             throw new Error(
-                "O e-mail não foi encontrado."
+                "E-mail não encontrado."
             );
         }
 
@@ -1496,10 +505,10 @@ async function reenviarCodigo() {
                 "/api/auth/resend-code",
                 {
                     method: "POST",
-
                     body:
                         JSON.stringify({
-                            email
+                            email:
+                                emailParaVerificacao
                         })
                 }
             );
@@ -1527,6 +536,14 @@ async function reenviarCodigo() {
 
 async function verificarSessao() {
 
+    const token = obterToken();
+
+    if (!token) {
+        usuario = null;
+        atualizarInterface();
+        return;
+    }
+
     try {
 
         const resposta =
@@ -1539,14 +556,23 @@ async function verificarSessao() {
             resposta.usuario ||
             null;
 
+        if (!usuario) {
+            removerToken();
+        }
+
     } catch {
 
         usuario = null;
+        removerToken();
     }
 
     atualizarInterface();
 }
 
+
+/* =========================
+   INTERFACE
+========================= */
 
 function atualizarInterface() {
 
@@ -1579,6 +605,8 @@ function atualizarInterface() {
             "hidden"
         );
 
+        adicionarBotaoVender();
+
     } else {
 
         loginButton.classList.remove(
@@ -1592,6 +620,59 @@ function atualizarInterface() {
         logoutButton.classList.add(
             "hidden"
         );
+
+        removerBotaoVender();
+    }
+}
+
+
+/* =========================
+   BOTÃO VENDER
+========================= */
+
+function adicionarBotaoVender() {
+
+    if (
+        document.getElementById(
+            "sellButton"
+        )
+    ) {
+        return;
+    }
+
+    const nav =
+        document.querySelector(".nav");
+
+    if (!nav) return;
+
+    const botao =
+        document.createElement("button");
+
+    botao.id = "sellButton";
+    botao.className = "primary";
+    botao.textContent = "Vender";
+
+    botao.onclick =
+        abrirCriarAnuncio;
+
+    nav.insertBefore(
+        botao,
+        document.getElementById(
+            "profileButton"
+        )
+    );
+}
+
+
+function removerBotaoVender() {
+
+    const botao =
+        document.getElementById(
+            "sellButton"
+        );
+
+    if (botao) {
+        botao.remove();
     }
 }
 
@@ -1602,16 +683,7 @@ function atualizarInterface() {
 
 async function logout() {
 
-    try {
-
-        await api(
-            "/api/auth/logout",
-            {
-                method: "POST"
-            }
-        );
-
-    } catch {}
+    removerToken();
 
     usuario = null;
 
@@ -1697,7 +769,6 @@ async function carregarProdutos() {
         );
 
         if (pesquisa) {
-
             params.set(
                 "search",
                 pesquisa
@@ -1705,7 +776,6 @@ async function carregarProdutos() {
         }
 
         if (categoriaAtual) {
-
             params.set(
                 "category",
                 categoriaAtual
@@ -1741,10 +811,7 @@ async function carregarProdutos() {
         container.innerHTML =
             produtos
                 .map(
-                    produto =>
-                        criarCardProduto(
-                            produto
-                        )
+                    criarCardProduto
                 )
                 .join("");
 
@@ -1767,31 +834,23 @@ function criarCardProduto(
     produto
 ) {
 
-    const imagem =
-        produto.image_url;
-
     return `
         <article class="product">
 
             <div class="product-image">
 
                 ${
-                    imagem
+                    produto.image_url
                         ? `
                             <img
                                 src="${escapeHTML(
-                                    imagem
+                                    produto.image_url
                                 )}"
                                 alt=""
-                                onerror="
-                                    this.style.display='none'
-                                "
                             >
                         `
                         : `
-                            <span>
-                                SLAX
-                            </span>
+                            <span>SLAX</span>
                         `
                 }
 
@@ -1827,11 +886,7 @@ function criarCardProduto(
 
                     <button
                         class="buy"
-                        onclick="
-                            abrirProduto(
-                                ${produto.id}
-                            )
-                        "
+                        onclick="abrirProduto(${produto.id})"
                     >
                         Ver
                     </button>
@@ -1846,7 +901,7 @@ function criarCardProduto(
 
 
 /* =========================
-   DETALHES DO PRODUTO
+   PRODUTO
 ========================= */
 
 async function abrirProduto(id) {
@@ -1914,11 +969,7 @@ async function abrirProduto(id) {
                 )}
             </div>
 
-            <h3
-                style="
-                    margin-bottom:10px;
-                "
-            >
+            <h3>
                 ${escapeHTML(
                     p.title
                 )}
@@ -1928,7 +979,7 @@ async function abrirProduto(id) {
                 style="
                     color:#9aa8bc;
                     line-height:1.6;
-                    margin-bottom:15px;
+                    margin:15px 0;
                 "
             >
                 ${escapeHTML(
@@ -1936,48 +987,22 @@ async function abrirProduto(id) {
                 )}
             </p>
 
-            <div
+            <strong
                 style="
-                    display:flex;
-                    justify-content:space-between;
-                    align-items:center;
-                    gap:15px;
-                    margin-bottom:18px;
+                    font-size:25px;
+                    display:block;
+                    margin-bottom:15px;
                 "
             >
-
-                <strong
-                    style="
-                        font-size:25px;
-                    "
-                >
-                    ${dinheiro(
-                        p.price_cents
-                    )}
-                </strong>
-
-                <span
-                    style="
-                        color:#8c9ab0;
-                        font-size:12px;
-                    "
-                >
-                    Estoque:
-                    ${Number(
-                        p.stock || 0
-                    )}
-                </span>
-
-            </div>
+                ${dinheiro(
+                    p.price_cents
+                )}
+            </strong>
 
             <button
                 class="btn primary"
                 style="width:100%;"
-                onclick="
-                    comprarProduto(
-                        ${p.id}
-                    )
-                "
+                onclick="comprarProduto(${p.id})"
             >
                 Comprar
             </button>
@@ -2009,9 +1034,7 @@ async function comprarProduto(id) {
             "productModal"
         );
 
-        abrirAuth(
-            "login"
-        );
+        abrirAuth("login");
 
         return;
     }
@@ -2086,8 +1109,9 @@ async function abrirPerfil() {
 
         usuario =
             resposta.user ||
-            resposta.usuario ||
             usuario;
+
+        atualizarInterface();
 
         const inicial =
             (
@@ -2142,6 +1166,19 @@ async function abrirPerfil() {
             >
 
                 <label>
+                    Usuário
+
+                    <input
+                        id="profileUsername"
+                        type="text"
+                        maxlength="30"
+                        value="${escapeHTML(
+                            usuario.username || ""
+                        )}"
+                    >
+                </label>
+
+                <label>
                     Bio
 
                     <textarea
@@ -2160,12 +1197,10 @@ async function abrirPerfil() {
                         id="avatarUrl"
                         type="text"
                         value="${escapeHTML(
-                            usuario.avatar_url ||
-                            ""
+                            usuario.avatar_url || ""
                         )}"
                         placeholder="https://..."
                     >
-
                 </label>
 
                 <div
@@ -2253,6 +1288,14 @@ async function salvarPerfil(
 
     try {
 
+        const username =
+            document
+                .getElementById(
+                    "profileUsername"
+                )
+                .value
+                .trim();
+
         const bio =
             document
                 .getElementById(
@@ -2273,9 +1316,9 @@ async function salvarPerfil(
                 "/api/auth/profile",
                 {
                     method: "PUT",
-
                     body:
                         JSON.stringify({
+                            username,
                             bio,
                             avatar_url
                         })
@@ -2289,11 +1332,293 @@ async function salvarPerfil(
         mostrarMensagem(
             message,
             resposta.message ||
-            "Perfil atualizado.",
+            "Perfil atualizado com sucesso.",
             "success"
         );
 
         atualizarInterface();
+
+    } catch (erro) {
+
+        mostrarMensagem(
+            message,
+            erro.message
+        );
+    }
+}
+
+
+/* =========================
+   CRIAR ANÚNCIO
+========================= */
+
+function abrirCriarAnuncio() {
+
+    if (!usuario) {
+        abrirAuth("login");
+        return;
+    }
+
+    abrirModal(
+        "productModal"
+    );
+
+    document.getElementById(
+        "productModalTitle"
+    ).textContent =
+        "Criar anúncio";
+
+    document.getElementById(
+        "productDetails"
+    ).innerHTML =
+        `
+        <form
+            id="createProductForm"
+            class="form"
+        >
+
+            <label>
+                Título
+
+                <input
+                    id="productTitle"
+                    type="text"
+                    maxlength="100"
+                    required
+                    placeholder="Ex: Conta de jogo"
+                >
+            </label>
+
+            <label>
+                Descrição
+
+                <textarea
+                    id="productDescription"
+                    maxlength="5000"
+                    required
+                    placeholder="Descreva o produto..."
+                ></textarea>
+            </label>
+
+            <label>
+                Categoria
+
+                <select
+                    id="productCategory"
+                    required
+                >
+                    <option value="Contas">
+                        Contas
+                    </option>
+
+                    <option value="Itens">
+                        Itens
+                    </option>
+
+                    <option value="Serviços">
+                        Serviços
+                    </option>
+
+                    <option value="Outros">
+                        Outros
+                    </option>
+                </select>
+            </label>
+
+            <label>
+                Preço em reais
+
+                <input
+                    id="productPrice"
+                    type="number"
+                    min="0.97"
+                    step="0.01"
+                    required
+                    placeholder="2.00"
+                >
+            </label>
+
+            <label>
+                Estoque
+
+                <input
+                    id="productStock"
+                    type="number"
+                    min="1"
+                    step="1"
+                    value="1"
+                    required
+                >
+            </label>
+
+            <label>
+                URL da imagem
+
+                <input
+                    id="productImage"
+                    type="text"
+                    placeholder="https://..."
+                >
+            </label>
+
+            <div
+                id="createProductMessage"
+                class="hidden"
+            ></div>
+
+            <button
+                class="btn primary"
+                type="submit"
+            >
+                Publicar anúncio
+            </button>
+
+        </form>
+        `;
+
+    document
+        .getElementById(
+            "createProductForm"
+        )
+        .addEventListener(
+            "submit",
+            criarAnuncio
+        );
+}
+
+
+async function criarAnuncio(
+    event
+) {
+
+    event.preventDefault();
+
+    const message =
+        document.getElementById(
+            "createProductMessage"
+        );
+
+    try {
+
+        const title =
+            document
+                .getElementById(
+                    "productTitle"
+                )
+                .value
+                .trim();
+
+        const description =
+            document
+                .getElementById(
+                    "productDescription"
+                )
+                .value
+                .trim();
+
+        const category =
+            document
+                .getElementById(
+                    "productCategory"
+                )
+                .value;
+
+        const price =
+            Number(
+                document
+                    .getElementById(
+                        "productPrice"
+                    )
+                    .value
+            );
+
+        const stock =
+            Number(
+                document
+                    .getElementById(
+                        "productStock"
+                    )
+                    .value
+            );
+
+        const image_url =
+            document
+                .getElementById(
+                    "productImage"
+                )
+                .value
+                .trim();
+
+        if (!title) {
+            throw new Error(
+                "Informe o título."
+            );
+        }
+
+        if (!description) {
+            throw new Error(
+                "Informe a descrição."
+            );
+        }
+
+        if (
+            !Number.isFinite(price) ||
+            price < 0.97
+        ) {
+            throw new Error(
+                "O preço mínimo é R$ 0,97."
+            );
+        }
+
+        if (
+            !Number.isInteger(stock) ||
+            stock < 1
+        ) {
+            throw new Error(
+                "O estoque precisa ser pelo menos 1."
+            );
+        }
+
+        const resposta =
+            await api(
+                "/api/products",
+                {
+                    method: "POST",
+                    body:
+                        JSON.stringify({
+                            title,
+                            description,
+                            category,
+                            price_cents:
+                                Math.round(
+                                    price * 100
+                                ),
+                            image_url:
+                                image_url ||
+                                null,
+                            stock,
+                            delivery_type:
+                                "manual"
+                        })
+                }
+            );
+
+        mostrarMensagem(
+            message,
+            resposta.message ||
+            "Anúncio enviado para análise.",
+            "success"
+        );
+
+        setTimeout(() => {
+
+            fecharModal(
+                "productModal"
+            );
+
+            carregarProdutos();
+
+        }, 1200);
 
     } catch (erro) {
 
@@ -2323,9 +1648,7 @@ document
 
             searchTimer =
                 setTimeout(
-                    function() {
-                        carregarProdutos();
-                    },
+                    carregarProdutos,
                     350
                 );
         }
@@ -2333,14 +1656,14 @@ document
 
 
 /* =========================
-   INICIAR
+   INICIAR SITE
 ========================= */
 
-verificarSessao();
+(async function iniciar() {
 
-carregarProdutos();
+    await verificarSessao();
 
+    await carregarProdutos();
+
+})();
 </script>
-
-</body>
-</html>
