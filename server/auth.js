@@ -1,995 +1,520 @@
-const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
 
-const db = require("./database");
-const { enviarCodigo } = require("./email");
+const {
+readDb,
+writeDb,
+nextId,
+now
+} = require("./server-database");
 
-const router = express.Router();
+const {
+sendVerificationCode,
+verifyCode
+} = require("./email");
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET =
+process.env.JWT_SECRET ||
+"SLAXSTORE_CHANGE_THIS_SECRET_BEFORE_PRODUCTION";
 
-if (!JWT_SECRET) {
-    console.warn("AVISO: JWT_SECRET não configurado.");
+function cleanUser(user) {
+if (!user) return null;
+
+return {
+id: user.id,
+username: user.username,
+nome: user.username,
+email: user.email,
+
+```
+balance: Number(user.balance || 0),
+saldo: Number(user.balance || 0),
+
+verified: Boolean(user.verified),
+isAdmin: Boolean(user.isAdmin),
+
+createdAt: user.createdAt
+```
+
+};
 }
 
-/*
- * GERAR TOKEN
- */
-function gerarToken(user) {
-    return jwt.sign(
-        {
-            id: user.id,
-            email: user.email,
-            role: user.role
-        },
-        JWT_SECRET,
-        {
-            expiresIn: "7d"
-        }
-    );
+function createToken(user) {
+return jwt.sign(
+{
+id: user.id,
+email: user.email
+},
+JWT_SECRET,
+{
+expiresIn: "30d"
+}
+);
 }
 
-/*
- * AUTENTICAÇÃO
- */
-function autenticar(req, res, next) {
-    const header = req.headers.authorization || "";
+function authRequired(req, res, next) {
+const authorization =
+req.headers.authorization || "";
 
-    if (!header.startsWith("Bearer ")) {
-        return res.status(401).json({
-            error: "Faça login para continuar."
-        });
-    }
-
-    const token = header.slice(7);
-
-    try {
-        const payload = jwt.verify(
-            token,
-            JWT_SECRET
-        );
-
-        const user = db.prepare(`
-            SELECT *
-            FROM users
-            WHERE id = ?
-        `).get(payload.id);
-
-        if (!user) {
-            return res.status(401).json({
-                error: "Usuário não encontrado."
-            });
-        }
-
-        if (user.suspended) {
-            return res.status(403).json({
-                error: "Sua conta está suspensa."
-            });
-        }
-
-        req.user = user;
-
-        next();
-
-    } catch {
-        return res.status(401).json({
-            error: "Sessão inválida ou expirada."
-        });
-    }
-}
-
-/*
- * LIMPAR DADOS DO USUÁRIO
- */
-function limparUsuario(user) {
-    return {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        email_verified: !!user.email_verified,
-        avatar_url: user.avatar_url,
-        bio: user.bio,
-        seller_verified: !!user.seller_verified,
-        verification_status: user.verification_status,
-        role: user.role,
-        suspended: !!user.suspended,
-        rating_positive: user.rating_positive,
-        rating_neutral: user.rating_neutral,
-        rating_negative: user.rating_negative,
-        created_at: user.created_at
-    };
-}
-
-/*
- * CADASTRO
- */
-router.post("/register", async (req, res) => {
-    try {
-        const username = String(
-            req.body.username || ""
-        ).trim();
-
-        const email = String(
-            req.body.email || ""
-        ).trim().toLowerCase();
-
-        const password = String(
-            req.body.password || ""
-        );
-
-        if (
-            !username ||
-            username.length < 3 ||
-            username.length > 30
-        ) {
-            return res.status(400).json({
-                error:
-                    "O nome de usuário deve ter entre 3 e 30 caracteres."
-            });
-        }
-
-        if (!/^[a-zA-Z0-9_.-]+$/.test(username)) {
-            return res.status(400).json({
-                error:
-                    "O nome de usuário possui caracteres inválidos."
-            });
-        }
-
-        if (
-            !email ||
-            !email.includes("@")
-        ) {
-            return res.status(400).json({
-                error:
-                    "Digite um e-mail válido."
-            });
-        }
-
-        if (password.length < 8) {
-            return res.status(400).json({
-                error:
-                    "A senha precisa ter pelo menos 8 caracteres."
-            });
-        }
-
-        const existente = db.prepare(`
-            SELECT id
-            FROM users
-            WHERE LOWER(email) = ?
-               OR LOWER(username) = ?
-        `).get(
-            email,
-            username.toLowerCase()
-        );
-
-        if (existente) {
-            return res.status(409).json({
-                error:
-                    "Esse e-mail ou nome de usuário já está cadastrado."
-            });
-        }
-
-        const passwordHash =
-            await bcrypt.hash(
-                password,
-                12
-            );
-
-        const codigo =
-            crypto
-                .randomInt(
-                    100000,
-                    1000000
-                )
-                .toString();
-
-        const codigoHash =
-            crypto
-                .createHash("sha256")
-                .update(codigo)
-                .digest("hex");
-
-        const expiracao =
-            Date.now() +
-            15 * 60 * 1000;
-
-        const adminEmail =
-            String(
-                process.env.ADMIN_EMAIL || ""
-            )
-                .trim()
-                .toLowerCase();
-
-        const role =
-            email === adminEmail
-                ? "admin"
-                : "user";
-
-        const resultado = db.prepare(`
-            INSERT INTO users (
-                username,
-                email,
-                password_hash,
-                email_verified,
-                role,
-                verification_code_hash,
-                verification_expires
-            )
-            VALUES (?, ?, ?, 0, ?, ?, ?)
-        `).run(
-            username,
-            email,
-            passwordHash,
-            role,
-            codigoHash,
-            expiracao
-        );
-
-        try {
-            await enviarCodigo(
-                email,
-                codigo
-            );
-
-        } catch (erro) {
-
-            db.prepare(`
-                DELETE FROM users
-                WHERE id = ?
-            `).run(
-                resultado.lastInsertRowid
-            );
-
-            console.error(
-                "Erro ao enviar código:",
-                erro
-            );
-
-            return res.status(500).json({
-                error:
-                    "Não foi possível enviar o código de verificação."
-            });
-        }
-
-        return res.status(201).json({
-            success: true,
-            message:
-                "Conta criada. Verifique seu e-mail.",
-            user_id:
-                resultado.lastInsertRowid
-        });
-
-    } catch (erro) {
-
-        console.error(
-            "Erro no cadastro:",
-            erro
-        );
-
-        return res.status(500).json({
-            error:
-                "Erro interno ao criar a conta."
-        });
-    }
+if (!authorization.startsWith("Bearer ")) {
+return res.status(401).json({
+error: "Você precisa estar logado."
 });
+}
 
-/*
- * VERIFICAR E-MAIL
- *
- * Aceita:
- * {
- *   code: "123456"
- * }
- *
- * Também aceita:
- * {
- *   codigo: "123456"
- * }
- *
- * O e-mail NÃO é mais obrigatório.
- */
-router.post(
-    "/verify-email",
-    async (req, res) => {
-        try {
+const token = authorization.substring(7);
 
-            const email =
-                String(
-                    req.body.email || ""
-                )
-                    .trim()
-                    .toLowerCase();
-
-            const codigo =
-                String(
-                    req.body.code ||
-                    req.body.codigo ||
-                    ""
-                ).trim();
-
-            if (!codigo) {
-                return res.status(400).json({
-                    error:
-                        "Informe o código de verificação."
-                });
-            }
-
-            if (
-                codigo.length !== 6 ||
-                !/^\d{6}$/.test(codigo)
-            ) {
-                return res.status(400).json({
-                    error:
-                        "O código deve ter 6 números."
-                });
-            }
-
-            const codigoHash =
-                crypto
-                    .createHash("sha256")
-                    .update(codigo)
-                    .digest("hex");
-
-            let user;
-
-            /*
-             * Se o frontend mandar o e-mail,
-             * usamos o e-mail + código.
-             */
-            if (email) {
-
-                user = db.prepare(`
-                    SELECT *
-                    FROM users
-                    WHERE LOWER(email) = ?
-                `).get(email);
-
-            } else {
-
-                /*
-                 * Se mandar somente o código,
-                 * encontramos a conta pelo hash.
-                 */
-                user = db.prepare(`
-                    SELECT *
-                    FROM users
-                    WHERE verification_code_hash = ?
-                `).get(codigoHash);
-            }
-
-            if (!user) {
-                return res.status(404).json({
-                    error:
-                        "Código de verificação inválido."
-                });
-            }
-
-            if (user.email_verified) {
-                return res.json({
-                    success: true,
-                    message:
-                        "E-mail já verificado."
-                });
-            }
-
-            if (
-                !user.verification_expires ||
-                Date.now() >
-                    user.verification_expires
-            ) {
-                return res.status(400).json({
-                    error:
-                        "O código expirou. Solicite outro."
-                });
-            }
-
-            /*
-             * Confere o código.
-             */
-            if (
-                codigoHash !==
-                user.verification_code_hash
-            ) {
-                return res.status(400).json({
-                    error:
-                        "Código de verificação incorreto."
-                });
-            }
-
-            /*
-             * Marca o e-mail como verificado.
-             */
-            db.prepare(`
-                UPDATE users
-                SET
-                    email_verified = 1,
-                    verification_code_hash = NULL,
-                    verification_expires = NULL
-                WHERE id = ?
-            `).run(user.id);
-
-            const atualizado =
-                db.prepare(`
-                    SELECT *
-                    FROM users
-                    WHERE id = ?
-                `).get(user.id);
-
-            return res.json({
-                success: true,
-                message:
-                    "E-mail verificado com sucesso.",
-                user:
-                    limparUsuario(atualizado)
-            });
-
-        } catch (erro) {
-
-            console.error(
-                "Erro na verificação:",
-                erro
-            );
-
-            return res.status(500).json({
-                error:
-                    "Erro interno na verificação."
-            });
-        }
-    }
+try {
+const decoded = jwt.verify(
+token,
+JWT_SECRET
 );
 
-/*
- * REENVIAR CÓDIGO
- */
-router.post(
-    "/resend-code",
-    async (req, res) => {
+```
+req.auth = decoded;
 
-        try {
+next();
+```
 
-            const email =
-                String(
-                    req.body.email || ""
-                )
-                    .trim()
-                    .toLowerCase();
+} catch (error) {
+return res.status(401).json({
+error: "Sua sessão expirou."
+});
+}
+}
 
-            if (!email) {
-                return res.status(400).json({
-                    error:
-                        "Informe o e-mail."
-                });
-            }
+function optionalAuth(req, res, next) {
+const authorization =
+req.headers.authorization || "";
 
-            const user =
-                db.prepare(`
-                    SELECT *
-                    FROM users
-                    WHERE LOWER(email) = ?
-                `).get(email);
+if (authorization.startsWith("Bearer ")) {
+const token = authorization.substring(7);
 
-            if (!user) {
+```
+try {
+  req.auth = jwt.verify(
+    token,
+    JWT_SECRET
+  );
+} catch {}
+```
 
-                return res.json({
-                    success: true,
-                    message:
-                        "Se o e-mail estiver cadastrado, um novo código será enviado."
-                });
-            }
+}
 
-            if (user.email_verified) {
+next();
+}
 
-                return res.status(400).json({
-                    error:
-                        "Esse e-mail já foi verificado."
-                });
-            }
-
-            const codigo =
-                crypto
-                    .randomInt(
-                        100000,
-                        1000000
-                    )
-                    .toString();
-
-            const codigoHash =
-                crypto
-                    .createHash("sha256")
-                    .update(codigo)
-                    .digest("hex");
-
-            const expiracao =
-                Date.now() +
-                15 * 60 * 1000;
-
-            db.prepare(`
-                UPDATE users
-                SET
-                    verification_code_hash = ?,
-                    verification_expires = ?
-                WHERE id = ?
-            `).run(
-                codigoHash,
-                expiracao,
-                user.id
-            );
-
-            await enviarCodigo(
-                email,
-                codigo
-            );
-
-            return res.json({
-                success: true,
-                message:
-                    "Novo código enviado."
-            });
-
-        } catch (erro) {
-
-            console.error(
-                "Erro ao reenviar código:",
-                erro
-            );
-
-            return res.status(500).json({
-                error:
-                    "Não foi possível enviar o novo código."
-            });
-        }
-    }
+function findUser(db, id) {
+return db.users.find(
+user => String(user.id) === String(id)
 );
+}
 
+function register(app) {
 /*
- * LOGIN
- */
-router.post(
-    "/login",
-    async (req, res) => {
 
-        try {
+* CADASTRO
+  */
+  app.post(
+  "/api/auth/register",
+  async (req, res) => {
+  try {
+  const username =
+  String(req.body.username || "").trim();
 
-            const login =
-                String(
-                    req.body.email || ""
-                )
-                    .trim()
-                    .toLowerCase();
+  const email =
+  String(req.body.email || "")
+  .trim()
+  .toLowerCase();
 
-            const password =
-                String(
-                    req.body.password || ""
-                );
+  const password =
+  String(req.body.password || "");
 
-            const user =
-                db.prepare(`
-                    SELECT *
-                    FROM users
-                    WHERE LOWER(email) = ?
-                `).get(login);
+  if (username.length < 3) {
+  return res.status(400).json({
+  error:
+  "O nome de usuário precisa ter pelo menos 3 caracteres."
+  });
+  }
 
-            if (!user) {
-                return res.status(401).json({
-                    error:
-                        "E-mail ou senha incorretos."
-                });
-            }
+  if (username.length > 30) {
+  return res.status(400).json({
+  error:
+  "O nome de usuário pode ter no máximo 30 caracteres."
+  });
+  }
 
-            if (user.suspended) {
-                return res.status(403).json({
-                    error:
-                        "Sua conta está suspensa."
-                });
-            }
+  if (
+  !/^[^\s@]+@[^\s@]+.[^\s@]+$/.test(
+  email
+  )
+  ) {
+  return res.status(400).json({
+  error: "Digite um e-mail válido."
+  });
+  }
 
-            const senhaCorreta =
-                await bcrypt.compare(
-                    password,
-                    user.password_hash
-                );
+  if (password.length < 6) {
+  return res.status(400).json({
+  error:
+  "A senha precisa ter pelo menos 6 caracteres."
+  });
+  }
 
-            if (!senhaCorreta) {
-                return res.status(401).json({
-                    error:
-                        "E-mail ou senha incorretos."
-                });
-            }
+  const db = readDb();
 
-            const token =
-                gerarToken(user);
+  const emailExists = db.users.some(
+  user => user.email === email
+  );
 
-            return res.json({
-                success: true,
-                token,
-                user:
-                    limparUsuario(user)
-            });
+  if (emailExists) {
+  return res.status(409).json({
+  error:
+  "Este e-mail já está cadastrado."
+  });
+  }
 
-        } catch (erro) {
+  const usernameExists = db.users.some(
+  user =>
+  user.username.toLowerCase() ===
+  username.toLowerCase()
+  );
 
-            console.error(
-                "Erro no login:",
-                erro
-            );
+  if (usernameExists) {
+  return res.status(409).json({
+  error:
+  "Este nome de usuário já está em uso."
+  });
+  }
 
-            return res.status(500).json({
-                error:
-                    "Erro interno ao fazer login."
-            });
-        }
-    }
-);
+  const passwordHash =
+  await bcrypt.hash(password, 12);
+
+  const user = {
+  id: nextId(db, "user"),
+
+  ```
+   username,
+   email,
+
+   passwordHash,
+
+   balance: 0,
+
+   verified: false,
+
+   isAdmin: false,
+
+   createdAt: now()
+  ```
+
+  };
+
+  db.users.push(user);
+
+  writeDb(db);
+
+  const emailResult =
+  await sendVerificationCode(email);
+
+  res.status(201).json({
+  message:
+  "Conta criada. Verifique seu e-mail.",
+
+  ```
+   email,
+
+   user: cleanUser(user),
+
+   /*
+    * Só aparece quando o SMTP não está configurado.
+    * Serve para desenvolvimento/testes.
+    */
+   developmentCode:
+     emailResult.developmentCode || null
+  ```
+
+  });
+  } catch (error) {
+  console.error(
+  "Erro no cadastro:",
+  error
+  );
+
+  res.status(500).json({
+  error: "Erro ao criar sua conta."
+  });
+  }
+  }
+  );
 
 /*
- * USUÁRIO LOGADO
- */
-router.get(
-    "/me",
-    autenticar,
-    (req, res) => {
 
-        return res.json({
-            user:
-                limparUsuario(
-                    req.user
-                )
-        });
-    }
-);
+* LOGIN
+  */
+  app.post(
+  "/api/auth/login",
+  async (req, res) => {
+  try {
+  const email =
+  String(req.body.email || "")
+  .trim()
+  .toLowerCase();
 
-/*
- * ALTERAR PERFIL
- */
-router.put(
-    "/profile",
-    autenticar,
-    (req, res) => {
+  const password =
+  String(req.body.password || "");
 
-        try {
+  const db = readDb();
 
-            const username =
-                req.body.username !== undefined
-                    ? String(
-                        req.body.username
-                    ).trim()
-                    : req.user.username;
+  const user = db.users.find(
+  item => item.email === email
+  );
 
-            const bio =
-                req.body.bio !== undefined
-                    ? String(
-                        req.body.bio
-                    )
-                    : req.user.bio;
+  if (!user) {
+  return res.status(401).json({
+  error:
+  "E-mail ou senha incorretos."
+  });
+  }
 
-            const avatarUrl =
-                req.body.avatar_url !== undefined
-                    ? String(
-                        req.body.avatar_url
-                    )
-                    : req.user.avatar_url;
+  const passwordCorrect =
+  await bcrypt.compare(
+  password,
+  user.passwordHash
+  );
 
-            if (
-                username.length < 3 ||
-                username.length > 30
-            ) {
-                return res.status(400).json({
-                    error:
-                        "O nome deve ter entre 3 e 30 caracteres."
-                });
-            }
+  if (!passwordCorrect) {
+  return res.status(401).json({
+  error:
+  "E-mail ou senha incorretos."
+  });
+  }
 
-            if (
-                !/^[a-zA-Z0-9_.-]+$/.test(
-                    username
-                )
-            ) {
-                return res.status(400).json({
-                    error:
-                        "O nome possui caracteres inválidos."
-                });
-            }
+  const token =
+  createToken(user);
 
-            if (bio.length > 500) {
-                return res.status(400).json({
-                    error:
-                        "A bio pode ter no máximo 500 caracteres."
-                });
-            }
+  res.json({
+  message:
+  "Login realizado com sucesso.",
 
-            if (
-                avatarUrl &&
-                avatarUrl.length > 700000
-            ) {
-                return res.status(400).json({
-                    error:
-                        "A foto de perfil é muito grande."
-                });
-            }
+  ```
+   token,
 
-            if (
-                avatarUrl &&
-                !(
-                    avatarUrl.startsWith(
-                        "http://"
-                    ) ||
-                    avatarUrl.startsWith(
-                        "https://"
-                    ) ||
-                    avatarUrl.startsWith(
-                        "data:image/"
-                    )
-                )
-            ) {
-                return res.status(400).json({
-                    error:
-                        "Formato de foto inválido."
-                });
-            }
+   user: cleanUser(user),
 
-            const outroUsuario =
-                db.prepare(`
-                    SELECT id
-                    FROM users
-                    WHERE LOWER(username) = ?
-                    AND id != ?
-                `).get(
-                    username.toLowerCase(),
-                    req.user.id
-                );
+   requiresVerification:
+     !user.verified
+  ```
 
-            if (outroUsuario) {
-                return res.status(409).json({
-                    error:
-                        "Esse nome de usuário já está sendo usado."
-                });
-            }
+  });
+  } catch (error) {
+  console.error(
+  "Erro no login:",
+  error
+  );
 
-            db.prepare(`
-                UPDATE users
-                SET
-                    username = ?,
-                    bio = ?,
-                    avatar_url = ?
-                WHERE id = ?
-            `).run(
-                username,
-                bio,
-                avatarUrl || null,
-                req.user.id
-            );
-
-            const atualizado =
-                db.prepare(`
-                    SELECT *
-                    FROM users
-                    WHERE id = ?
-                `).get(req.user.id);
-
-            return res.json({
-                success: true,
-                user:
-                    limparUsuario(
-                        atualizado
-                    )
-            });
-
-        } catch (erro) {
-
-            console.error(
-                "Erro ao atualizar perfil:",
-                erro
-            );
-
-            return res.status(500).json({
-                error:
-                    "Não foi possível atualizar o perfil."
-            });
-        }
-    }
-);
+  res.status(500).json({
+  error: "Erro ao entrar."
+  });
+  }
+  }
+  );
 
 /*
- * ALTERAR SENHA
- */
-router.put(
-    "/password",
-    autenticar,
-    async (req, res) => {
 
-        try {
+* USUÁRIO LOGADO
+  */
+  app.get(
+  "/api/auth/me",
+  authRequired,
+  (req, res) => {
+  const db = readDb();
 
-            const senhaAtual =
-                String(
-                    req.body.current_password ||
-                    ""
-                );
+  const user =
+  findUser(db, req.auth.id);
 
-            const novaSenha =
-                String(
-                    req.body.new_password ||
-                    ""
-                );
+  if (!user) {
+  return res.status(401).json({
+  error:
+  "Usuário não encontrado."
+  });
+  }
 
-            if (
-                !senhaAtual ||
-                !novaSenha
-            ) {
-                return res.status(400).json({
-                    error:
-                        "Preencha as duas senhas."
-                });
-            }
-
-            if (novaSenha.length < 8) {
-                return res.status(400).json({
-                    error:
-                        "A nova senha precisa ter pelo menos 8 caracteres."
-                });
-            }
-
-            const correta =
-                await bcrypt.compare(
-                    senhaAtual,
-                    req.user.password_hash
-                );
-
-            if (!correta) {
-                return res.status(400).json({
-                    error:
-                        "A senha atual está incorreta."
-                });
-            }
-
-            const hash =
-                await bcrypt.hash(
-                    novaSenha,
-                    12
-                );
-
-            db.prepare(`
-                UPDATE users
-                SET password_hash = ?
-                WHERE id = ?
-            `).run(
-                hash,
-                req.user.id
-            );
-
-            return res.json({
-                success: true,
-                message:
-                    "Senha alterada com sucesso."
-            });
-
-        } catch (erro) {
-
-            console.error(
-                "Erro ao alterar senha:",
-                erro
-            );
-
-            return res.status(500).json({
-                error:
-                    "Não foi possível alterar a senha."
-            });
-        }
-    }
-);
+  res.json({
+  user: cleanUser(user)
+  });
+  }
+  );
 
 /*
- * SOLICITAR VERIFICAÇÃO DE VENDEDOR
- *
- * Não armazena documentos pessoais.
- */
-router.post(
-    "/verification/request",
-    autenticar,
-    (req, res) => {
 
-        try {
+* VERIFICAR E-MAIL
+  */
+  app.post(
+  "/api/auth/verify-email",
+  (req, res) => {
+  const email =
+  String(req.body.email || "")
+  .trim()
+  .toLowerCase();
 
-            if (!req.user.email_verified) {
-                return res.status(400).json({
-                    error:
-                        "Verifique seu e-mail antes de solicitar a verificação."
-                });
-            }
+  const code =
+  String(req.body.code || "").trim();
 
-            if (req.user.seller_verified) {
-                return res.status(400).json({
-                    error:
-                        "Sua conta já está verificada como vendedor."
-                });
-            }
+  if (
+  !verifyCode(
+  email,
+  code
+  )
+  ) {
+  return res.status(400).json({
+  error:
+  "Código inválido ou expirado."
+  });
+  }
 
-            const existente =
-                db.prepare(`
-                    SELECT *
-                    FROM verification_requests
-                    WHERE user_id = ?
-                `).get(req.user.id);
+  const db = readDb();
 
-            if (
-                existente &&
-                existente.status === "pending"
-            ) {
-                return res.status(400).json({
-                    error:
-                        "Sua solicitação já está em análise."
-                });
-            }
+  const user = db.users.find(
+  item => item.email === email
+  );
 
-            if (existente) {
+  if (!user) {
+  return res.status(404).json({
+  error:
+  "Usuário não encontrado."
+  });
+  }
 
-                db.prepare(`
-                    UPDATE verification_requests
-                    SET
-                        status = 'pending',
-                        note = NULL,
-                        reviewed_at = NULL,
-                        created_at = CURRENT_TIMESTAMP
-                    WHERE user_id = ?
-                `).run(req.user.id);
+  user.verified = true;
 
-            } else {
+  writeDb(db);
 
-                db.prepare(`
-                    INSERT INTO verification_requests (
-                        user_id,
-                        status
-                    )
-                    VALUES (?, 'pending')
-                `).run(req.user.id);
-            }
+  const token =
+  createToken(user);
 
-            db.prepare(`
-                UPDATE users
-                SET verification_status = 'pending'
-                WHERE id = ?
-            `).run(req.user.id);
+  res.json({
+  message:
+  "E-mail verificado com sucesso.",
 
-            return res.json({
-                success: true,
-                message:
-                    "Solicitação enviada para análise."
-            });
+  token,
 
-        } catch (erro) {
-
-            console.error(
-                "Erro na solicitação de verificação:",
-                erro
-            );
-
-            return res.status(500).json({
-                error:
-                    "Não foi possível enviar a solicitação."
-            });
-        }
-    }
-);
+  user: cleanUser(user)
+  });
+  }
+  );
 
 /*
- * LOGOUT
- *
- * O token é armazenado no navegador,
- * então o frontend remove o token.
- */
-router.post(
-    "/logout",
-    (req, res) => {
-        return res.json({
-            success: true,
-            message:
-                "Logout realizado com sucesso."
-        });
-    }
-);
+
+* REENVIAR CÓDIGO
+  */
+  app.post(
+  "/api/auth/resend-code",
+  async (req, res) => {
+  try {
+  const email =
+  String(req.body.email || "")
+  .trim()
+  .toLowerCase();
+
+  const db = readDb();
+
+  const user = db.users.find(
+  item => item.email === email
+  );
+
+  if (!user) {
+  return res.status(404).json({
+  error:
+  "E-mail não encontrado."
+  });
+  }
+
+  if (user.verified) {
+  return res.status(400).json({
+  error:
+  "Este e-mail já foi verificado."
+  });
+  }
+
+  const result =
+  await sendVerificationCode(
+  email
+  );
+
+  res.json({
+  message:
+  "Novo código enviado.",
+
+  ```
+   developmentCode:
+     result.developmentCode || null
+  ```
+
+  });
+  } catch (error) {
+  console.error(error);
+
+  res.status(500).json({
+  error:
+  "Não foi possível enviar o código."
+  });
+  }
+  }
+  );
+
+/*
+
+* LOGOUT
+*
+* Como o login usa JWT, o logout no servidor
+* apenas confirma a saída. O index.html remove
+* o token do navegador.
+  */
+  app.post(
+  "/api/auth/logout",
+  authRequired,
+  (_req, res) => {
+  res.json({
+  message:
+  "Sessão encerrada."
+  });
+  }
+  );
+
+/*
+
+* PERFIL PÚBLICO
+  */
+  app.get(
+  "/api/auth/user/:id",
+  optionalAuth,
+  (req, res) => {
+  const db = readDb();
+
+  const user =
+  findUser(
+  db,
+  req.params.id
+  );
+
+  if (!user) {
+  return res.status(404).json({
+  error:
+  "Usuário não encontrado."
+  });
+  }
+
+  res.json({
+  user: cleanUser(user)
+  });
+  }
+  );
+  }
 
 module.exports = {
-    router,
-    autenticar
+register,
+authRequired,
+optionalAuth,
+cleanUser
 };
