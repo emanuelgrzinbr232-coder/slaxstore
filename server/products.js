@@ -1,4 +1,5 @@
 const express = require("express");
+
 const db = require("./database");
 const { autenticar } = require("./auth");
 
@@ -11,775 +12,626 @@ const CATEGORIAS = [
     "Outros"
 ];
 
-function validarCategoria(categoria) {
-    return CATEGORIAS.includes(categoria);
-}
+const TIPOS_ENTREGA = [
+    "manual",
+    "automatic"
+];
 
-function produtoPublico(produto) {
-    return {
-        id: produto.id,
-        title: produto.title,
-        description: produto.description,
-        category: produto.category,
-        price_cents: produto.price_cents,
-        price: produto.price_cents / 100,
-        image_url: produto.image_url,
-        stock: produto.stock,
-        delivery_type: produto.delivery_type,
-        views: produto.views,
-        created_at: produto.created_at,
-        updated_at: produto.updated_at,
-
-        seller: {
-            id: produto.seller_id,
-            username: produto.seller_username,
-            avatar_url: produto.seller_avatar,
-            seller_verified: !!produto.seller_verified,
-
-            rating_positive:
-                produto.rating_positive || 0,
-
-            rating_neutral:
-                produto.rating_neutral || 0,
-
-            rating_negative:
-                produto.rating_negative || 0
-        }
-    };
+function agora() {
+    return Date.now();
 }
 
 
-/*
-========================================
-LISTAR PRODUTOS
-GET /api/products
-========================================
-*/
+/* ==========================================
+   GET /api/products
+   LISTAGEM PÚBLICA
+========================================== */
 
 router.get("/", (req, res) => {
 
     try {
 
         const {
-            category,
-            search,
-            sort = "newest",
-            page = 1,
-            limit = 20
+            category = "",
+            search = "",
+            sort = "recent",
+            page = "1",
+            limit = "24"
         } = req.query;
 
-        const pagina =
-            Math.max(
-                parseInt(page) || 1,
-                1
-            );
+        const pagina = Math.max(
+            1,
+            Number.parseInt(page, 10) || 1
+        );
 
-        const limite =
-            Math.min(
-                Math.max(
-                    parseInt(limit) || 20,
-                    1
-                ),
-                50
-            );
+        const limite = Math.min(
+            50,
+            Math.max(
+                1,
+                Number.parseInt(limit, 10) || 24
+            )
+        );
 
         const offset =
             (pagina - 1) * limite;
 
-        let where = `
-            p.status = 'approved'
-            AND p.stock > 0
-        `;
+        const filtros = [
+            `p.status = 'approved'`,
+            `p.stock > 0`
+        ];
 
-        const parametros = [];
+        const parametros = {};
 
         if (category) {
 
-            if (!validarCategoria(category)) {
-
+            if (!CATEGORIAS.includes(category)) {
                 return res.status(400).json({
                     error: "Categoria inválida."
                 });
-
             }
 
-            where += `
-                AND p.category = ?
-            `;
+            filtros.push(
+                `p.category = @category`
+            );
 
-            parametros.push(category);
+            parametros.category =
+                category;
         }
 
-        if (search) {
+        if (search.trim()) {
 
-            where += `
-                AND (
-                    p.title LIKE ?
-                    OR p.description LIKE ?
+            filtros.push(`
+                (
+                    LOWER(p.title) LIKE LOWER(@search)
+                    OR
+                    LOWER(p.description) LIKE LOWER(@search)
+                    OR
+                    LOWER(u.username) LIKE LOWER(@search)
                 )
-            `;
+            `);
 
-            const termo = `%${search}%`;
-
-            parametros.push(termo);
-            parametros.push(termo);
+            parametros.search =
+                `%${search.trim()}%`;
         }
 
-        let orderBy = `
+        let ordem = `
             p.created_at DESC
         `;
 
         if (sort === "price_asc") {
-
-            orderBy = `
-                p.price_cents ASC
-            `;
-
-        } else if (sort === "price_desc") {
-
-            orderBy = `
-                p.price_cents DESC
-            `;
-
-        } else if (sort === "popular") {
-
-            orderBy = `
-                p.views DESC,
-                p.created_at DESC
-            `;
+            ordem = `p.price_cents ASC`;
         }
 
-        const produtos = db.prepare(`
-            SELECT
-                p.*,
+        if (sort === "price_desc") {
+            ordem = `p.price_cents DESC`;
+        }
 
-                u.username AS seller_username,
-                u.avatar_url AS seller_avatar,
-                u.seller_verified,
-                u.rating_positive,
-                u.rating_neutral,
-                u.rating_negative
+        if (sort === "popular") {
+            ordem = `p.views DESC, p.created_at DESC`;
+        }
 
-            FROM products p
+        const where =
+            filtros.join(" AND ");
 
-            INNER JOIN users u
-                ON u.id = p.seller_id
+        const produtos =
+            db.prepare(`
+                SELECT
+                    p.id,
+                    p.title,
+                    p.description,
+                    p.category,
+                    p.price_cents,
+                    p.image_url,
+                    p.stock,
+                    p.delivery_type,
+                    p.views,
+                    p.created_at,
+                    p.updated_at,
 
-            WHERE ${where}
+                    u.id AS seller_id,
+                    u.username AS seller_username,
+                    u.avatar_url AS seller_avatar,
 
-            ORDER BY ${orderBy}
+                    u.rating_positive,
+                    u.rating_neutral,
+                    u.rating_negative,
 
-            LIMIT ?
-            OFFSET ?
-        `).all(
-            ...parametros,
-            limite,
-            offset
-        );
+                    u.seller_verified
 
-        const total = db.prepare(`
-            SELECT COUNT(*) AS total
+                FROM products p
 
-            FROM products p
+                INNER JOIN users u
+                    ON u.id = p.seller_id
 
-            WHERE ${where}
-        `).get(...parametros);
+                WHERE
+                    ${where}
+
+                ORDER BY
+                    ${ordem}
+
+                LIMIT @limit
+                OFFSET @offset
+            `)
+            .all({
+                ...parametros,
+                limit: limite,
+                offset
+            });
+
+        const total =
+            db.prepare(`
+                SELECT COUNT(*) AS total
+
+                FROM products p
+
+                INNER JOIN users u
+                    ON u.id = p.seller_id
+
+                WHERE
+                    ${where}
+            `)
+            .get(parametros).total;
 
         res.json({
-
-            products:
-                produtos.map(produtoPublico),
-
+            products: produtos.map(formatarProduto),
             pagination: {
                 page: pagina,
                 limit: limite,
-                total: total.total,
+                total,
                 pages: Math.ceil(
-                    total.total / limite
+                    total / limite
                 )
             }
-
         });
 
-    } catch (error) {
+    } catch (erro) {
 
         console.error(
             "Erro ao listar produtos:",
-            error
+            erro
         );
 
         res.status(500).json({
-            error: "Erro ao carregar produtos."
+            error:
+                "Erro ao carregar os produtos."
         });
     }
 });
 
 
-/*
-========================================
-MEUS PRODUTOS
-GET /api/products/mine
-========================================
-*/
+/* ==========================================
+   GET /api/products/mine
+   MEUS ANÚNCIOS
+========================================== */
 
-router.get("/mine", autenticar, (req, res) => {
+router.get(
+    "/mine",
+    autenticar,
+    (req, res) => {
 
-    try {
+        try {
 
-        const produtos = db.prepare(`
-            SELECT *
-            FROM products
-            WHERE seller_id = ?
-            ORDER BY created_at DESC
-        `).all(req.user.id);
+            const produtos =
+                db.prepare(`
+                    SELECT
+                        p.*,
 
-        res.json({
-            products: produtos.map(produto => ({
-                ...produto,
-                price:
-                    produto.price_cents / 100
-            }))
-        });
+                        u.username AS seller_username,
+                        u.avatar_url AS seller_avatar
 
-    } catch (error) {
+                    FROM products p
 
-        console.error(error);
+                    INNER JOIN users u
+                        ON u.id = p.seller_id
 
-        res.status(500).json({
-            error: "Erro ao carregar seus anúncios."
-        });
+                    WHERE p.seller_id = ?
+
+                    ORDER BY
+                        p.created_at DESC
+                `)
+                .all(req.user.id);
+
+            res.json({
+                products:
+                    produtos.map(
+                        formatarProduto
+                    )
+            });
+
+        } catch (erro) {
+
+            console.error(erro);
+
+            res.status(500).json({
+                error:
+                    "Erro ao carregar seus anúncios."
+            });
+        }
     }
-});
+);
 
 
-/*
-========================================
-VER PRODUTO
-GET /api/products/:id
-========================================
-*/
+/* ==========================================
+   GET /api/products/:id
+   PRODUTO INDIVIDUAL
+========================================== */
 
-router.get("/:id", (req, res) => {
+router.get(
+    "/:id",
+    (req, res) => {
 
-    try {
+        try {
 
-        const id =
-            Number(req.params.id);
+            const id =
+                Number.parseInt(
+                    req.params.id,
+                    10
+                );
 
-        if (!Number.isInteger(id)) {
-
-            return res.status(400).json({
-                error: "Produto inválido."
-            });
-        }
-
-        const produto = db.prepare(`
-            SELECT
-                p.*,
-
-                u.username AS seller_username,
-                u.avatar_url AS seller_avatar,
-                u.seller_verified,
-                u.rating_positive,
-                u.rating_neutral,
-                u.rating_negative
-
-            FROM products p
-
-            INNER JOIN users u
-                ON u.id = p.seller_id
-
-            WHERE p.id = ?
-            AND p.status = 'approved'
-        `).get(id);
-
-        if (!produto) {
-
-            return res.status(404).json({
-                error: "Produto não encontrado."
-            });
-        }
-
-        db.prepare(`
-            UPDATE products
-            SET views = views + 1
-            WHERE id = ?
-        `).run(id);
-
-        produto.views++;
-
-        res.json({
-            product:
-                produtoPublico(produto)
-        });
-
-    } catch (error) {
-
-        console.error(error);
-
-        res.status(500).json({
-            error: "Erro ao carregar produto."
-        });
-    }
-});
-
-
-/*
-========================================
-CRIAR PRODUTO
-POST /api/products
-========================================
-*/
-
-router.post("/", autenticar, (req, res) => {
-
-    try {
-
-        if (!req.user.email_verified) {
-
-            return res.status(403).json({
-                error:
-                    "Verifique seu e-mail antes de publicar anúncios."
-            });
-        }
-
-        if (req.user.suspended) {
-
-            return res.status(403).json({
-                error:
-                    "Sua conta está suspensa."
-            });
-        }
-
-        const {
-            title,
-            description,
-            category,
-            price,
-            stock = 1,
-            delivery_type = "manual",
-            image_url = null
-        } = req.body;
-
-        const titulo =
-            String(title || "").trim();
-
-        const descricao =
-            String(description || "").trim();
-
-        const preco =
-            Number(price);
-
-        const estoque =
-            Number(stock);
-
-        if (
-            titulo.length < 3 ||
-            titulo.length > 80
-        ) {
-
-            return res.status(400).json({
-                error:
-                    "O título precisa ter entre 3 e 80 caracteres."
-            });
-        }
-
-        if (
-            descricao.length < 10 ||
-            descricao.length > 5000
-        ) {
-
-            return res.status(400).json({
-                error:
-                    "A descrição precisa ter entre 10 e 5000 caracteres."
-            });
-        }
-
-        if (!validarCategoria(category)) {
-
-            return res.status(400).json({
-                error: "Categoria inválida."
-            });
-        }
-
-        if (
-            !Number.isFinite(preco) ||
-            preco <= 0
-        ) {
-
-            return res.status(400).json({
-                error:
-                    "Informe um preço válido."
-            });
-        }
-
-        /*
-        A taxa fixa é R$0,97.
-        Produtos abaixo disso não podem
-        gerar valor negativo para o vendedor.
-        */
-
-        if (preco < 0.97) {
-
-            return res.status(400).json({
-                error:
-                    "O preço mínimo é R$0,97."
-            });
-        }
-
-        if (
-            !Number.isInteger(estoque) ||
-            estoque < 1 ||
-            estoque > 100000
-        ) {
-
-            return res.status(400).json({
-                error:
-                    "O estoque precisa ser um número inteiro entre 1 e 100000."
-            });
-        }
-
-        if (
-            delivery_type !== "manual" &&
-            delivery_type !== "automatic"
-        ) {
-
-            return res.status(400).json({
-                error:
-                    "Tipo de entrega inválido."
-            });
-        }
-
-        let imagem = null;
-
-        if (image_url) {
-
-            imagem =
-                String(image_url).trim();
-
-            if (imagem.length > 1500000) {
+            if (!Number.isInteger(id)) {
 
                 return res.status(400).json({
                     error:
-                        "A imagem é muito grande."
+                        "ID do produto inválido."
                 });
             }
+
+            const produto =
+                db.prepare(`
+                    SELECT
+                        p.*,
+
+                        u.username AS seller_username,
+                        u.avatar_url AS seller_avatar,
+
+                        u.rating_positive,
+                        u.rating_neutral,
+                        u.rating_negative,
+
+                        u.seller_verified
+
+                    FROM products p
+
+                    INNER JOIN users u
+                        ON u.id = p.seller_id
+
+                    WHERE
+                        p.id = ?
+                        AND p.status = 'approved'
+                `)
+                .get(id);
+
+            if (!produto) {
+
+                return res.status(404).json({
+                    error:
+                        "Produto não encontrado."
+                });
+            }
+
+            db.prepare(`
+                UPDATE products
+                SET views = views + 1
+                WHERE id = ?
+            `).run(id);
+
+            produto.views++;
+
+            res.json({
+                product:
+                    formatarProduto(produto)
+            });
+
+        } catch (erro) {
+
+            console.error(erro);
+
+            res.status(500).json({
+                error:
+                    "Erro ao carregar o produto."
+            });
         }
+    }
+);
 
-        const agora =
-            Date.now();
 
-        const resultado = db.prepare(`
-            INSERT INTO products (
+/* ==========================================
+   POST /api/products
+   CRIAR ANÚNCIO
+========================================== */
 
-                seller_id,
+router.post(
+    "/",
+    autenticar,
+    (req, res) => {
+
+        try {
+
+            if (!req.user.email_verified) {
+
+                return res.status(403).json({
+                    error:
+                        "Verifique seu e-mail antes de publicar anúncios."
+                });
+            }
+
+            if (req.user.suspended) {
+
+                return res.status(403).json({
+                    error:
+                        "Sua conta está suspensa."
+                });
+            }
+
+            const {
                 title,
                 description,
                 category,
-                price_cents,
-                image_url,
-                status,
-                stock,
-                delivery_type,
-                views,
-                created_at,
-                updated_at
+                price,
+                image_url = null,
+                stock = 1,
+                delivery_type = "manual"
+            } = req.body;
 
-            )
+            const titulo =
+                String(title || "").trim();
 
-            VALUES (
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                'pending',
-                ?,
-                ?,
-                0,
-                ?,
-                ?
-            )
-        `).run(
+            const descricao =
+                String(description || "").trim();
 
-            req.user.id,
+            const preco =
+                Number(price);
 
-            titulo,
+            const estoque =
+                Number.parseInt(
+                    stock,
+                    10
+                );
 
-            descricao,
+            if (
+                titulo.length < 3 ||
+                titulo.length > 100
+            ) {
 
-            category,
+                return res.status(400).json({
+                    error:
+                        "O título precisa ter entre 3 e 100 caracteres."
+                });
+            }
 
-            Math.round(preco * 100),
+            if (
+                descricao.length < 10 ||
+                descricao.length > 3000
+            ) {
 
-            imagem,
+                return res.status(400).json({
+                    error:
+                        "A descrição precisa ter entre 10 e 3000 caracteres."
+                });
+            }
 
-            estoque,
+            if (!CATEGORIAS.includes(category)) {
 
-            delivery_type,
+                return res.status(400).json({
+                    error:
+                        "Categoria inválida."
+                });
+            }
 
-            agora,
+            if (
+                !Number.isFinite(preco) ||
+                preco <= 0
+            ) {
 
-            agora
-        );
+                return res.status(400).json({
+                    error:
+                        "O preço precisa ser maior que R$ 0,00."
+                });
+            }
 
-        res.status(201).json({
+            /*
+                A taxa do SlaxStore é R$0,97.
 
-            message:
-                "Anúncio enviado para moderação.",
+                Não permitimos preço abaixo
+                da taxa para que o vendedor
+                não fique com saldo negativo.
+            */
 
-            product_id:
-                resultado.lastInsertRowid,
+            if (preco < 0.97) {
 
-            status:
-                "pending"
-        });
+                return res.status(400).json({
+                    error:
+                        "O preço mínimo é R$ 0,97."
+                });
+            }
 
-    } catch (error) {
+            if (
+                !Number.isInteger(estoque) ||
+                estoque < 1 ||
+                estoque > 100000
+            ) {
 
-        console.error(
-            "Erro ao criar produto:",
-            error
-        );
+                return res.status(400).json({
+                    error:
+                        "O estoque precisa ser um número entre 1 e 100000."
+                });
+            }
 
-        res.status(500).json({
-            error:
-                "Erro ao criar anúncio."
-        });
+            if (
+                !TIPOS_ENTREGA.includes(
+                    delivery_type
+                )
+            ) {
+
+                return res.status(400).json({
+                    error:
+                        "Tipo de entrega inválido."
+                });
+            }
+
+            let imagem = null;
+
+            if (image_url !== null) {
+
+                imagem =
+                    String(image_url).trim();
+
+                if (imagem.length > 2000000) {
+
+                    return res.status(400).json({
+                        error:
+                            "A imagem é muito grande."
+                    });
+                }
+
+                if (
+                    imagem &&
+                    !imagem.startsWith("http://") &&
+                    !imagem.startsWith("https://") &&
+                    !imagem.startsWith("data:image/")
+                ) {
+
+                    return res.status(400).json({
+                        error:
+                            "Formato de imagem inválido."
+                    });
+                }
+            }
+
+            const timestamp =
+                agora();
+
+            const resultado =
+                db.prepare(`
+                    INSERT INTO products
+                    (
+                        seller_id,
+                        title,
+                        description,
+                        category,
+                        price_cents,
+                        image_url,
+                        status,
+                        stock,
+                        delivery_type,
+                        views,
+                        created_at,
+                        updated_at
+                    )
+
+                    VALUES
+                    (
+                        @seller_id,
+                        @title,
+                        @description,
+                        @category,
+                        @price_cents,
+                        @image_url,
+                        'pending',
+                        @stock,
+                        @delivery_type,
+                        0,
+                        @created_at,
+                        @updated_at
+                    )
+                `)
+                .run({
+                    seller_id:
+                        req.user.id,
+
+                    title:
+                        titulo,
+
+                    description:
+                        descricao,
+
+                    category,
+
+                    price_cents:
+                        Math.round(
+                            preco * 100
+                        ),
+
+                    image_url:
+                        imagem,
+
+                    stock:
+                        estoque,
+
+                    delivery_type,
+
+                    created_at:
+                        timestamp,
+
+                    updated_at:
+                        timestamp
+                });
+
+            const produto =
+                db.prepare(`
+                    SELECT *
+                    FROM products
+                    WHERE id = ?
+                `)
+                .get(resultado.lastInsertRowid);
+
+            res.status(201).json({
+                message:
+                    "Anúncio enviado para moderação.",
+
+                product:
+                    formatarProduto(produto)
+            });
+
+        } catch (erro) {
+
+            console.error(
+                "Erro ao criar produto:",
+                erro
+            );
+
+            res.status(500).json({
+                error:
+                    "Erro ao criar anúncio."
+            });
+        }
     }
-});
+);
 
 
-/*
-========================================
-EDITAR PRODUTO
-PUT /api/products/:id
-========================================
-*/
+/* ==========================================
+   PUT /api/products/:id
+   EDITAR ANÚNCIO
+========================================== */
 
-router.put("/:id", autenticar, (req, res) => {
-
-    try {
-
-        const id =
-            Number(req.params.id);
-
-        const produto = db.prepare(`
-            SELECT *
-            FROM products
-            WHERE id = ?
-        `).get(id);
-
-        if (!produto) {
-
-            return res.status(404).json({
-                error:
-                    "Produto não encontrado."
-            });
-        }
-
-        if (
-            produto.seller_id !==
-            req.user.id
-        ) {
-
-            return res.status(403).json({
-                error:
-                    "Você não é o dono deste anúncio."
-            });
-        }
-
-        const {
-            title,
-            description,
-            category,
-            price,
-            stock,
-            delivery_type,
-            image_url
-        } = req.body;
-
-        const titulo =
-            String(
-                title ?? produto.title
-            ).trim();
-
-        const descricao =
-            String(
-                description ??
-                produto.description
-            ).trim();
-
-        const categoria =
-            category ??
-            produto.category;
-
-        const preco =
-            price === undefined
-                ? produto.price_cents / 100
-                : Number(price);
-
-        const estoque =
-            stock === undefined
-                ? produto.stock
-                : Number(stock);
-
-        const entrega =
-            delivery_type ??
-            produto.delivery_type;
-
-        const imagem =
-            image_url === undefined
-                ? produto.image_url
-                : image_url;
-
-        if (
-            titulo.length < 3 ||
-            titulo.length > 80
-        ) {
-
-            return res.status(400).json({
-                error:
-                    "Título inválido."
-            });
-        }
-
-        if (
-            descricao.length < 10 ||
-            descricao.length > 5000
-        ) {
-
-            return res.status(400).json({
-                error:
-                    "Descrição inválida."
-            });
-        }
-
-        if (!validarCategoria(categoria)) {
-
-            return res.status(400).json({
-                error:
-                    "Categoria inválida."
-            });
-        }
-
-        if (
-            !Number.isFinite(preco) ||
-            preco < 0.97
-        ) {
-
-            return res.status(400).json({
-                error:
-                    "Preço inválido. O mínimo é R$0,97."
-            });
-        }
-
-        if (
-            !Number.isInteger(estoque) ||
-            estoque < 1
-        ) {
-
-            return res.status(400).json({
-                error:
-                    "Estoque inválido."
-            });
-        }
-
-        if (
-            entrega !== "manual" &&
-            entrega !== "automatic"
-        ) {
-
-            return res.status(400).json({
-                error:
-                    "Tipo de entrega inválido."
-            });
-        }
-
-        const agora =
-            Date.now();
-
-        /*
-        Qualquer alteração importante
-        manda novamente para moderação.
-        */
-
-        db.prepare(`
-            UPDATE products
-
-            SET
-                title = ?,
-                description = ?,
-                category = ?,
-                price_cents = ?,
-                image_url = ?,
-                stock = ?,
-                delivery_type = ?,
-                status = 'pending',
-                updated_at = ?
-
-            WHERE id = ?
-        `).run(
-
-            titulo,
-
-            descricao,
-
-            categoria,
-
-            Math.round(preco * 100),
-
-            imagem || null,
-
-            estoque,
-
-            entrega,
-
-            agora,
-
-            id
-        );
-
-        res.json({
-            message:
-                "Anúncio atualizado e enviado novamente para moderação."
-        });
-
-    } catch (error) {
-
-        console.error(error);
-
-        res.status(500).json({
-            error:
-                "Erro ao editar anúncio."
-        });
-    }
-});
-
-
-/*
-========================================
-PAUSAR / ATIVAR
-POST /api/products/:id/toggle
-========================================
-*/
-
-router.post(
-    "/:id/toggle",
+router.put(
+    "/:id",
     autenticar,
     (req, res) => {
 
         try {
 
             const id =
-                Number(req.params.id);
+                Number.parseInt(
+                    req.params.id,
+                    10
+                );
 
-            const produto = db.prepare(`
-                SELECT *
-                FROM products
-                WHERE id = ?
-            `).get(id);
+            if (!Number.isInteger(id)) {
+
+                return res.status(400).json({
+                    error:
+                        "ID inválido."
+                });
+            }
+
+            const produto =
+                db.prepare(`
+                    SELECT *
+                    FROM products
+                    WHERE id = ?
+                `)
+                .get(id);
 
             if (!produto) {
 
@@ -796,7 +648,254 @@ router.post(
 
                 return res.status(403).json({
                     error:
-                        "Você não é o dono deste anúncio."
+                        "Você não pode editar este anúncio."
+                });
+            }
+
+            const {
+                title,
+                description,
+                category,
+                price,
+                image_url,
+                stock,
+                delivery_type
+            } = req.body;
+
+            const titulo =
+                String(
+                    title ?? produto.title
+                ).trim();
+
+            const descricao =
+                String(
+                    description ??
+                    produto.description
+                ).trim();
+
+            const categoria =
+                category ??
+                produto.category;
+
+            const preco =
+                Number(
+                    price ??
+                    produto.price_cents / 100
+                );
+
+            const estoque =
+                Number.parseInt(
+                    stock ??
+                    produto.stock,
+                    10
+                );
+
+            const entrega =
+                delivery_type ??
+                produto.delivery_type;
+
+            let imagem =
+                image_url !== undefined
+                    ? image_url
+                    : produto.image_url;
+
+            if (
+                typeof imagem === "string"
+            ) {
+                imagem =
+                    imagem.trim();
+            }
+
+            if (
+                titulo.length < 3 ||
+                titulo.length > 100
+            ) {
+
+                return res.status(400).json({
+                    error:
+                        "O título precisa ter entre 3 e 100 caracteres."
+                });
+            }
+
+            if (
+                descricao.length < 10 ||
+                descricao.length > 3000
+            ) {
+
+                return res.status(400).json({
+                    error:
+                        "A descrição precisa ter entre 10 e 3000 caracteres."
+                });
+            }
+
+            if (!CATEGORIAS.includes(categoria)) {
+
+                return res.status(400).json({
+                    error:
+                        "Categoria inválida."
+                });
+            }
+
+            if (
+                !Number.isFinite(preco) ||
+                preco < 0.97
+            ) {
+
+                return res.status(400).json({
+                    error:
+                        "O preço mínimo é R$ 0,97."
+                });
+            }
+
+            if (
+                !Number.isInteger(estoque) ||
+                estoque < 1
+            ) {
+
+                return res.status(400).json({
+                    error:
+                        "O estoque precisa ser pelo menos 1."
+                });
+            }
+
+            if (
+                !TIPOS_ENTREGA.includes(entrega)
+            ) {
+
+                return res.status(400).json({
+                    error:
+                        "Tipo de entrega inválido."
+                });
+            }
+
+            if (
+                imagem &&
+                !String(imagem).startsWith("http://") &&
+                !String(imagem).startsWith("https://") &&
+                !String(imagem).startsWith("data:image/")
+            ) {
+
+                return res.status(400).json({
+                    error:
+                        "Formato de imagem inválido."
+                });
+            }
+
+            if (
+                String(imagem || "").length >
+                2000000
+            ) {
+
+                return res.status(400).json({
+                    error:
+                        "A imagem é muito grande."
+                });
+            }
+
+            const timestamp =
+                agora();
+
+            db.prepare(`
+                UPDATE products
+
+                SET
+                    title = ?,
+                    description = ?,
+                    category = ?,
+                    price_cents = ?,
+                    image_url = ?,
+                    stock = ?,
+                    delivery_type = ?,
+
+                    status = 'pending',
+
+                    updated_at = ?
+
+                WHERE id = ?
+            `)
+            .run(
+                titulo,
+                descricao,
+                categoria,
+                Math.round(preco * 100),
+                imagem || null,
+                estoque,
+                entrega,
+                timestamp,
+                id
+            );
+
+            const atualizado =
+                db.prepare(`
+                    SELECT *
+                    FROM products
+                    WHERE id = ?
+                `)
+                .get(id);
+
+            res.json({
+                message:
+                    "Anúncio atualizado e enviado novamente para moderação.",
+
+                product:
+                    formatarProduto(atualizado)
+            });
+
+        } catch (erro) {
+
+            console.error(erro);
+
+            res.status(500).json({
+                error:
+                    "Erro ao editar anúncio."
+            });
+        }
+    }
+);
+
+
+/* ==========================================
+   POST /api/products/:id/pause
+   PAUSAR / REATIVAR
+========================================== */
+
+router.post(
+    "/:id/pause",
+    autenticar,
+    (req, res) => {
+
+        try {
+
+            const id =
+                Number.parseInt(
+                    req.params.id,
+                    10
+                );
+
+            const produto =
+                db.prepare(`
+                    SELECT *
+                    FROM products
+                    WHERE id = ?
+                `)
+                .get(id);
+
+            if (!produto) {
+
+                return res.status(404).json({
+                    error:
+                        "Produto não encontrado."
+                });
+            }
+
+            if (
+                produto.seller_id !==
+                req.user.id
+            ) {
+
+                return res.status(403).json({
+                    error:
+                        "Você não pode alterar este anúncio."
                 });
             }
 
@@ -807,7 +906,7 @@ router.post(
 
                 return res.status(400).json({
                     error:
-                        "Somente anúncios aprovados podem ser pausados ou ativados."
+                        "Somente anúncios aprovados ou pausados podem ser alterados."
                 });
             }
 
@@ -818,30 +917,32 @@ router.post(
 
             db.prepare(`
                 UPDATE products
+
                 SET
                     status = ?,
                     updated_at = ?
+
                 WHERE id = ?
-            `).run(
+            `)
+            .run(
                 novoStatus,
-                Date.now(),
+                agora(),
                 id
             );
 
             res.json({
-
                 message:
                     novoStatus === "paused"
                         ? "Anúncio pausado."
-                        : "Anúncio ativado.",
+                        : "Anúncio reativado.",
 
                 status:
                     novoStatus
             });
 
-        } catch (error) {
+        } catch (erro) {
 
-            console.error(error);
+            console.error(erro);
 
             res.status(500).json({
                 error:
@@ -852,12 +953,9 @@ router.post(
 );
 
 
-/*
-========================================
-EXCLUIR PRODUTO
-DELETE /api/products/:id
-========================================
-*/
+/* ==========================================
+   DELETE /api/products/:id
+========================================== */
 
 router.delete(
     "/:id",
@@ -867,13 +965,18 @@ router.delete(
         try {
 
             const id =
-                Number(req.params.id);
+                Number.parseInt(
+                    req.params.id,
+                    10
+                );
 
-            const produto = db.prepare(`
-                SELECT *
-                FROM products
-                WHERE id = ?
-            `).get(id);
+            const produto =
+                db.prepare(`
+                    SELECT *
+                    FROM products
+                    WHERE id = ?
+                `)
+                .get(id);
 
             if (!produto) {
 
@@ -894,34 +997,20 @@ router.delete(
                 });
             }
 
-            const pedidos =
-                db.prepare(`
-                    SELECT COUNT(*) AS total
-                    FROM orders
-                    WHERE product_id = ?
-                `).get(id);
-
-            if (pedidos.total > 0) {
-
-                return res.status(400).json({
-                    error:
-                        "Este anúncio possui pedidos e não pode ser excluído. Pause o anúncio."
-                });
-            }
-
             db.prepare(`
                 DELETE FROM products
                 WHERE id = ?
-            `).run(id);
+            `)
+            .run(id);
 
             res.json({
                 message:
-                    "Anúncio excluído."
+                    "Anúncio excluído com sucesso."
             });
 
-        } catch (error) {
+        } catch (erro) {
 
-            console.error(error);
+            console.error(erro);
 
             res.status(500).json({
                 error:
@@ -930,6 +1019,86 @@ router.delete(
         }
     }
 );
+
+
+/* ==========================================
+   FORMATAR PRODUTO
+========================================== */
+
+function formatarProduto(produto) {
+
+    if (!produto) {
+        return null;
+    }
+
+    return {
+
+        id:
+            produto.id,
+
+        title:
+            produto.title,
+
+        description:
+            produto.description,
+
+        category:
+            produto.category,
+
+        price_cents:
+            produto.price_cents,
+
+        price:
+            produto.price_cents / 100,
+
+        image_url:
+            produto.image_url,
+
+        status:
+            produto.status,
+
+        stock:
+            produto.stock,
+
+        delivery_type:
+            produto.delivery_type,
+
+        views:
+            produto.views,
+
+        created_at:
+            produto.created_at,
+
+        updated_at:
+            produto.updated_at,
+
+        seller: {
+
+            id:
+                produto.seller_id,
+
+            username:
+                produto.seller_username,
+
+            avatar_url:
+                produto.seller_avatar,
+
+            rating_positive:
+                produto.rating_positive ?? 0,
+
+            rating_neutral:
+                produto.rating_neutral ?? 0,
+
+            rating_negative:
+                produto.rating_negative ?? 0,
+
+            seller_verified:
+                Boolean(
+                    produto.seller_verified
+                )
+        }
+    };
+}
 
 
 module.exports = router;
