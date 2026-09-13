@@ -47,7 +47,8 @@ router.post("/register", async (req, res) => {
             });
         }
 
-        const emailNormalizado = email.toLowerCase().trim();
+        const emailNormalizado =
+            email.toLowerCase().trim();
 
         const existente = db
             .prepare(`
@@ -60,19 +61,22 @@ router.post("/register", async (req, res) => {
 
         if (existente) {
             return res.status(409).json({
-                error: "E-mail ou nome de usuário já cadastrado."
+                error:
+                    "E-mail ou nome de usuário já cadastrado."
             });
         }
 
         const passwordHash =
             await bcrypt.hash(password, 12);
 
-        const codigo = gerarCodigo();
+        const codigo =
+            gerarCodigo();
 
         const codigoHash =
             await bcrypt.hash(codigo, 10);
 
-        const agora = Date.now();
+        const agora =
+            Date.now();
 
         const expiracao =
             agora + (15 * 60 * 1000);
@@ -105,7 +109,6 @@ router.post("/register", async (req, res) => {
         res.status(201).json({
             message:
                 "Conta criada. Verifique seu e-mail.",
-
             userId:
                 result.lastInsertRowid
         });
@@ -141,7 +144,8 @@ router.post("/verify-email", async (req, res) => {
 
         if (!email || !code) {
             return res.status(400).json({
-                error: "Informe o e-mail e o código."
+                error:
+                    "Informe o e-mail e o código."
             });
         }
 
@@ -158,13 +162,15 @@ router.post("/verify-email", async (req, res) => {
 
         if (!user) {
             return res.status(404).json({
-                error: "Conta não encontrada."
+                error:
+                    "Conta não encontrada."
             });
         }
 
         if (user.email_verified) {
             return res.json({
-                message: "E-mail já verificado."
+                message:
+                    "E-mail já verificado."
             });
         }
 
@@ -173,7 +179,8 @@ router.post("/verify-email", async (req, res) => {
             Date.now() > user.verification_expires
         ) {
             return res.status(400).json({
-                error: "Código expirado."
+                error:
+                    "Código expirado."
             });
         }
 
@@ -185,7 +192,8 @@ router.post("/verify-email", async (req, res) => {
 
         if (!correto) {
             return res.status(400).json({
-                error: "Código incorreto."
+                error:
+                    "Código incorreto."
             });
         }
 
@@ -295,7 +303,8 @@ router.post("/login", async (req, res) => {
 
         res.json({
 
-            message: "Login realizado.",
+            message:
+                "Login realizado.",
 
             token,
 
@@ -314,6 +323,211 @@ router.post("/login", async (req, res) => {
         res.status(500).json({
             error:
                 "Erro interno."
+        });
+
+    }
+
+});
+
+
+/*
+========================================
+RECUPERAR SENHA
+========================================
+*/
+
+router.post("/forgot-password", async (req, res) => {
+
+    try {
+
+        const {
+            email
+        } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                error:
+                    "Informe seu e-mail."
+            });
+        }
+
+        const emailNormalizado =
+            email.toLowerCase().trim();
+
+        const user = db
+            .prepare(`
+                SELECT id, email
+                FROM users
+                WHERE email = ?
+            `)
+            .get(emailNormalizado);
+
+        if (!user) {
+            return res.status(404).json({
+                error:
+                    "Nenhuma conta encontrada com esse e-mail."
+            });
+        }
+
+        const codigo =
+            gerarCodigo();
+
+        const codigoHash =
+            await bcrypt.hash(codigo, 10);
+
+        const expiracao =
+            Date.now() + (15 * 60 * 1000);
+
+        db.prepare(`
+            UPDATE users
+
+            SET
+                verification_code_hash = ?,
+                verification_expires = ?
+
+            WHERE id = ?
+        `).run(
+            codigoHash,
+            expiracao,
+            user.id
+        );
+
+        await enviarCodigo(
+            emailNormalizado,
+            codigo
+        );
+
+        res.json({
+            message:
+                "Código enviado para seu e-mail."
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            error:
+                "Erro interno ao enviar o código."
+        });
+
+    }
+
+});
+
+
+/*
+========================================
+REDEFINIR SENHA
+========================================
+*/
+
+router.post("/reset-password", async (req, res) => {
+
+    try {
+
+        const {
+            email,
+            code,
+            newPassword
+        } = req.body;
+
+        if (!email || !code || !newPassword) {
+            return res.status(400).json({
+                error:
+                    "Preencha todos os campos."
+            });
+        }
+
+        if (newPassword.length < 8) {
+            return res.status(400).json({
+                error:
+                    "A nova senha precisa ter pelo menos 8 caracteres."
+            });
+        }
+
+        const emailNormalizado =
+            email.toLowerCase().trim();
+
+        const user = db
+            .prepare(`
+                SELECT *
+                FROM users
+                WHERE email = ?
+            `)
+            .get(emailNormalizado);
+
+        if (!user) {
+            return res.status(404).json({
+                error:
+                    "Conta não encontrada."
+            });
+        }
+
+        if (
+            !user.verification_code_hash ||
+            !user.verification_expires
+        ) {
+            return res.status(400).json({
+                error:
+                    "Nenhum código de recuperação foi solicitado."
+            });
+        }
+
+        if (
+            Date.now() > user.verification_expires
+        ) {
+            return res.status(400).json({
+                error:
+                    "Código expirado."
+            });
+        }
+
+        const codigoCorreto =
+            await bcrypt.compare(
+                code,
+                user.verification_code_hash
+            );
+
+        if (!codigoCorreto) {
+            return res.status(400).json({
+                error:
+                    "Código incorreto."
+            });
+        }
+
+        const passwordHash =
+            await bcrypt.hash(
+                newPassword,
+                12
+            );
+
+        db.prepare(`
+            UPDATE users
+
+            SET
+                password_hash = ?,
+                verification_code_hash = NULL,
+                verification_expires = NULL
+
+            WHERE id = ?
+        `).run(
+            passwordHash,
+            user.id
+        );
+
+        res.json({
+            message:
+                "Senha alterada com sucesso."
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            error:
+                "Erro interno ao redefinir a senha."
         });
 
     }
