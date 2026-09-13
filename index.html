@@ -2,420 +2,744 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 
-    <title>SlaxStore</title>
+<title>SlaxStore — Marketplace Gamer</title>
 
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+<style>
 
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            background: #05070d;
-            color: white;
-            min-height: 100vh;
-        }
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
 
-        header {
-            height: 70px;
-            background: #080b13;
-            border-bottom: 1px solid #151d2e;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 35px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+html{
+    scroll-behavior:smooth;
+}
 
-        .logo {
-            font-size: 25px;
-            font-weight: 900;
-            color: #168cff;
-            letter-spacing: -1px;
-        }
+body{
+    font-family:Arial,Helvetica,sans-serif;
+    background:
+        radial-gradient(circle at 20% 0%,rgba(0,132,255,.13),transparent 35%),
+        radial-gradient(circle at 90% 20%,rgba(0,90,255,.09),transparent 30%),
+        #05070c;
+    color:#fff;
+    min-height:100vh;
+}
 
-        .logo span {
-            color: white;
-        }
+/* HEADER */
 
-        nav {
-            display: flex;
-            gap: 25px;
-            align-items: center;
-        }
+header{
+    height:72px;
+    position:sticky;
+    top:0;
+    z-index:500;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 5%;
+    background:rgba(5,8,14,.9);
+    backdrop-filter:blur(18px);
+    border-bottom:1px solid #162238;
+}
 
-        nav a {
-            color: #b8c0cf;
-            text-decoration: none;
-            font-size: 14px;
-            cursor: pointer;
-        }
+.logo{
+    font-size:25px;
+    font-weight:900;
+    color:#1494ff;
+    cursor:pointer;
+}
 
-        nav a:hover {
-            color: #168cff;
-        }
+.logo span{
+    color:#fff;
+}
 
-        #authArea {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+nav{
+    display:flex;
+    align-items:center;
+    gap:25px;
+}
 
-        .btn {
-            border: none;
-            border-radius: 9px;
-            padding: 11px 17px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-        }
+nav a{
+    color:#8e9bb0;
+    text-decoration:none;
+    cursor:pointer;
+    font-size:14px;
+    transition:.2s;
+}
 
-        .btn:hover {
-            transform: translateY(-1px);
-        }
+nav a:hover{
+    color:#1594ff;
+}
 
-        .btn-blue {
-            background: #168cff;
-            color: white;
-        }
+#authArea{
+    display:flex;
+    align-items:center;
+}
 
-        .btn-blue:hover {
-            background: #0876df;
-        }
+/* BUTTONS */
 
-        .btn-dark {
-            background: #111827;
-            color: white;
-            border: 1px solid #263248;
-        }
+.btn{
+    border:none;
+    border-radius:9px;
+    padding:11px 17px;
+    font-weight:800;
+    cursor:pointer;
+    transition:.2s;
+}
 
-        .btn-red {
-            background: #d93636;
-            color: white;
-        }
+.btn:hover{
+    transform:translateY(-1px);
+}
 
-        .user-box {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+.blue{
+    background:#128fff;
+    color:white;
+    box-shadow:0 5px 25px rgba(18,143,255,.2);
+}
 
-        .username {
-            color: #dce5f5;
-            font-weight: bold;
-        }
+.blue:hover{
+    background:#0878dd;
+}
 
-        .hero {
-            max-width: 1200px;
-            margin: auto;
-            padding: 100px 25px 70px;
-            text-align: center;
-        }
+.dark{
+    background:#0c121d;
+    color:#fff;
+    border:1px solid #24334a;
+}
 
-        .hero h1 {
-            font-size: 55px;
-            font-weight: 900;
-            margin-bottom: 18px;
-        }
+.red{
+    background:#d93c45;
+    color:white;
+}
 
-        .hero h1 span {
-            color: #168cff;
-        }
+/* HERO */
 
-        .hero p {
-            color: #8995aa;
-            max-width: 650px;
-            margin: auto;
-            line-height: 1.6;
-            font-size: 17px;
-        }
+.hero{
+    max-width:1200px;
+    margin:auto;
+    min-height:600px;
+    padding:120px 25px 90px;
+    text-align:center;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+}
 
-        .hero-buttons {
-            margin-top: 30px;
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
+.badge{
+    display:inline-block;
+    padding:8px 13px;
+    border-radius:30px;
+    background:rgba(18,143,255,.1);
+    border:1px solid rgba(18,143,255,.3);
+    color:#5eb9ff;
+    font-size:12px;
+    font-weight:bold;
+    margin-bottom:20px;
+}
 
-        .section {
-            max-width: 1200px;
-            margin: auto;
-            padding: 40px 25px 100px;
-        }
+.hero h1{
+    max-width:900px;
+    font-size:clamp(42px,7vw,78px);
+    line-height:.98;
+    font-weight:950;
+    letter-spacing:-4px;
+}
 
-        .section-title {
-            font-size: 28px;
-            margin-bottom: 25px;
-        }
+.hero h1 span{
+    color:#1494ff;
+}
 
-        .categories {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
+.hero p{
+    max-width:650px;
+    color:#8794a9;
+    font-size:17px;
+    line-height:1.7;
+    margin-top:25px;
+}
 
-        .category {
-            background: #0a0f19;
-            border: 1px solid #172236;
-            padding: 25px;
-            border-radius: 14px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
+.hero-buttons{
+    display:flex;
+    gap:12px;
+    margin-top:30px;
+    flex-wrap:wrap;
+    justify-content:center;
+}
 
-        .category:hover {
-            border-color: #168cff;
-            transform: translateY(-3px);
-        }
+/* STATS */
 
-        .category h3 {
-            margin-bottom: 8px;
-        }
+.stats{
+    width:min(900px,100%);
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+    margin-top:65px;
+}
 
-        .category p {
-            color: #7f8ca3;
-            font-size: 13px;
-        }
+.stat{
+    background:rgba(10,16,26,.7);
+    border:1px solid #18263b;
+    border-radius:14px;
+    padding:20px;
+}
 
-        footer {
-            border-top: 1px solid #151d2e;
-            padding: 30px;
-            text-align: center;
-            color: #68758b;
-            font-size: 13px;
-        }
+.stat strong{
+    display:block;
+    color:#fff;
+    font-size:24px;
+}
 
-        /* MODAL */
+.stat span{
+    color:#68778d;
+    font-size:12px;
+}
 
-        .modal-bg {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.75);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            z-index: 1000;
-        }
+/* SECTION */
 
-        .modal {
-            width: 100%;
-            max-width: 430px;
-            background: #090e17;
-            border: 1px solid #1b2a42;
-            border-radius: 16px;
-            padding: 28px;
-            box-shadow: 0 20px 80px rgba(0, 0, 0, 0.6);
-        }
+.section{
+    width:min(1200px,92%);
+    margin:auto;
+    padding:70px 0;
+}
 
-        .modal h2 {
-            margin-bottom: 8px;
-        }
+.section-title{
+    font-size:30px;
+    margin-bottom:8px;
+}
 
-        .modal-subtitle {
-            color: #7e8ba0;
-            font-size: 14px;
-            margin-bottom: 22px;
-            line-height: 1.5;
-        }
+.section-description{
+    color:#748197;
+    margin-bottom:30px;
+}
 
-        .close {
-            float: right;
-            background: none;
-            border: none;
-            color: #8895a9;
-            font-size: 23px;
-            cursor: pointer;
-        }
+/* CATEGORIES */
 
-        .field {
-            margin-bottom: 15px;
-        }
+.categories{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:15px;
+}
 
-        .field label {
-            display: block;
-            color: #aeb8c8;
-            font-size: 13px;
-            margin-bottom: 7px;
-        }
+.category{
+    background:linear-gradient(145deg,#0a111d,#080c14);
+    border:1px solid #19273d;
+    border-radius:15px;
+    padding:25px;
+    cursor:pointer;
+    transition:.2s;
+}
 
-        .field input {
-            width: 100%;
-            padding: 13px;
-            border-radius: 9px;
-            border: 1px solid #24334c;
-            background: #060a11;
-            color: white;
-            outline: none;
-        }
+.category:hover{
+    border-color:#128fff;
+    transform:translateY(-4px);
+}
 
-        .field input:focus {
-            border-color: #168cff;
-        }
+.category-icon{
+    font-size:28px;
+    margin-bottom:15px;
+}
 
-        .modal .btn {
-            width: 100%;
-            margin-top: 5px;
-        }
+.category h3{
+    margin-bottom:8px;
+}
 
-        .switch {
-            text-align: center;
-            margin-top: 18px;
-            color: #77849a;
-            font-size: 13px;
-        }
+.category p{
+    color:#68778d;
+    font-size:13px;
+}
 
-        .switch span {
-            color: #168cff;
-            cursor: pointer;
-            font-weight: bold;
-        }
+/* PRODUCTS */
 
-        .forgot {
-            display: block;
-            text-align: right;
-            margin: 8px 0 12px;
-            color: #168cff;
-            font-size: 12px;
-            cursor: pointer;
-        }
+.products{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+    gap:18px;
+}
 
-        .message {
-            padding: 11px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 13px;
-            display: none;
-        }
+.product{
+    overflow:hidden;
+    background:#090f18;
+    border:1px solid #17263b;
+    border-radius:15px;
+    transition:.2s;
+}
 
-        .message.error {
-            display: block;
-            background: rgba(217, 54, 54, 0.12);
-            border: 1px solid rgba(217, 54, 54, 0.4);
-            color: #ff8585;
-        }
+.product:hover{
+    border-color:#128fff;
+    transform:translateY(-3px);
+}
 
-        .message.success {
-            display: block;
-            background: rgba(22, 140, 255, 0.12);
-            border: 1px solid rgba(22, 140, 255, 0.4);
-            color: #65b5ff;
-        }
+.product-image{
+    height:160px;
+    background:
+        linear-gradient(135deg,#07111e,#0d2740);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#3e9fe8;
+    font-size:45px;
+}
 
-        .hidden {
-            display: none !important;
-        }
+.product-body{
+    padding:18px;
+}
 
-        @media (max-width: 700px) {
-            header {
-                padding: 0 15px;
-            }
+.product-category{
+    color:#4baeff;
+    font-size:11px;
+    font-weight:bold;
+    text-transform:uppercase;
+}
 
-            nav {
-                display: none;
-            }
+.product h3{
+    margin:8px 0;
+    font-size:17px;
+}
 
-            .hero {
-                padding-top: 70px;
-            }
+.product-description{
+    color:#738198;
+    font-size:13px;
+    min-height:38px;
+}
 
-            .hero h1 {
-                font-size: 39px;
-            }
+.product-bottom{
+    display:flex;
+    justify-content:space-between;
+    align-items:end;
+    margin-top:18px;
+}
 
-            .username {
-                display: none;
-            }
-        }
-    </style>
+.price{
+    font-size:20px;
+    font-weight:900;
+}
+
+.seller{
+    color:#66748a;
+    font-size:11px;
+}
+
+/* USER */
+
+.user-box{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.username{
+    font-size:13px;
+    font-weight:bold;
+}
+
+/* MODAL */
+
+.modal-bg{
+    position:fixed;
+    inset:0;
+    z-index:2000;
+    background:rgba(0,0,0,.78);
+    backdrop-filter:blur(7px);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+    overflow:auto;
+}
+
+.modal{
+    width:100%;
+    max-width:500px;
+    max-height:92vh;
+    overflow:auto;
+    background:#080d16;
+    border:1px solid #1c2e47;
+    border-radius:18px;
+    padding:30px;
+    box-shadow:0 30px 100px rgba(0,0,0,.7);
+}
+
+.close{
+    float:right;
+    background:none;
+    border:none;
+    color:#78869b;
+    font-size:25px;
+    cursor:pointer;
+}
+
+.modal h2{
+    font-size:25px;
+    margin-bottom:8px;
+}
+
+.subtitle{
+    color:#748197;
+    font-size:13px;
+    line-height:1.5;
+    margin-bottom:22px;
+}
+
+.field{
+    margin-bottom:15px;
+}
+
+.field label{
+    display:block;
+    color:#aab5c6;
+    font-size:12px;
+    font-weight:bold;
+    margin-bottom:7px;
+}
+
+.field input,
+.field textarea,
+.field select{
+    width:100%;
+    padding:13px;
+    border-radius:9px;
+    border:1px solid #24364f;
+    background:#050910;
+    color:#fff;
+    outline:none;
+    font-family:inherit;
+}
+
+.field textarea{
+    min-height:110px;
+    resize:vertical;
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus{
+    border-color:#1494ff;
+}
+
+.modal .btn{
+    width:100%;
+    margin-top:5px;
+}
+
+.switch{
+    text-align:center;
+    margin-top:17px;
+    color:#68778c;
+    font-size:13px;
+}
+
+.switch span,
+.link{
+    color:#1494ff;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.forgot{
+    display:block;
+    text-align:right;
+    color:#1494ff;
+    font-size:12px;
+    margin:-5px 0 12px;
+    cursor:pointer;
+}
+
+.message{
+    display:none;
+    padding:11px;
+    border-radius:9px;
+    margin-bottom:15px;
+    font-size:13px;
+}
+
+.message.error{
+    display:block;
+    background:rgba(220,50,60,.1);
+    border:1px solid rgba(220,50,60,.35);
+    color:#ff8188;
+}
+
+.message.success{
+    display:block;
+    background:rgba(18,143,255,.1);
+    border:1px solid rgba(18,143,255,.35);
+    color:#66bbff;
+}
+
+/* DASHBOARD */
+
+.dashboard{
+    display:grid;
+    grid-template-columns:220px 1fr;
+    gap:20px;
+}
+
+.side{
+    background:#080e17;
+    border:1px solid #18273d;
+    border-radius:15px;
+    padding:15px;
+    height:max-content;
+}
+
+.side button{
+    width:100%;
+    text-align:left;
+    background:none;
+    border:none;
+    color:#8794a8;
+    padding:13px;
+    border-radius:8px;
+    cursor:pointer;
+    margin-bottom:4px;
+}
+
+.side button:hover,
+.side button.active{
+    color:#fff;
+    background:#101c2d;
+}
+
+.panel{
+    background:#080e17;
+    border:1px solid #18273d;
+    border-radius:15px;
+    padding:25px;
+}
+
+.panel h2{
+    margin-bottom:8px;
+}
+
+.panel p{
+    color:#748197;
+}
+
+/* SELLER */
+
+.notice{
+    padding:15px;
+    background:rgba(18,143,255,.08);
+    border:1px solid rgba(18,143,255,.2);
+    border-radius:10px;
+    color:#91cfff;
+    font-size:13px;
+    line-height:1.5;
+    margin-bottom:20px;
+}
+
+/* FOOTER */
+
+footer{
+    border-top:1px solid #142238;
+    padding:35px;
+    text-align:center;
+    color:#59677c;
+    font-size:12px;
+}
+
+/* HIDDEN */
+
+.hidden{
+    display:none!important;
+}
+
+/* MOBILE */
+
+@media(max-width:750px){
+
+    header{
+        padding:0 15px;
+    }
+
+    nav{
+        display:none;
+    }
+
+    .hero{
+        min-height:540px;
+        padding-top:80px;
+    }
+
+    .hero h1{
+        letter-spacing:-2px;
+    }
+
+    .stats{
+        grid-template-columns:1fr;
+    }
+
+    .dashboard{
+        grid-template-columns:1fr;
+    }
+
+    .username{
+        display:none;
+    }
+
+}
+
+</style>
 </head>
 
 <body>
 
 <header>
-    <div class="logo">
+
+    <div class="logo" onclick="inicio()">
         Slax<span>Store</span>
     </div>
 
     <nav>
-        <a onclick="irInicio()">Início</a>
-        <a onclick="mostrarLogin()">Entrar</a>
-        <a onclick="mostrarCadastro()">Criar conta</a>
+        <a onclick="inicio()">Início</a>
+        <a onclick="mostrarProdutos()">Produtos</a>
+        <a onclick="mostrarCategorias()">Categorias</a>
+        <a onclick="abrirVender()">Vender</a>
     </nav>
 
     <div id="authArea"></div>
+
 </header>
 
-<main>
 
-    <section class="hero" id="inicio">
-        <h1>
-            O marketplace <span>gamer</span>
-        </h1>
+<main id="conteudo">
 
-        <p>
-            Compre e venda produtos e serviços relacionados
-            aos seus jogos favoritos em um só lugar.
-        </p>
+<section class="hero" id="home">
 
-        <div class="hero-buttons">
-            <button class="btn btn-blue" onclick="mostrarCadastro()">
-                Criar conta
-            </button>
+    <div class="badge">
+        MARKETPLACE GAMER
+    </div>
 
-            <button class="btn btn-dark" onclick="mostrarLogin()">
-                Entrar
-            </button>
+    <h1>
+        Compre. Venda.<br>
+        <span>Jogue mais.</span>
+    </h1>
+
+    <p>
+        O marketplace criado para jogadores comprarem
+        produtos digitais e serviços de games em um só lugar.
+    </p>
+
+    <div class="hero-buttons">
+
+        <button class="btn blue" onclick="mostrarProdutos()">
+            Explorar produtos
+        </button>
+
+        <button class="btn dark" onclick="abrirVender()">
+            Quero vender
+        </button>
+
+    </div>
+
+    <div class="stats">
+
+        <div class="stat">
+            <strong>0</strong>
+            <span>Produtos</span>
         </div>
-    </section>
 
-    <section class="section">
-        <h2 class="section-title">
-            Categorias
-        </h2>
+        <div class="stat">
+            <strong>0</strong>
+            <span>Vendedores</span>
+        </div>
 
-        <div class="categories">
+        <div class="stat">
+            <strong>R$ 0</strong>
+            <span>Vendas</span>
+        </div>
 
-            <div class="category">
-                <h3>🎮 Contas</h3>
-                <p>
-                    Contas e itens de jogos.
-                </p>
+    </div>
+
+</section>
+
+
+<section class="section" id="categorias">
+
+    <h2 class="section-title">
+        Categorias
+    </h2>
+
+    <p class="section-description">
+        Encontre exatamente o que procura.
+    </p>
+
+    <div class="categories">
+
+        <div class="category" onclick="filtrarCategoria('Contas')">
+            <div class="category-icon">🎮</div>
+            <h3>Contas</h3>
+            <p>Contas e produtos relacionados a jogos.</p>
+        </div>
+
+        <div class="category" onclick="filtrarCategoria('Itens')">
+            <div class="category-icon">⚔️</div>
+            <h3>Itens</h3>
+            <p>Itens, skins e produtos digitais.</p>
+        </div>
+
+        <div class="category" onclick="filtrarCategoria('Serviços')">
+            <div class="category-icon">🚀</div>
+            <h3>Serviços</h3>
+            <p>Serviços realizados por jogadores.</p>
+        </div>
+
+        <div class="category" onclick="filtrarCategoria('Outros')">
+            <div class="category-icon">💎</div>
+            <h3>Outros</h3>
+            <p>Outros produtos digitais.</p>
+        </div>
+
+    </div>
+
+</section>
+
+
+<section class="section" id="produtos">
+
+    <h2 class="section-title">
+        Produtos
+    </h2>
+
+    <p class="section-description">
+        Os anúncios publicados no SlaxStore aparecem aqui.
+    </p>
+
+    <div id="productList" class="products">
+
+        <div class="product">
+
+            <div class="product-image">
+                🎮
             </div>
 
-            <div class="category">
-                <h3>⚔️ Itens</h3>
-                <p>
-                    Itens e produtos para seus jogos.
-                </p>
-            </div>
+            <div class="product-body">
 
-            <div class="category">
-                <h3>🚀 Serviços</h3>
-                <p>
-                    Serviços realizados por jogadores.
-                </p>
-            </div>
+                <div class="product-category">
+                    EXEMPLO
+                </div>
 
-            <div class="category">
-                <h3>💎 Produtos</h3>
-                <p>
-                    Produtos digitais para gamers.
+                <h3>
+                    Nenhum produto publicado
+                </h3>
+
+                <p class="product-description">
+                    Seja o primeiro vendedor a publicar um anúncio.
                 </p>
+
             </div>
 
         </div>
-    </section>
+
+    </div>
+
+</section>
 
 </main>
+
 
 <footer>
     © 2026 SlaxStore — Marketplace Gamer
@@ -424,83 +748,153 @@
 
 <script>
 
-/* =========================================
-   UTILIDADES
-========================================= */
+/* ==========================================
+   CONFIGURAÇÃO
+========================================== */
 
-function criarModal(conteudo) {
+const API_URL =
+    "https://slaxstore.onrender.com";
 
-    const antigo = document.getElementById("authModal");
 
-    if (antigo) {
+/* ==========================================
+   MODAL
+========================================== */
+
+function criarModal(html){
+
+    const antigo =
+        document.getElementById("authModal");
+
+    if(antigo){
         antigo.remove();
     }
 
-    const fundo = document.createElement("div");
+    const fundo =
+        document.createElement("div");
 
-    fundo.className = "modal-bg";
-    fundo.id = "authModal";
+    fundo.id="authModal";
+    fundo.className="modal-bg";
 
-    fundo.innerHTML = `
+    fundo.innerHTML=`
         <div class="modal">
-            <button class="close" onclick="fecharModal()">×</button>
-            ${conteudo}
+            <button class="close"
+                onclick="fecharModal()">×</button>
+            ${html}
         </div>
     `;
 
-    fundo.addEventListener("click", function(event) {
-
-        if (event.target === fundo) {
-            fecharModal();
+    fundo.addEventListener(
+        "click",
+        e=>{
+            if(e.target===fundo){
+                fecharModal();
+            }
         }
-
-    });
+    );
 
     document.body.appendChild(fundo);
 }
 
 
-function fecharModal() {
+function fecharModal(){
 
-    const modal = document.getElementById("authModal");
+    const modal =
+        document.getElementById("authModal");
 
-    if (modal) {
+    if(modal){
         modal.remove();
     }
 }
 
 
-function irInicio() {
+/* ==========================================
+   NAVEGAÇÃO
+========================================== */
+
+function inicio(){
 
     window.scrollTo({
-        top: 0,
-        behavior: "smooth"
+        top:0,
+        behavior:"smooth"
     });
 }
 
 
-/* =========================================
-   ÁREA DO USUÁRIO
-========================================= */
+function mostrarProdutos(){
 
-function atualizarAuthArea() {
+    document
+        .getElementById("produtos")
+        ?.scrollIntoView({
+            behavior:"smooth"
+        });
 
-    const area = document.getElementById("authArea");
+    carregarProdutos();
+}
 
-    if (!area) {
-        return;
+
+function mostrarCategorias(){
+
+    document
+        .getElementById("categorias")
+        ?.scrollIntoView({
+            behavior:"smooth"
+        });
+}
+
+
+/* ==========================================
+   USUÁRIO
+========================================== */
+
+function escaparHTML(texto){
+
+    const div =
+        document.createElement("div");
+
+    div.textContent =
+        texto ?? "";
+
+    return div.innerHTML;
+}
+
+
+function usuarioAtual(){
+
+    try{
+
+        const user =
+            localStorage.getItem("slax_user");
+
+        const token =
+            localStorage.getItem("slax_token");
+
+        if(!user || !token){
+            return null;
+        }
+
+        return JSON.parse(user);
+
+    }catch{
+
+        return null;
     }
+}
 
-    const usuarioSalvo = localStorage.getItem("slax_user");
-    const token = localStorage.getItem("slax_token");
 
-    if (!usuarioSalvo || !token) {
+function atualizarAuthArea(){
 
-        area.innerHTML = `
+    const area =
+        document.getElementById("authArea");
+
+    const usuario =
+        usuarioAtual();
+
+    if(!usuario){
+
+        area.innerHTML=`
             <button
-                class="btn btn-blue"
-                onclick="mostrarLogin()"
-            >
+                class="btn blue"
+                onclick="mostrarLogin()">
                 Entrar
             </button>
         `;
@@ -508,52 +902,31 @@ function atualizarAuthArea() {
         return;
     }
 
-    try {
+    area.innerHTML=`
+        <div class="user-box">
 
-        const usuario = JSON.parse(usuarioSalvo);
+            <span class="username">
+                ${escaparHTML(usuario.username)}
+            </span>
 
-        area.innerHTML = `
-            <div class="user-box">
+            <button
+                class="btn dark"
+                onclick="abrirPainel()">
+                Painel
+            </button>
 
-                <span class="username">
-                    ${escaparHTML(usuario.username)}
-                </span>
+            <button
+                class="btn red"
+                onclick="logout()">
+                Sair
+            </button>
 
-                <button
-                    class="btn btn-dark"
-                    onclick="logout()"
-                >
-                    Sair
-                </button>
-
-            </div>
-        `;
-
-    } catch {
-
-        localStorage.removeItem("slax_user");
-        localStorage.removeItem("slax_token");
-
-        atualizarAuthArea();
-    }
+        </div>
+    `;
 }
 
 
-function escaparHTML(texto) {
-
-    const div = document.createElement("div");
-
-    div.textContent = texto;
-
-    return div.innerHTML;
-}
-
-
-/* =========================================
-   LOGOUT
-========================================= */
-
-function logout() {
+function logout(){
 
     localStorage.removeItem("slax_token");
     localStorage.removeItem("slax_user");
@@ -564,94 +937,104 @@ function logout() {
 }
 
 
-/* =========================================
+/* ==========================================
    CADASTRO
-========================================= */
+========================================== */
 
-function mostrarCadastro() {
+function mostrarCadastro(){
 
     criarModal(`
 
         <h2>Criar conta</h2>
 
-        <p class="modal-subtitle">
-            Crie sua conta na SlaxStore.
+        <p class="subtitle">
+            Crie sua conta gratuita na SlaxStore.
         </p>
 
         <div id="registerMessage"
-             class="message">
-        </div>
+             class="message"></div>
 
         <div class="field">
+
             <label>Nome de usuário</label>
 
             <input
                 id="registerUsername"
-                type="text"
-                placeholder="Seu nome"
                 maxlength="30"
-            >
+                placeholder="Seu nome de usuário">
+
         </div>
 
         <div class="field">
+
             <label>E-mail</label>
 
             <input
                 id="registerEmail"
                 type="email"
-                placeholder="seu@email.com"
-            >
+                placeholder="seu@email.com">
+
         </div>
 
         <div class="field">
+
             <label>Senha</label>
 
             <input
                 id="registerPassword"
                 type="password"
-                placeholder="Mínimo 8 caracteres"
-            >
+                placeholder="Mínimo 8 caracteres">
+
         </div>
 
         <button
-            class="btn btn-blue"
-            onclick="cadastrar()"
-        >
+            class="btn blue"
+            onclick="cadastrar()">
+
             Criar conta
+
         </button>
 
         <div class="switch">
+
             Já possui uma conta?
+
             <span onclick="mostrarLogin()">
                 Entrar
             </span>
+
         </div>
 
     `);
 }
 
 
-async function cadastrar() {
+async function cadastrar(){
 
     const username =
-        document.getElementById("registerUsername")
-        .value.trim();
+        document.getElementById(
+            "registerUsername"
+        ).value.trim();
 
     const email =
-        document.getElementById("registerEmail")
-        .value.trim();
+        document.getElementById(
+            "registerEmail"
+        ).value.trim();
 
     const password =
-        document.getElementById("registerPassword")
-        .value;
+        document.getElementById(
+            "registerPassword"
+        ).value;
 
-    const mensagem =
-        document.getElementById("registerMessage");
+    const message =
+        document.getElementById(
+            "registerMessage"
+        );
 
-    if (!username || !email || !password) {
+    if(!username || !email || !password){
 
         mostrarMensagem(
-            mensagem,
+            message,
             "Preencha todos os campos.",
             "error"
         );
@@ -659,31 +1042,35 @@ async function cadastrar() {
         return;
     }
 
-    try {
+    try{
 
-        const resposta = await fetch(
-            "/api/auth/register",
-            {
-                method: "POST",
+        const resposta =
+            await fetch(
+                API_URL +
+                "/api/auth/register",
+                {
+                    method:"POST",
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                    headers:{
+                        "Content-Type":
+                        "application/json"
+                    },
 
-                body: JSON.stringify({
-                    username,
-                    email,
-                    password
-                })
-            }
-        );
+                    body:JSON.stringify({
+                        username,
+                        email,
+                        password
+                    })
+                }
+            );
 
-        const dados = await resposta.json();
+        const dados =
+            await resposta.json();
 
-        if (!resposta.ok) {
+        if(!resposta.ok){
 
             mostrarMensagem(
-                mensagem,
+                message,
                 dados.error ||
                 "Não foi possível criar a conta.",
                 "error"
@@ -694,12 +1081,12 @@ async function cadastrar() {
 
         mostrarVerificacao(email);
 
-    } catch (erro) {
+    }catch(erro){
 
         console.error(erro);
 
         mostrarMensagem(
-            mensagem,
+            message,
             "Não foi possível conectar ao servidor.",
             "error"
         );
@@ -707,101 +1094,97 @@ async function cadastrar() {
 }
 
 
-/* =========================================
-   VERIFICAÇÃO DE E-MAIL
-========================================= */
+/* ==========================================
+   VERIFICAÇÃO
+========================================== */
 
-function mostrarVerificacao(email) {
+function mostrarVerificacao(email){
 
     criarModal(`
 
         <h2>Verifique seu e-mail</h2>
 
-        <p class="modal-subtitle">
+        <p class="subtitle">
             Enviamos um código de 6 números para:
-            <br>
-            <strong>${escaparHTML(email)}</strong>
+            <br><br>
+            <strong>
+                ${escaparHTML(email)}
+            </strong>
         </p>
 
         <div id="verifyMessage"
-             class="message">
-        </div>
+             class="message"></div>
 
         <div class="field">
-            <label>Código de verificação</label>
+
+            <label>Código</label>
 
             <input
                 id="verifyCode"
-                type="text"
-                inputmode="numeric"
                 maxlength="6"
-                placeholder="000000"
-            >
+                inputmode="numeric"
+                placeholder="000000">
+
         </div>
 
         <button
-            class="btn btn-blue"
-            onclick="verificarEmail('${encodeURIComponent(email)}')"
-        >
+            class="btn blue"
+            onclick="verificarEmail()">
+
             Verificar e-mail
+
         </button>
 
-        <div class="switch">
-            Depois da verificação,
-            você poderá entrar na conta.
-        </div>
-
     `);
+
+    window.emailVerificacao =
+        email;
 }
 
 
-async function verificarEmail(emailCodificado) {
+async function verificarEmail(){
 
     const email =
-        decodeURIComponent(emailCodificado);
+        window.emailVerificacao;
 
     const code =
-        document.getElementById("verifyCode")
-        .value.trim();
+        document.getElementById(
+            "verifyCode"
+        ).value.trim();
 
-    const mensagem =
-        document.getElementById("verifyMessage");
-
-    if (!code) {
-
-        mostrarMensagem(
-            mensagem,
-            "Digite o código recebido.",
-            "error"
+    const message =
+        document.getElementById(
+            "verifyMessage"
         );
 
-        return;
-    }
+    try{
 
-    try {
+        const resposta =
+            await fetch(
+                API_URL +
+                "/api/auth/verify-email",
+                {
+                    method:"POST",
 
-        const resposta = await fetch(
-            "/api/auth/verify-email",
-            {
-                method: "POST",
+                    headers:{
+                        "Content-Type":
+                        "application/json"
+                    },
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                    body:JSON.stringify({
+                        email,
+                        code
+                    })
+                }
+            );
 
-                body: JSON.stringify({
-                    email,
-                    code
-                })
-            }
-        );
+        const dados =
+            await resposta.json();
 
-        const dados = await resposta.json();
-
-        if (!resposta.ok) {
+        if(!resposta.ok){
 
             mostrarMensagem(
-                mensagem,
+                message,
                 dados.error ||
                 "Código inválido.",
                 "error"
@@ -811,21 +1194,24 @@ async function verificarEmail(emailCodificado) {
         }
 
         mostrarMensagem(
-            mensagem,
-            "E-mail verificado! Agora você pode entrar.",
+            message,
+            "E-mail verificado! Entrando no login...",
             "success"
         );
 
-        setTimeout(() => {
-            mostrarLogin(email);
-        }, 1000);
+        setTimeout(
+            ()=>{
+                mostrarLogin(email);
+            },
+            1000
+        );
 
-    } catch (erro) {
+    }catch(erro){
 
         console.error(erro);
 
         mostrarMensagem(
-            mensagem,
+            message,
             "Erro ao conectar ao servidor.",
             "error"
         );
@@ -833,87 +1219,97 @@ async function verificarEmail(emailCodificado) {
 }
 
 
-/* =========================================
+/* ==========================================
    LOGIN
-========================================= */
+========================================== */
 
-function mostrarLogin(emailInicial = "") {
+function mostrarLogin(email=""){
 
     criarModal(`
 
         <h2>Entrar</h2>
 
-        <p class="modal-subtitle">
-            Entre na sua conta SlaxStore.
+        <p class="subtitle">
+            Acesse sua conta SlaxStore.
         </p>
 
         <div id="loginMessage"
-             class="message">
-        </div>
+             class="message"></div>
 
         <div class="field">
+
             <label>E-mail</label>
 
             <input
                 id="loginEmail"
                 type="email"
-                placeholder="seu@email.com"
-                value="${escaparHTML(emailInicial)}"
-            >
+                value="${escaparHTML(email)}"
+                placeholder="seu@email.com">
+
         </div>
 
         <div class="field">
+
             <label>Senha</label>
 
             <input
                 id="loginPassword"
                 type="password"
-                placeholder="Sua senha"
-            >
+                placeholder="Sua senha">
+
         </div>
 
         <span
             class="forgot"
-            onclick="mostrarEsqueciSenha()"
-        >
+            onclick="mostrarEsqueciSenha()">
+
             Esqueci minha senha
+
         </span>
 
         <button
-            class="btn btn-blue"
-            onclick="fazerLogin()"
-        >
+            class="btn blue"
+            onclick="fazerLogin()">
+
             Entrar
+
         </button>
 
         <div class="switch">
-            Ainda não possui uma conta?
+
+            Não possui conta?
+
             <span onclick="mostrarCadastro()">
                 Criar conta
             </span>
+
         </div>
 
     `);
 }
 
 
-async function fazerLogin() {
+async function fazerLogin(){
 
     const email =
-        document.getElementById("loginEmail")
-        .value.trim();
+        document.getElementById(
+            "loginEmail"
+        ).value.trim();
 
     const password =
-        document.getElementById("loginPassword")
-        .value;
+        document.getElementById(
+            "loginPassword"
+        ).value;
 
-    const mensagem =
-        document.getElementById("loginMessage");
+    const message =
+        document.getElementById(
+            "loginMessage"
+        );
 
-    if (!email || !password) {
+    if(!email || !password){
 
         mostrarMensagem(
-            mensagem,
+            message,
             "Preencha o e-mail e a senha.",
             "error"
         );
@@ -921,47 +1317,47 @@ async function fazerLogin() {
         return;
     }
 
-    try {
+    try{
 
-        const resposta = await fetch(
-            "/api/auth/login",
-            {
-                method: "POST",
+        const resposta =
+            await fetch(
+                API_URL +
+                "/api/auth/login",
+                {
+                    method:"POST",
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                    headers:{
+                        "Content-Type":
+                        "application/json"
+                    },
 
-                body: JSON.stringify({
-                    email,
-                    password
-                })
-            }
+                    body:JSON.stringify({
+                        email,
+                        password
+                    })
+                }
+            );
+
+        const dados =
+            await resposta.json();
+
+        console.log(
+            "LOGIN:",
+            resposta.status,
+            dados
         );
 
-        const dados = await resposta.json();
-
-        console.log("Resposta do login:", dados);
-
-        if (!resposta.ok) {
+        if(!resposta.ok){
 
             mostrarMensagem(
-                mensagem,
+                message,
                 dados.error ||
-                "Não foi possível fazer login.",
+                "Erro ao fazer login.",
                 "error"
             );
 
             return;
         }
-
-        /*
-            IMPORTANTE:
-
-            A conta está salva no banco.
-            O token abaixo salva somente
-            a sessão do usuário no navegador.
-        */
 
         localStorage.setItem(
             "slax_token",
@@ -981,15 +1377,12 @@ async function fazerLogin() {
             "Login realizado com sucesso!"
         );
 
-    } catch (erro) {
+    }catch(erro){
 
-        console.error(
-            "Erro no login:",
-            erro
-        );
+        console.error(erro);
 
         mostrarMensagem(
-            mensagem,
+            message,
             "Não foi possível conectar ao servidor.",
             "error"
         );
@@ -997,65 +1390,70 @@ async function fazerLogin() {
 }
 
 
-/* =========================================
-   ESQUECI A SENHA
-========================================= */
+/* ==========================================
+   ESQUECI SENHA
+========================================== */
 
-function mostrarEsqueciSenha() {
+function mostrarEsqueciSenha(){
 
     criarModal(`
 
         <h2>Recuperar senha</h2>
 
-        <p class="modal-subtitle">
-            Digite seu e-mail para receber
-            um código de recuperação.
+        <p class="subtitle">
+            Digite o e-mail da sua conta.
         </p>
 
         <div id="forgotMessage"
-             class="message">
-        </div>
+             class="message"></div>
 
         <div class="field">
+
             <label>E-mail</label>
 
             <input
                 id="forgotEmail"
                 type="email"
-                placeholder="seu@email.com"
-            >
+                placeholder="seu@email.com">
+
         </div>
 
         <button
-            class="btn btn-blue"
-            onclick="enviarCodigoRecuperacao()"
-        >
+            class="btn blue"
+            onclick="enviarCodigoRecuperacao()">
+
             Enviar código
+
         </button>
 
         <div class="switch">
+
             <span onclick="mostrarLogin()">
                 Voltar para o login
             </span>
+
         </div>
 
     `);
 }
 
 
-async function enviarCodigoRecuperacao() {
+async function enviarCodigoRecuperacao(){
 
     const email =
-        document.getElementById("forgotEmail")
-        .value.trim();
+        document.getElementById(
+            "forgotEmail"
+        ).value.trim();
 
-    const mensagem =
-        document.getElementById("forgotMessage");
+    const message =
+        document.getElementById(
+            "forgotMessage"
+        );
 
-    if (!email) {
+    if(!email){
 
         mostrarMensagem(
-            mensagem,
+            message,
             "Digite seu e-mail.",
             "error"
         );
@@ -1063,29 +1461,33 @@ async function enviarCodigoRecuperacao() {
         return;
     }
 
-    try {
+    try{
 
-        const resposta = await fetch(
-            "/api/auth/forgot-password",
-            {
-                method: "POST",
+        const resposta =
+            await fetch(
+                API_URL +
+                "/api/auth/forgot-password",
+                {
+                    method:"POST",
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                    headers:{
+                        "Content-Type":
+                        "application/json"
+                    },
 
-                body: JSON.stringify({
-                    email
-                })
-            }
-        );
+                    body:JSON.stringify({
+                        email
+                    })
+                }
+            );
 
-        const dados = await resposta.json();
+        const dados =
+            await resposta.json();
 
-        if (!resposta.ok) {
+        if(!resposta.ok){
 
             mostrarMensagem(
-                mensagem,
+                message,
                 dados.error ||
                 "Não foi possível enviar o código.",
                 "error"
@@ -1096,12 +1498,12 @@ async function enviarCodigoRecuperacao() {
 
         mostrarRedefinirSenha(email);
 
-    } catch (erro) {
+    }catch(erro){
 
         console.error(erro);
 
         mostrarMensagem(
-            mensagem,
+            message,
             "Erro ao conectar ao servidor.",
             "error"
         );
@@ -1109,110 +1511,110 @@ async function enviarCodigoRecuperacao() {
 }
 
 
-/* =========================================
-   REDEFINIR SENHA
-========================================= */
+/* ==========================================
+   RESET SENHA
+========================================== */
 
-function mostrarRedefinirSenha(email) {
+function mostrarRedefinirSenha(email){
 
     criarModal(`
 
         <h2>Nova senha</h2>
 
-        <p class="modal-subtitle">
-            Digite o código recebido no e-mail
-            e escolha uma nova senha.
+        <p class="subtitle">
+            Digite o código recebido e sua nova senha.
         </p>
 
         <div id="resetMessage"
-             class="message">
-        </div>
+             class="message"></div>
 
         <div class="field">
+
             <label>Código</label>
 
             <input
                 id="resetCode"
-                type="text"
-                inputmode="numeric"
                 maxlength="6"
-                placeholder="000000"
-            >
+                inputmode="numeric"
+                placeholder="000000">
+
         </div>
 
         <div class="field">
+
             <label>Nova senha</label>
 
             <input
                 id="newPassword"
                 type="password"
-                placeholder="Mínimo 8 caracteres"
-            >
+                placeholder="Mínimo 8 caracteres">
+
         </div>
 
         <button
-            class="btn btn-blue"
-            onclick="redefinirSenha('${encodeURIComponent(email)}')"
-        >
+            class="btn blue"
+            onclick="redefinirSenha()">
+
             Alterar senha
+
         </button>
 
     `);
+
+    window.emailReset =
+        email;
 }
 
 
-async function redefinirSenha(emailCodificado) {
+async function redefinirSenha(){
 
     const email =
-        decodeURIComponent(emailCodificado);
+        window.emailReset;
 
     const code =
-        document.getElementById("resetCode")
-        .value.trim();
+        document.getElementById(
+            "resetCode"
+        ).value.trim();
 
     const newPassword =
-        document.getElementById("newPassword")
-        .value;
+        document.getElementById(
+            "newPassword"
+        ).value;
 
-    const mensagem =
-        document.getElementById("resetMessage");
-
-    if (!code || !newPassword) {
-
-        mostrarMensagem(
-            mensagem,
-            "Preencha todos os campos.",
-            "error"
+    const message =
+        document.getElementById(
+            "resetMessage"
         );
 
-        return;
-    }
+    try{
 
-    try {
+        const resposta =
+            await fetch(
+                API_URL +
+                "/api/auth/reset-password",
+                {
+                    method:"POST",
 
-        const resposta = await fetch(
-            "/api/auth/reset-password",
-            {
-                method: "POST",
+                    headers:{
+                        "Content-Type":
+                        "application/json"
+                    },
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                    body:JSON.stringify({
+                        email,
+                        code,
+                        newPassword
+                    })
+                }
+            );
 
-                body: JSON.stringify({
-                    email,
-                    code,
-                    newPassword
-                })
-            }
-        );
+        const dados =
+            await resposta.json();
 
-        const dados = await resposta.json();
-
-        if (!resposta.ok) {
+        if(!resposta.ok){
 
             mostrarMensagem(
-                mensagem,
+                message,
                 dados.error ||
                 "Não foi possível alterar a senha.",
                 "error"
@@ -1222,21 +1624,24 @@ async function redefinirSenha(emailCodificado) {
         }
 
         mostrarMensagem(
-            mensagem,
+            message,
             "Senha alterada com sucesso!",
             "success"
         );
 
-        setTimeout(() => {
-            mostrarLogin(email);
-        }, 1200);
+        setTimeout(
+            ()=>{
+                mostrarLogin(email);
+            },
+            1000
+        );
 
-    } catch (erro) {
+    }catch(erro){
 
         console.error(erro);
 
         mostrarMensagem(
-            mensagem,
+            message,
             "Erro ao conectar ao servidor.",
             "error"
         );
@@ -1244,74 +1649,410 @@ async function redefinirSenha(emailCodificado) {
 }
 
 
-/* =========================================
+/* ==========================================
+   VENDER
+========================================== */
+
+function abrirVender(){
+
+    const usuario =
+        usuarioAtual();
+
+    if(!usuario){
+
+        alert(
+            "Você precisa entrar na sua conta para vender."
+        );
+
+        mostrarLogin();
+
+        return;
+    }
+
+    criarModal(`
+
+        <h2>Criar anúncio</h2>
+
+        <p class="subtitle">
+            Publique seu produto no SlaxStore.
+        </p>
+
+        <div class="notice">
+            Seu e-mail precisa estar verificado
+            para publicar anúncios.
+        </div>
+
+        <div id="productMessage"
+             class="message"></div>
+
+        <div class="field">
+
+            <label>Título do anúncio</label>
+
+            <input
+                id="productTitle"
+                maxlength="100"
+                placeholder="Ex: Item raro do jogo">
+
+        </div>
+
+        <div class="field">
+
+            <label>Categoria</label>
+
+            <select id="productCategory">
+
+                <option value="Contas">
+                    Contas
+                </option>
+
+                <option value="Itens">
+                    Itens
+                </option>
+
+                <option value="Serviços">
+                    Serviços
+                </option>
+
+                <option value="Outros">
+                    Outros
+                </option>
+
+            </select>
+
+        </div>
+
+        <div class="field">
+
+            <label>Descrição</label>
+
+            <textarea
+                id="productDescription"
+                maxlength="3000"
+                placeholder="Explique exatamente o que está sendo vendido..."></textarea>
+
+        </div>
+
+        <div class="field">
+
+            <label>Preço em R$</label>
+
+            <input
+                id="productPrice"
+                type="number"
+                min="1"
+                step="0.01"
+                placeholder="10.00"
+                oninput="calcularTaxa()">
+
+        </div>
+
+        <div id="feePreview"
+             class="notice">
+
+            Taxa da plataforma:
+            R$ 0,97
+            <br>
+            Você receberá:
+            R$ 0,00
+
+        </div>
+
+        <div class="field">
+
+            <label>
+                Imagem do anúncio
+            </label>
+
+            <input
+                id="productImage"
+                type="file"
+                accept="image/*">
+
+        </div>
+
+        <button
+            class="btn blue"
+            onclick="publicarProduto()">
+
+            Publicar anúncio
+
+        </button>
+
+    `);
+}
+
+
+function calcularTaxa(){
+
+    const campo =
+        document.getElementById(
+            "productPrice"
+        );
+
+    const preview =
+        document.getElementById(
+            "feePreview"
+        );
+
+    if(!campo || !preview){
+        return;
+    }
+
+    const preco =
+        Number(campo.value) || 0;
+
+    const taxa =
+        0.97;
+
+    const vendedor =
+        Math.max(0,preco-taxa);
+
+    preview.innerHTML=`
+        Taxa da plataforma:
+        <strong>R$ ${taxa.toFixed(2)}</strong>
+        <br>
+        Você receberá:
+        <strong>R$ ${vendedor.toFixed(2)}</strong>
+    `;
+}
+
+
+async function publicarProduto(){
+
+    const usuario =
+        usuarioAtual();
+
+    if(!usuario){
+
+        alert(
+            "Faça login antes de publicar."
+        );
+
+        return;
+    }
+
+    const title =
+        document.getElementById(
+            "productTitle"
+        ).value.trim();
+
+    const category =
+        document.getElementById(
+            "productCategory"
+        ).value;
+
+    const description =
+        document.getElementById(
+            "productDescription"
+        ).value.trim();
+
+    const price =
+        Number(
+            document.getElementById(
+                "productPrice"
+            ).value
+        );
+
+    const imageInput =
+        document.getElementById(
+            "productImage"
+        );
+
+    const message =
+        document.getElementById(
+            "productMessage"
+        );
+
+    if(
+        !title ||
+        !description ||
+        !price ||
+        price <= 0
+    ){
+
+        mostrarMensagem(
+            message,
+            "Preencha corretamente os dados do anúncio.",
+            "error"
+        );
+
+        return;
+    }
+
+    /*
+       IMPORTANTE:
+
+       O backend atual ainda não possui
+       /api/products.
+
+       Por isso esta parte está preparada
+       para a próxima etapa.
+    */
+
+    mostrarMensagem(
+        message,
+        "A interface de anúncios está pronta. Agora precisamos conectar o cadastro de produtos ao banco do servidor.",
+        "success"
+    );
+}
+
+
+/* ==========================================
+   PAINEL
+========================================== */
+
+function abrirPainel(){
+
+    const usuario =
+        usuarioAtual();
+
+    if(!usuario){
+
+        mostrarLogin();
+
+        return;
+    }
+
+    criarModal(`
+
+        <h2>Painel do vendedor</h2>
+
+        <p class="subtitle">
+            Bem-vindo,
+            <strong>
+                ${escaparHTML(usuario.username)}
+            </strong>.
+        </p>
+
+        <div class="notice">
+
+            Sua conta está conectada ao SlaxStore.
+            <br><br>
+            Próxima etapa:
+            gerenciamento real dos seus anúncios,
+            pedidos e saldo.
+
+        </div>
+
+        <button
+            class="btn blue"
+            onclick="abrirVender()">
+
+            Criar anúncio
+
+        </button>
+
+        <br><br>
+
+        <button
+            class="btn dark"
+            onclick="fecharModal()">
+
+            Fechar
+
+        </button>
+
+    `);
+}
+
+
+/* ==========================================
+   CATEGORIA
+========================================== */
+
+function filtrarCategoria(categoria){
+
+    document
+        .getElementById("produtos")
+        ?.scrollIntoView({
+            behavior:"smooth"
+        });
+
+    carregarProdutos(categoria);
+}
+
+
+/* ==========================================
+   PRODUTOS
+========================================== */
+
+async function carregarProdutos(categoria=""){
+
+    /*
+       O backend de produtos ainda será criado.
+       Enquanto isso mostramos o estado vazio.
+    */
+
+    const lista =
+        document.getElementById(
+            "productList"
+        );
+
+    lista.innerHTML=`
+
+        <div class="product">
+
+            <div class="product-image">
+                🛒
+            </div>
+
+            <div class="product-body">
+
+                <div class="product-category">
+                    SLAXSTORE
+                </div>
+
+                <h3>
+                    Nenhum anúncio ainda
+                </h3>
+
+                <p class="product-description">
+                    ${categoria
+                        ? "Nenhum anúncio encontrado nesta categoria."
+                        : "Seja o primeiro vendedor a publicar."
+                    }
+                </p>
+
+            </div>
+
+        </div>
+
+    `;
+}
+
+
+/* ==========================================
    MENSAGENS
-========================================= */
+========================================== */
 
 function mostrarMensagem(
     elemento,
     texto,
     tipo
-) {
+){
 
-    if (!elemento) {
+    if(!elemento){
         return;
     }
 
-    elemento.textContent = texto;
+    elemento.textContent =
+        texto;
 
     elemento.className =
         "message " + tipo;
 }
 
 
-/* =========================================
-   ENTER NOS CAMPOS
-========================================= */
-
-document.addEventListener(
-    "keydown",
-    function(event) {
-
-        if (event.key !== "Enter") {
-            return;
-        }
-
-        const modal =
-            document.getElementById("authModal");
-
-        if (!modal) {
-            return;
-        }
-
-        const loginEmail =
-            document.getElementById("loginEmail");
-
-        const loginPassword =
-            document.getElementById("loginPassword");
-
-        if (
-            loginEmail &&
-            loginPassword &&
-            document.activeElement !== loginEmail
-        ) {
-
-            fazerLogin();
-        }
-    }
-);
-
-
-/* =========================================
+/* ==========================================
    INICIALIZAÇÃO
-========================================= */
+========================================== */
 
 document.addEventListener(
     "DOMContentLoaded",
-    function() {
-
+    ()=>{
         atualizarAuthArea();
-
+        carregarProdutos();
     }
 );
 
