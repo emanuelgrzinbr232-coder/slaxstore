@@ -1,1 +1,480 @@
+"use strict";
 
+const API_URL = window.location.origin;
+
+let usuario = null;
+let authMode = "login";
+let categoriaAtual = "";
+let produtoAtual = null;
+let emailParaVerificacao = "";
+let searchTimer = null;
+
+const $ = id => document.getElementById(id);
+
+function token() {
+    return localStorage.getItem("slaxstore_token") || "";
+}
+
+function salvarToken(value) {
+    if (value) {
+        localStorage.setItem("slaxstore_token", value);
+    }
+}
+
+function removerToken() {
+    localStorage.removeItem("slaxstore_token");
+}
+
+function texto(value) {
+    return String(value ?? "");
+}
+
+function escapeHTML(value) {
+    return texto(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function dinheiro(cents) {
+    return (Number(cents || 0) / 100).toLocaleString(
+        "pt-BR",
+        {
+            style: "currency",
+            currency: "BRL"
+        }
+    );
+}
+
+function mostrar(elemento, mostrar = true) {
+    if (!elemento) return;
+
+    elemento.classList.toggle(
+        "hidden",
+        !mostrar
+    );
+
+    if (!mostrar) {
+        elemento.style.display = "none";
+    } else {
+        elemento.style.display = "";
+    }
+}
+
+function abrirModal(id) {
+    const elemento = $(id);
+
+    if (!elemento) return false;
+
+    mostrar(elemento, true);
+    return true;
+}
+
+function fecharModal(id) {
+    const elemento = $(id);
+
+    if (!elemento) return;
+
+    mostrar(elemento, false);
+}
+
+function mensagem(elemento, msg, tipo = "error") {
+    if (!elemento) {
+        alert(msg);
+        return;
+    }
+
+    elemento.textContent = msg;
+    elemento.className = "message " + tipo;
+    elemento.style.display = "block";
+}
+
+async function api(endpoint, options = {}) {
+    const headers = {
+        ...(options.body
+            ? {
+                "Content-Type": "application/json"
+            }
+            : {}),
+        ...(options.headers || {})
+    };
+
+    const authToken = token();
+
+    if (authToken) {
+        headers.Authorization =
+            "Bearer " + authToken;
+    }
+
+    const resposta = await fetch(
+        API_URL + endpoint,
+        {
+            ...options,
+            credentials: "include",
+            headers
+        }
+    );
+
+    let dados = {};
+
+    try {
+        dados = await resposta.json();
+    } catch {
+        dados = {};
+    }
+
+    if (!resposta.ok) {
+        if (
+            resposta.status === 401 &&
+            !endpoint.includes("/login") &&
+            !endpoint.includes("/register")
+        ) {
+            usuario = null;
+            removerToken();
+            atualizarInterface();
+        }
+
+        throw new Error(
+            dados.error ||
+            dados.message ||
+            "Erro no servidor."
+        );
+    }
+
+    return dados;
+}
+
+async function verificarSessao() {
+    const authToken = token();
+
+    if (!authToken) {
+        usuario = null;
+        atualizarInterface();
+        return;
+    }
+
+    try {
+        const resposta =
+            await api("/api/auth/me");
+
+        usuario =
+            resposta.user ||
+            resposta.usuario ||
+            null;
+
+        if (!usuario) {
+            removerToken();
+        }
+
+    } catch {
+        usuario = null;
+        removerToken();
+    }
+
+    atualizarInterface();
+}
+
+function atualizarInterface() {
+    const loginButton =
+        $("loginButton");
+
+    const profileButton =
+        $("profileButton");
+
+    const logoutButton =
+        $("logoutButton");
+
+    if (usuario) {
+        if (loginButton) {
+            loginButton.style.display = "none";
+        }
+
+        if (profileButton) {
+            profileButton.style.display = "";
+        }
+
+        if (logoutButton) {
+            logoutButton.style.display = "";
+        }
+
+        criarBotaoVender();
+
+    } else {
+        if (loginButton) {
+            loginButton.style.display = "";
+        }
+
+        if (profileButton) {
+            profileButton.style.display = "none";
+        }
+
+        if (logoutButton) {
+            logoutButton.style.display = "none";
+        }
+
+        const vender =
+            $("slaxSellButton");
+
+        if (vender) {
+            vender.remove();
+        }
+    }
+}
+
+function criarBotaoVender() {
+    if (!usuario) return;
+
+    if ($("slaxSellButton")) return;
+
+    const possiveisNav = [
+        document.querySelector(".nav"),
+        document.querySelector("nav"),
+        document.querySelector("header")
+    ];
+
+    const nav =
+        possiveisNav.find(Boolean);
+
+    if (!nav) return;
+
+    const botao =
+        document.createElement("button");
+
+    botao.id = "slaxSellButton";
+    botao.type = "button";
+    botao.textContent = "Vender";
+    botao.className = "primary";
+    botao.style.cursor = "pointer";
+
+    botao.addEventListener(
+        "click",
+        abrirCriarAnuncio
+    );
+
+    nav.appendChild(botao);
+}
+
+function abrirAuth(modo = "login") {
+    authMode = modo;
+
+    const modal =
+        $("authModal");
+
+    if (!modal) {
+        alert(
+            "O modal de login não existe no HTML."
+        );
+        return;
+    }
+
+    const title =
+        $("authTitle");
+
+    const usernameField =
+        $("usernameField");
+
+    const submit =
+        $("authSubmit");
+
+    const switchText =
+        $("authSwitchText");
+
+    const switchButton =
+        $("authSwitch");
+
+    if (title) {
+        title.textContent =
+            modo === "register"
+                ? "Criar conta"
+                : "Entrar";
+    }
+
+    if (usernameField) {
+        usernameField.classList.toggle(
+            "hidden",
+            modo !== "register"
+        );
+
+        usernameField.style.display =
+            modo === "register"
+                ? ""
+                : "none";
+    }
+
+    if (submit) {
+        submit.textContent =
+            modo === "register"
+                ? "Criar conta"
+                : "Entrar";
+    }
+
+    if (switchText) {
+        switchText.textContent =
+            modo === "register"
+                ? "Já possui uma conta?"
+                : "Ainda não tem uma conta?";
+    }
+
+    if (switchButton) {
+        switchButton.textContent =
+            modo === "register"
+                ? "Entrar"
+                : "Criar conta";
+    }
+
+    const msg =
+        $("authMessage");
+
+    if (msg) {
+        msg.textContent = "";
+        msg.style.display = "none";
+    }
+
+    abrirModal("authModal");
+}
+
+function alternarAuth() {
+    abrirAuth(
+        authMode === "login"
+            ? "register"
+            : "login"
+    );
+}
+
+function configurarLogin() {
+    const form =
+        $("authForm");
+
+    if (!form) return;
+
+    form.addEventListener(
+        "submit",
+        async event => {
+            event.preventDefault();
+
+            const msg =
+                $("authMessage");
+
+            try {
+                const email =
+                    ($("email")?.value || "")
+                        .trim()
+                        .toLowerCase();
+
+                const password =
+                    $("password")?.value || "";
+
+                if (!email) {
+                    throw new Error(
+                        "Digite seu e-mail."
+                    );
+                }
+
+                if (!password) {
+                    throw new Error(
+                        "Digite sua senha."
+                    );
+                }
+
+                if (
+                    authMode === "register"
+                ) {
+                    const username =
+                        ($("username")?.value || "")
+                            .trim();
+
+                    if (!username) {
+                        throw new Error(
+                            "Digite seu nome de usuário."
+                        );
+                    }
+
+                    emailParaVerificacao =
+                        email;
+
+                    await api(
+                        "/api/auth/register",
+                        {
+                            method: "POST",
+                            body:
+                                JSON.stringify({
+                                    username,
+                                    email,
+                                    password
+                                })
+                        }
+                    );
+
+                    const textoVerificacao =
+                        $("verifyEmailText");
+
+                    if (textoVerificacao) {
+                        textoVerificacao.textContent =
+                            "Enviamos um código para " +
+                            email + ".";
+                    }
+
+                    const codigo =
+                        $("verificationCode");
+
+                    if (codigo) {
+                        codigo.value = "";
+                    }
+
+                    fecharModal("authModal");
+
+                    abrirModal("verifyModal");
+
+                    return;
+                }
+
+                const resposta =
+                    await api(
+                        "/api/auth/login",
+                        {
+                            method: "POST",
+                            body:
+                                JSON.stringify({
+                                    email,
+                                    password
+                                })
+                        }
+                    );
+
+                if (!resposta.token) {
+                    throw new Error(
+                        "O servidor não enviou o token."
+                    );
+                }
+
+                salvarToken(
+                    resposta.token
+                );
+
+                usuario =
+                    resposta.user ||
+                    resposta.usuario;
+
+                if (!usuario) {
+                    throw new Error(
+                        "Usuário não retornado pelo servidor."
+                    );
+                }
+
+                fecharModal("authModal");
+
+                atualizarInterface();
+
+                await carregarProdutos();
+
+            } catch (erro) {
+                mensagem(
+                    msg,
+                    erro.message
+                );
+            }
+        }
+    );
+}
