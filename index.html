@@ -1,5 +1,5 @@
-```html
 <!DOCTYPE html>
+
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -787,6 +787,7 @@ footer{
     }
 }
 </style>
+
 </head>
 
 <body>
@@ -794,584 +795,645 @@ footer{
 <header>
 <nav class="nav">
 
-    <a href="#" class="logo">
-        Slax<span>Store</span>
-    </a>
+```
+<a href="#" class="logo">
+    Slax<span>Store</span>
+</a>
 
-    <div class="search-box">
-        <span class="search-icon">⌕</span>
-        <input
-            id="searchInput"
-            type="search"
-            placeholder="Pesquisar produtos..."
-            autocomplete="off"
-        >
-    </div>
+<div class="search-box">
+    <span class="search-icon">⌕</span>
 
-    <div class="nav-buttons">
+    <input
+        id="searchInput"
+        type="search"
+        placeholder="Pesquisar produtos..."
+        autocomplete="off"
+    >
+</div>
 
-        <button
-            id="loginButton"
-            class="btn primary"
-            type="button"
-        >
-            Entrar
-        </button>
+<div class="nav-buttons">
 
-        <button
-            id="profileButton"
-            class="btn"
-            type="button"
-            style="display:none"
-        >
-            Perfil
-        </button>
+    <button
+        id="loginButton"
+        class="btn primary"
+        type="button"
+    >
+        Entrar
+    </button>
 
-        <button
-            id="logoutButton"
-            class="btn danger"
-            type="button"
-            style="display:none"
-        >
-            Sair
-        </button>
+    <button
+        id="profileButton"
+        class="btn"
+        type="button"
+        style="display:none"
+    >
+        Perfil
+    </button>
 
-    </div>
+    <button
+        id="logoutButton"
+        class="btn danger"
+        type="button"
+        style="display:none"
+    >
+        Sair
+    </button>
+
+</div>
+```
 
 </nav>
 </header>
-
 
 <main class="container">
 
 <section class="hero">
 
-    <div class="hero-content">
+```
+<div class="hero-content">
 
-        <div class="hero-badge">
-            ● Marketplace digital
-        </div>
+    <div class="hero-badge">
+        ● Marketplace digital
+    </div>
 
-        <h1>
-            Compre e venda
-            <span>do seu jeito.</span>
-        </h1>
+    <h1>
+        Compre e venda
+        <span>do seu jeito.</span>
+    </h1>
 
-        <p>
-            Bem-vindo à SlaxStore. Encontre produtos digitais,
-            publique seus próprios anúncios e acompanhe suas
-            compras e seu saldo em um só lugar.
-        </p>
+    <p>
+        Bem-vindo à SlaxStore. Encontre produtos digitais,
+        publique seus próprios anúncios e acompanhe suas
+        compras e seu saldo em um só lugar.
+    </p>
 
-        <div class="hero-actions">
+    <div class="hero-actions">
 
-            <button
-                class="btn primary"
-                type="button"
-                onclick="rolarProdutos()"
-            >
-                Explorar produtos
-            </button>
+        <button
+            class="btn primary"
+            type="button"
+            onclick="rolarProdutos()"
+        >
+            Explorar produtos
+        </button>
 
-            <button
-                id="heroSellButton"
-                class="btn"
-                type="button"
-                onclick="abrirCriarAnuncio()"
-            >
-                Começar a vender
-            </button>
-
-        </div>
+        <button
+            id="heroSellButton"
+            class="btn"
+            type="button"
+            onclick="abrirCriarAnuncio()"
+        >
+            Começar a vender
+        </button>
 
     </div>
+
+</div>
+```
 
 </section>
 
-
 <div class="stats">
 
-    <div class="stat">
-        <strong>Compra segura</strong>
-        <span>Pagamento integrado ao sistema.</span>
-    </div>
-
-    <div class="stat">
-        <strong>Venda fácil</strong>
-        <span>Publique seus anúncios rapidamente.</span>
-    </div>
-
-    <div class="stat">
-        <strong>Saldo Slax</strong>
-        <span>Acompanhe seus ganhos pelo perfil.</span>
-    </div>
-
+```
+<div class="stat">
+    <strong>Compra segura</strong>
+    <span>Pagamento integrado ao sistema.</span>
 </div>
 
+<div class="stat">
+    <strong>Venda fácil</strong>
+    <span>Publique seus anúncios rapidamente.</span>
+</div>
+
+<div class="stat">
+    <strong>Saldo Slax</strong>
+    <span>Acompanhe seus ganhos pelo perfil.</span>
+</div>
+```
+
+</div>
 
 <div class="categories">
 
-    <button class="category active"
-        data-category="" type="button">
-        Todos
-    </button>
+```
+<button
+    class="category active"
+    data-category=""
+    type="button"
+>
+    Todos
+</button>
 
-    <button class="category"
-        data-category="Jogos" type="button">
-        Jogos
-    </button>
+<button
+    class="category"
+    data-category="Jogos"
+    type="button"
+>
+    Jogos
+</button>
 
-    <button class="category"
-        data-category="Roblox" type="button">
-        Roblox
-    </button>
+<button
+    class="category"
+    data-category="Roblox"
+    type="button"
+>
+    Roblox
+</button>
 
-    <button class="category"
-        data-category="Minecraft" type="button">
-        Minecraft
-    </button>
+<button
+    class="category"
+    data-category="Minecraft"
+    type="button"
+>
+    Minecraft
+</button>
 
-    <button class="category"
-        data-category="Contas" type="button">
-        Contas
-    </button>
+<button
+    class="category"
+    data-category="Contas"
+    type="button"
+>
+    Contas
+</button>
 
-    <button class="category"
-        data-category="Itens" type="button">
-        Itens
-    </button>
+<button
+    class="category"
+    data-category="Itens"
+    type="button"
+>
+    Itens
+</button>
 
-    <button class="category"
-        data-category="Outros" type="button">
-        Outros
-    </button>
+<button
+    class="category"
+    data-category="Outros"
+    type="button"
+>
+    Outros
+</button>
+```
 
 </div>
-
 
 <div class="section-head">
-    <h2 class="section-title">
-        Produtos em destaque
-    </h2>
-</div>
 
+```
+<h2 class="section-title">
+    Produtos em destaque
+</h2>
+```
+
+</div>
 
 <section
     id="productsGrid"
     class="products-grid"
 >
-    <div class="loading">
-        Carregando produtos...
-    </div>
+
+```
+<div class="loading">
+    Carregando produtos...
+</div>
+```
+
 </section>
 
 </main>
 
-
 <footer>
 
-    <div class="footer-logo">
-        Slax<span>Store</span>
-    </div>
+```
+<div class="footer-logo">
+    Slax<span>Store</span>
+</div>
 
-    <p>
-        Marketplace digital © 2026 SlaxStore
-    </p>
+<p>
+    Marketplace digital © 2026 SlaxStore
+</p>
+```
 
 </footer>
 
-
 <!-- LOGIN -->
 
-<div id="authModal" class="modal hidden">
+<div
+    id="authModal"
+    class="modal hidden"
+>
 
 <div class="modal-box">
 
-    <div class="modal-header">
+```
+<div class="modal-header">
 
-        <h2 id="authTitle">
-            Entrar
-        </h2>
+    <h2 id="authTitle">
+        Entrar
+    </h2>
 
-        <button
-            class="close"
-            type="button"
-            data-close-modal="authModal"
-        >
-            ×
-        </button>
+    <button
+        class="close"
+        type="button"
+        data-close-modal="authModal"
+    >
+        ×
+    </button>
 
-    </div>
+</div>
+
+<div
+    id="authMessage"
+    class="message"
+></div>
+
+<form id="authForm">
 
     <div
-        id="authMessage"
-        class="message"
-    ></div>
+        id="usernameField"
+        class="form-group hidden"
+    >
 
-    <form id="authForm">
-
-        <div
-            id="usernameField"
-            class="form-group hidden"
-        >
-
-            <label for="username">
-                Nome de usuário
-            </label>
-
-            <input
-                id="username"
-                type="text"
-                autocomplete="username"
-                placeholder="Seu nome"
-            >
-
-        </div>
-
-        <div class="form-group">
-
-            <label for="email">
-                E-mail
-            </label>
-
-            <input
-                id="email"
-                type="email"
-                autocomplete="email"
-                placeholder="seu@email.com"
-                required
-            >
-
-        </div>
-
-        <div class="form-group">
-
-            <label for="password">
-                Senha
-            </label>
-
-            <input
-                id="password"
-                type="password"
-                autocomplete="current-password"
-                placeholder="Sua senha"
-                required
-            >
-
-        </div>
-
-        <label
-            id="rememberContainer"
-            class="remember"
-        >
-            <input
-                id="rememberLogin"
-                type="checkbox"
-                checked
-            >
-            Lembrar meu login neste dispositivo
+        <label for="username">
+            Nome de usuário
         </label>
 
-        <button
-            id="authSubmit"
-            class="btn primary"
-            type="submit"
-            style="width:100%"
+        <input
+            id="username"
+            type="text"
+            autocomplete="username"
+            placeholder="Seu nome"
         >
-            Entrar
-        </button>
-
-    </form>
-
-    <div class="switch">
-
-        <span id="authSwitchText">
-            Ainda não tem uma conta?
-        </span>
-
-        <button
-            id="authSwitch"
-            type="button"
-        >
-            Criar conta
-        </button>
 
     </div>
 
+    <div class="form-group">
+
+        <label for="email">
+            E-mail
+        </label>
+
+        <input
+            id="email"
+            type="email"
+            autocomplete="email"
+            placeholder="seu@email.com"
+            required
+        >
+
+    </div>
+
+    <div class="form-group">
+
+        <label for="password">
+            Senha
+        </label>
+
+        <input
+            id="password"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Sua senha"
+            required
+        >
+
+    </div>
+
+    <label
+        id="rememberContainer"
+        class="remember"
+    >
+
+        <input
+            id="rememberLogin"
+            type="checkbox"
+            checked
+        >
+
+        Lembrar meu login neste dispositivo
+
+    </label>
+
+    <button
+        id="authSubmit"
+        class="btn primary"
+        type="submit"
+        style="width:100%"
+    >
+        Entrar
+    </button>
+
+</form>
+
+<div class="switch">
+
+    <span id="authSwitchText">
+        Ainda não tem uma conta?
+    </span>
+
+    <button
+        id="authSwitch"
+        type="button"
+    >
+        Criar conta
+    </button>
+
 </div>
+```
 
 </div>
 
+</div>
 
 <!-- VERIFICAÇÃO -->
 
-<div id="verifyModal" class="modal hidden">
+<div
+    id="verifyModal"
+    class="modal hidden"
+>
 
 <div class="modal-box">
 
-    <div class="modal-header">
+```
+<div class="modal-header">
 
-        <h2>Verificar e-mail</h2>
+    <h2>
+        Verificar e-mail
+    </h2>
 
-        <button
-            class="close"
-            type="button"
-            data-close-modal="verifyModal"
+    <button
+        class="close"
+        type="button"
+        data-close-modal="verifyModal"
+    >
+        ×
+    </button>
+
+</div>
+
+<p
+    id="verifyEmailText"
+    style="color:#8291a6;margin-bottom:20px"
+>
+    Enviamos um código para seu e-mail.
+</p>
+
+<div
+    id="verifyMessage"
+    class="message"
+></div>
+
+<form id="verifyForm">
+
+    <div class="form-group">
+
+        <label for="verificationCode">
+            Código recebido
+        </label>
+
+        <input
+            id="verificationCode"
+            type="text"
+            inputmode="numeric"
+            maxlength="8"
+            placeholder="000000"
+            required
         >
-            ×
-        </button>
 
     </div>
 
-    <p
-        id="verifyEmailText"
-        style="color:#8291a6;margin-bottom:20px"
+    <button
+        class="btn primary"
+        type="submit"
+        style="width:100%"
     >
-        Enviamos um código para seu e-mail.
-    </p>
+        Verificar conta
+    </button>
 
-    <div
-        id="verifyMessage"
-        class="message"
-    ></div>
+</form>
 
-    <form id="verifyForm">
+<button
+    id="resendCode"
+    class="btn"
+    type="button"
+    style="width:100%;margin-top:10px"
+>
+    Reenviar código
+</button>
+```
 
-        <div class="form-group">
+</div>
 
-            <label for="verificationCode">
-                Código recebido
-            </label>
+</div>
 
-            <input
-                id="verificationCode"
-                type="text"
-                inputmode="numeric"
-                maxlength="8"
-                placeholder="000000"
-                required
-            >
+<!-- PERFIL -->
 
-        </div>
+<div
+    id="profileModal"
+    class="modal hidden"
+>
+
+<div class="modal-box profile-box">
+
+```
+<div class="modal-header">
+
+    <h2>
+        Minha conta
+    </h2>
+
+    <button
+        class="close"
+        type="button"
+        data-close-modal="profileModal"
+    >
+        ×
+    </button>
+
+</div>
+
+<div
+    id="profileAvatar"
+    class="profile-avatar"
+>
+    S
+</div>
+
+<h2 id="profileUsername">
+    Usuário
+</h2>
+
+<p
+    id="profileEmail"
+    class="profile-email"
+></p>
+
+<div class="balance">
+
+    <span>
+        Saldo disponível
+    </span>
+
+    <strong id="profileBalance">
+        R$ 0,00
+    </strong>
+
+</div>
+
+<div class="balance-actions">
+
+    <button
+        id="withdrawButton"
+        class="btn primary"
+        type="button"
+    >
+        Resgatar saldo
+    </button>
+
+    <button
+        id="profileSellButton"
+        class="btn"
+        type="button"
+    >
+        Vender produto
+    </button>
+
+</div>
+
+<button
+    class="btn danger"
+    type="button"
+    onclick="sair()"
+    style="width:100%"
+>
+    Sair da conta
+</button>
+```
+
+</div>
+
+</div>
+
+<!-- RESGATE -->
+
+<div
+    id="withdrawModal"
+    class="modal hidden"
+>
+
+<div class="modal-box">
+
+```
+<div class="modal-header">
+
+    <h2>
+        Resgatar saldo
+    </h2>
+
+    <button
+        class="close"
+        type="button"
+        data-close-modal="withdrawModal"
+    >
+        ×
+    </button>
+
+</div>
+
+<div class="withdraw-info">
+
+    O valor mínimo para resgate é
+
+    <span class="withdraw-limit">
+        R$ 2,00
+    </span>.
+
+    Digite o valor que deseja solicitar.
+    O processamento do pagamento é feito
+    pelo servidor da SlaxStore.
+
+</div>
+
+<div
+    id="withdrawMessage"
+    class="message"
+></div>
+
+<form id="withdrawForm">
+
+    <div class="form-group">
+
+        <label for="withdrawAmount">
+            Valor do resgate
+        </label>
+
+        <input
+            id="withdrawAmount"
+            type="number"
+            min="2"
+            step="0.01"
+            placeholder="2,00"
+            required
+        >
+
+    </div>
+
+    <div class="form-group">
+
+        <label for="withdrawMethod">
+            Método de recebimento
+        </label>
+
+        <select id="withdrawMethod">
+
+            <option value="pix">
+                PIX
+            </option>
+
+        </select>
+
+    </div>
+
+    <div class="form-group">
+
+        <label for="withdrawKey">
+            Chave PIX
+        </label>
+
+        <input
+            id="withdrawKey"
+            type="text"
+            placeholder="Digite sua chave PIX"
+            autocomplete="off"
+            required
+        >
+
+    </div>
+
+    <div class="form-actions">
+
+        <button
+            class="btn"
+            type="button"
+            data-close-modal="withdrawModal"
+        >
+            Cancelar
+        </button>
 
         <button
             class="btn primary"
             type="submit"
-            style="width:100%"
         >
-            Verificar conta
-        </button>
-
-    </form>
-
-    <button
-        id="resendCode"
-        class="btn"
-        type="button"
-        style="width:100%;margin-top:10px"
-    >
-        Reenviar código
-    </button>
-
-</div>
-
-</div>
-
-
-<!-- PERFIL -->
-
-<div id="profileModal" class="modal hidden">
-
-<div class="modal-box profile-box">
-
-    <div class="modal-header">
-
-        <h2>Minha conta</h2>
-
-        <button
-            class="close"
-            type="button"
-            data-close-modal="profileModal"
-        >
-            ×
+            Solicitar resgate
         </button>
 
     </div>
 
-    <div
-        id="profileAvatar"
-        class="profile-avatar"
-    >
-        S
-    </div>
-
-    <h2 id="profileUsername">
-        Usuário
-    </h2>
-
-    <p
-        id="profileEmail"
-        class="profile-email"
-    ></p>
-
-    <div class="balance">
-
-        <span>Saldo disponível</span>
-
-        <strong id="profileBalance">
-            R$ 0,00
-        </strong>
-
-    </div>
-
-    <div class="balance-actions">
-
-        <button
-            id="withdrawButton"
-            class="btn primary"
-            type="button"
-        >
-            Resgatar saldo
-        </button>
-
-        <button
-            id="profileSellButton"
-            class="btn"
-            type="button"
-        >
-            Vender produto
-        </button>
-
-    </div>
-
-    <button
-        class="btn danger"
-        type="button"
-        onclick="sair()"
-        style="width:100%"
-    >
-        Sair da conta
-    </button>
+</form>
+```
 
 </div>
 
 </div>
-
-
-<!-- RESGATE -->
-
-<div id="withdrawModal" class="modal hidden">
-
-<div class="modal-box">
-
-    <div class="modal-header">
-
-        <h2>Resgatar saldo</h2>
-
-        <button
-            class="close"
-            type="button"
-            data-close-modal="withdrawModal"
-        >
-            ×
-        </button>
-
-    </div>
-
-    <div class="withdraw-info">
-
-        O valor mínimo para resgate é
-        <span class="withdraw-limit">
-            R$ 2,00
-        </span>.
-
-        Digite o valor que deseja solicitar.
-        O processamento do pagamento é feito
-        pelo servidor da SlaxStore.
-
-    </div>
-
-    <div
-        id="withdrawMessage"
-        class="message"
-    ></div>
-
-    <form id="withdrawForm">
-
-        <div class="form-group">
-
-            <label for="withdrawAmount">
-                Valor do resgate
-            </label>
-
-            <input
-                id="withdrawAmount"
-                type="number"
-                min="2"
-                step="0.01"
-                placeholder="2,00"
-                required
-            >
-
-        </div>
-
-        <div class="form-group">
-
-            <label for="withdrawMethod">
-                Método de recebimento
-            </label>
-
-            <select id="withdrawMethod">
-
-                <option value="pix">
-                    PIX
-                </option>
-
-            </select>
-
-        </div>
-
-        <div class="form-group">
-
-            <label for="withdrawKey">
-                Chave PIX
-            </label>
-
-            <input
-                id="withdrawKey"
-                type="text"
-                placeholder="Digite sua chave PIX"
-                autocomplete="off"
-                required
-            >
-
-        </div>
-
-        <div class="form-actions">
-
-            <button
-                class="btn"
-                type="button"
-                data-close-modal="withdrawModal"
-            >
-                Cancelar
-            </button>
-
-            <button
-                class="btn primary"
-                type="submit"
-            >
-                Solicitar resgate
-            </button>
-
-        </div>
-
-    </form>
-
-</div>
-
-</div>
-
 
 <!-- CRIAR ANÚNCIO -->
 
@@ -1382,264 +1444,250 @@ footer{
 
 <div class="modal-box large">
 
-    <div class="modal-header">
+```
+<div class="modal-header">
 
-        <h2>Publicar anúncio</h2>
-
-        <button
-            class="close"
-            type="button"
-            data-close-modal="createProductModal"
-        >
-            ×
-        </button>
-
-    </div>
-
-    <div
-        id="createProductMessage"
-        class="message"
-    ></div>
-
-    <form id="createProductForm">
-
-        <div class="form-group">
-
-            <label for="productName">
-                Nome do produto
-            </label>
-
-            <input
-                id="productName"
-                type="text"
-                maxlength="120"
-                placeholder="Ex.: Item raro"
-                required
-            >
-
-        </div>
-
-        <div class="form-group">
-
-            <label for="productDescription">
-                Descrição
-            </label>
-
-            <textarea
-                id="productDescription"
-                maxlength="3000"
-                placeholder="Explique exatamente o que o comprador receberá..."
-            ></textarea>
-
-        </div>
-
-        <div class="form-group">
-
-            <label for="productPrice">
-                Preço em reais
-            </label>
-
-            <input
-                id="productPrice"
-                type="number"
-                min="0.01"
-                step="0.01"
-                placeholder="10,00"
-                required
-            >
-
-        </div>
-
-        <div class="form-group">
-
-            <label for="productCategory">
-                Categoria
-            </label>
-
-            <select id="productCategory">
-
-                <option value="Roblox">
-                    Roblox
-                </option>
-
-                <option value="Jogos">
-                    Jogos
-                </option>
-
-                <option value="Minecraft">
-                    Minecraft
-                </option>
-
-                <option value="Contas">
-                    Contas
-                </option>
-
-                <option value="Itens">
-                    Itens
-                </option>
-
-                <option value="Outros">
-                    Outros
-                </option>
-
-            </select>
-
-        </div>
-
-        <div class="form-group">
-
-            <label for="productImage">
-                URL da imagem
-            </label>
-
-            <input
-                id="productImage"
-                type="url"
-                placeholder="https://..."
-            >
-
-        </div>
-
-        <div class="form-actions">
-
-            <button
-                class="btn"
-                type="button"
-                data-close-modal="createProductModal"
-            >
-                Cancelar
-            </button>
-
-            <button
-                class="btn primary"
-                type="submit"
-            >
-                Publicar anúncio
-            </button>
-
-        </div>
-
-    </form>
-
-</div>
-
-</div>
-
-
-<!-- PRODUTO -->
-
-<div id="productModal" class="modal hidden">
-
-<div class="modal-box large">
-
-    <div class="modal-header">
-
-        <h2>Detalhes do produto</h2>
-
-        <button
-            class="close"
-            type="button"
-            data-close-modal="productModal"
-        >
-            ×
-        </button>
-
-    </div>
-
-    <img
-        id="productModalImage"
-        class="product-detail-image"
-        alt="Produto"
-        style="display:none"
-    >
-
-    <h2 id="productModalName">
-        Produto
+    <h2>
+        Publicar anúncio
     </h2>
 
-    <div
-        id="productModalPrice"
-        class="product-detail-price"
-    >
-        R$ 0,00
-    </div>
-
-    <p
-        id="productModalDescription"
-        class="product-detail-description"
-    ></p>
-
-    <div
-        id="sellerBox"
-        class="seller-box"
-    >
-        <div
-            id="sellerAvatar"
-            class="seller-avatar"
-        >
-            S
-        </div>
-
-        <div>
-            <small style="color:#68788d">
-                Vendedor
-            </small>
-
-            <div id="sellerName">
-                SlaxStore
-            </div>
-        </div>
-    </div>
-
     <button
-        id="buyProductButton"
-        class="btn primary"
+        class="close"
         type="button"
-        style="width:100%;margin-top:20px"
+        data-close-modal="createProductModal"
     >
-        Comprar agora
+        ×
     </button>
 
 </div>
 
+<div
+    id="createProductMessage"
+    class="message"
+></div>
+
+<form id="createProductForm">
+
+    <div class="form-group">
+
+        <label for="productName">
+            Nome do produto
+        </label>
+
+        <input
+            id="productName"
+            type="text"
+            maxlength="120"
+            placeholder="Ex.: Item raro"
+            required
+        >
+
+    </div>
+
+    <div class="form-group">
+
+        <label for="productDescription">
+            Descrição
+        </label>
+
+        <textarea
+            id="productDescription"
+            maxlength="3000"
+            placeholder="Explique exatamente o que o comprador receberá..."
+        ></textarea>
+
+    </div>
+
+    <div class="form-group">
+
+        <label for="productPrice">
+            Preço em reais
+        </label>
+
+        <input
+            id="productPrice"
+            type="number"
+            min="0.01"
+            step="0.01"
+            placeholder="10,00"
+            required
+        >
+
+    </div>
+
+    <div class="form-group">
+
+        <label for="productCategory">
+            Categoria
+        </label>
+
+        <select id="productCategory">
+
+            <option value="Roblox">
+                Roblox
+            </option>
+
+            <option value="Jogos">
+                Jogos
+            </option>
+
+            <option value="Minecraft">
+                Minecraft
+            </option>
+
+            <option value="Contas">
+                Contas
+            </option>
+
+            <option value="Itens">
+                Itens
+            </option>
+
+            <option value="Outros">
+                Outros
+            </option>
+
+        </select>
+
+    </div>
+
+    <div class="form-group">
+
+        <label for="productImage">
+            URL da imagem
+        </label>
+
+        <input
+            id="productImage"
+            type="url"
+            placeholder="https://..."
+        >
+
+    </div>
+
+    <div class="form-actions">
+
+        <button
+            class="btn"
+            type="button"
+            data-close-modal="createProductModal"
+        >
+            Cancelar
+        </button>
+
+        <button
+            class="btn primary"
+            type="submit"
+        >
+            Publicar anúncio
+        </button>
+
+    </div>
+
+</form>
+```
+
 </div>
 
+</div>
+
+<!-- PRODUTO -->
+
+<div
+    id="productModal"
+    class="modal hidden"
+>
+
+<div class="modal-box large">
+
+```
+<div class="modal-header">
+
+    <h2>
+        Detalhes do produto
+    </h2>
+
+    <button
+        class="close"
+        type="button"
+        data-close-modal="productModal"
+    >
+        ×
+    </button>
+
+</div>
+
+<img
+    id="productModalImage"
+    class="product-detail-image"
+    alt="Produto"
+    style="display:none"
+>
+
+<h2 id="productModalName">
+    Produto
+</h2>
+
+<div
+    id="productModalPrice"
+    class="product-detail-price"
+>
+    R$ 0,00
+</div>
+
+<p
+    id="productModalDescription"
+    class="product-detail-description"
+></p>
+
+<div
+    id="sellerBox"
+    class="seller-box"
+>
+
+    <div
+        id="sellerAvatar"
+        class="seller-avatar"
+    >
+        S
+    </div>
+
+    <div>
+
+        <small style="color:#68788d">
+            Vendedor
+        </small>
+
+        <div id="sellerName">
+            SlaxStore
+        </div>
+
+    </div>
+
+</div>
+
+<button
+    id="buyProductButton"
+    class="btn primary"
+    type="button"
+    style="width:100%;margin-top:20px"
+>
+    Comprar agora
+</button>
+```
+
+</div>
+
+</div>
 
 <script>
 "use strict";
-
-/*
-    SLAXSTORE FRONTEND
-    ==================
-
-    Este arquivo trabalha com a API do seu servidor.
-
-    Endpoints utilizados:
-
-    POST /api/auth/register
-    POST /api/auth/login
-    POST /api/auth/logout
-    GET  /api/auth/me
-    POST /api/auth/verify-email
-    POST /api/auth/resend-code
-
-    GET  /api/products
-    GET  /api/products/search
-    GET  /api/products/:id
-    POST /api/products
-    POST /api/products/:id/buy
-
-    POST /api/wallet/withdraw
-
-    IMPORTANTE:
-    O endpoint de resgate precisa existir no backend
-    para o saque ser realmente processado.
-*/
 
 const API_URL = window.location.origin;
 
 const TOKEN_KEY = "slaxstore_token";
 const EMAIL_KEY = "slaxstore_saved_email";
+const USER_KEY = "slaxstore_user";
 
 let usuario = null;
 let authMode = "login";
@@ -1652,7 +1700,7 @@ const $ = id => document.getElementById(id);
 
 
 /* =========================
-   TOKEN / LOGIN
+   LOGIN / TOKEN
 ========================= */
 
 function token(){
@@ -1660,7 +1708,9 @@ function token(){
 }
 
 function salvarToken(value){
-    if(!value) return;
+
+    if(!value)
+        return;
 
     localStorage.setItem(
         TOKEN_KEY,
@@ -1669,11 +1719,16 @@ function salvarToken(value){
 }
 
 function removerToken(){
-    localStorage.removeItem(TOKEN_KEY);
+
+    localStorage.removeItem(
+        TOKEN_KEY
+    );
 }
 
 function salvarEmailLogin(email){
-    if(!email) return;
+
+    if(!email)
+        return;
 
     localStorage.setItem(
         EMAIL_KEY,
@@ -1682,9 +1737,55 @@ function salvarEmailLogin(email){
 }
 
 function emailSalvo(){
+
     return localStorage.getItem(
         EMAIL_KEY
     ) || "";
+}
+
+
+/* =========================
+   USUÁRIO SALVO
+========================= */
+
+function salvarUsuarioLocal(user){
+
+    if(!user)
+        return;
+
+    try{
+
+        localStorage.setItem(
+            USER_KEY,
+            JSON.stringify(user)
+        );
+
+    }catch{}
+}
+
+function usuarioLocal(){
+
+    try{
+
+        const salvo =
+            localStorage.getItem(USER_KEY);
+
+        if(!salvo)
+            return null;
+
+        return JSON.parse(salvo);
+
+    }catch{
+
+        return null;
+    }
+}
+
+function removerUsuarioLocal(){
+
+    localStorage.removeItem(
+        USER_KEY
+    );
 }
 
 
@@ -1697,6 +1798,7 @@ function texto(value){
 }
 
 function escapeHTML(value){
+
     return texto(value)
         .replace(/&/g,"&amp;")
         .replace(/</g,"&lt;")
@@ -1706,6 +1808,7 @@ function escapeHTML(value){
 }
 
 function dinheiro(cents){
+
     return (
         Number(cents || 0) / 100
     ).toLocaleString(
@@ -1717,9 +1820,13 @@ function dinheiro(cents){
     );
 }
 
-function mostrar(elemento, mostrar=true){
+function mostrar(
+    elemento,
+    mostrar=true
+){
 
-    if(!elemento) return;
+    if(!elemento)
+        return;
 
     elemento.classList.toggle(
         "hidden",
@@ -1732,12 +1839,16 @@ function mostrar(elemento, mostrar=true){
 
 function abrirModal(id){
 
-    const elemento = $(id);
+    const elemento =
+        $(id);
 
     if(!elemento)
         return false;
 
-    mostrar(elemento,true);
+    mostrar(
+        elemento,
+        true
+    );
 
     document.body.classList.add(
         "modal-open"
@@ -1748,20 +1859,28 @@ function abrirModal(id){
 
 function fecharModal(id){
 
-    const elemento = $(id);
+    const elemento =
+        $(id);
 
     if(!elemento)
         return;
 
-    mostrar(elemento,false);
+    mostrar(
+        elemento,
+        false
+    );
 
     const algumAberto =
         [...document.querySelectorAll(".modal")]
-        .some(modal =>
-            !modal.classList.contains("hidden")
+        .some(
+            modal =>
+                !modal.classList.contains(
+                    "hidden"
+                )
         );
 
     if(!algumAberto){
+
         document.body.classList.remove(
             "modal-open"
         );
@@ -1775,7 +1894,9 @@ function mensagem(
 ){
 
     if(!elemento){
+
         alert(msg);
+
         return;
     }
 
@@ -1794,9 +1915,14 @@ function limparMensagem(elemento){
     if(!elemento)
         return;
 
-    elemento.textContent = "";
-    elemento.className = "message";
-    elemento.style.display = "none";
+    elemento.textContent =
+        "";
+
+    elemento.className =
+        "message";
+
+    elemento.style.display =
+        "none";
 }
 
 
@@ -1806,16 +1932,19 @@ function limparMensagem(elemento){
 
 async function api(
     endpoint,
-    options={}
+    options={},
+    config={}
 ){
 
     const headers = {
+
         ...(options.body
             ? {
                 "Content-Type":
                     "application/json"
             }
             : {}),
+
         ...(options.headers || {})
     };
 
@@ -1864,21 +1993,25 @@ async function api(
     if(!resposta.ok){
 
         /*
-            Só removemos o token quando o servidor
-            realmente informa que ele não é válido.
+            O token só será removido quando
+            uma chamada que verifica a sessão
+            realmente retornar 401.
 
-            Isso evita apagar o login local por erros
-            temporários de rede ou servidor.
+            Isso impede que outros erros
+            derrubem o login.
         */
 
         if(
             resposta.status === 401 &&
-            !endpoint.includes("/login") &&
-            !endpoint.includes("/register")
+            config.clearSession === true
         ){
 
             usuario = null;
+
             removerToken();
+
+            removerUsuarioLocal();
+
             atualizarInterface();
         }
 
@@ -1894,7 +2027,7 @@ async function api(
 
 
 /* =========================
-   SESSÃO
+   RECUPERAR SESSÃO
 ========================= */
 
 async function verificarSessao(){
@@ -1911,54 +2044,118 @@ async function verificarSessao(){
         return;
     }
 
+
+    /*
+        Mostra imediatamente o usuário salvo.
+        Depois tentamos confirmar no servidor.
+    */
+
+    const salvo =
+        usuarioLocal();
+
+    if(salvo){
+
+        usuario =
+            salvo;
+
+        atualizarInterface();
+    }
+
+
     try{
 
         const resposta =
             await api(
-                "/api/auth/me"
+                "/api/auth/me",
+                {},
+                {
+                    clearSession:true
+                }
             );
 
-        usuario =
+        const servidorUsuario =
             resposta.user ||
             resposta.usuario ||
+            resposta.data?.user ||
             null;
 
-        /*
-            Se o backend respondeu normalmente,
-            mas não mandou usuário, o token não
-            pode ser considerado uma sessão válida.
-        */
+        if(servidorUsuario){
 
-        if(!usuario){
+            usuario =
+                servidorUsuario;
 
-            removerToken();
+            salvarUsuarioLocal(
+                usuario
+            );
+
+            if(usuario.email){
+
+                salvarEmailLogin(
+                    usuario.email
+                );
+            }
+
+        }else{
+
+            /*
+                O token continua salvo.
+                Não forçamos novo login.
+            */
+
+            if(!usuario){
+
+                usuario = {
+                    email:
+                        emailSalvo() || ""
+                };
+            }
+
+            salvarUsuarioLocal(
+                usuario
+            );
         }
 
     }catch(erro){
 
+        const erroTexto =
+            String(
+                erro.message || ""
+            ).toLowerCase();
+
         /*
-            Não apagamos o token em erro de rede.
-            Isso é importante para não "deslogar"
-            o usuário sozinho.
+            Erro de conexão não desloga.
         */
 
         if(
-            String(erro.message)
-            .toLowerCase()
-            .includes("não foi possível conectar")
+            erroTexto.includes(
+                "não foi possível conectar"
+            )
         ){
+
+            atualizarInterface();
+
             return;
         }
 
         /*
-            Se o api() já recebeu 401,
-            o token já foi removido.
+            Se ainda existe token,
+            mantemos a sessão local.
         */
 
-        usuario =
-            token()
-                ? usuario
-                : null;
+        if(token()){
+
+            if(!usuario){
+
+                usuario =
+                    usuarioLocal();
+            }
+
+            atualizarInterface();
+
+            return;
+        }
+
+        usuario = null;
     }
 
     atualizarInterface();
@@ -1982,6 +2179,7 @@ function atualizarInterface(){
 
     const heroSellButton =
         $("heroSellButton");
+
 
     if(usuario){
 
@@ -2045,7 +2243,9 @@ function atualizarAvatar(){
         "S";
 
     avatar.textContent =
-        nome.charAt(0).toUpperCase();
+        nome
+            .charAt(0)
+            .toUpperCase();
 }
 
 function criarBotaoVender(){
@@ -2065,7 +2265,9 @@ function criarBotaoVender(){
         return;
 
     const botao =
-        document.createElement("button");
+        document.createElement(
+            "button"
+        );
 
     botao.id =
         "slaxSellButton";
@@ -2120,11 +2322,13 @@ function abrirAuth(
     const remember =
         $("rememberContainer");
 
+
     if(title)
         title.textContent =
             modo === "register"
                 ? "Criar conta"
                 : "Entrar";
+
 
     if(usernameField){
 
@@ -2139,11 +2343,13 @@ function abrirAuth(
                 : "none";
     }
 
+
     if(submit)
         submit.textContent =
             modo === "register"
                 ? "Criar conta"
                 : "Entrar";
+
 
     if(switchText)
         switchText.textContent =
@@ -2151,11 +2357,13 @@ function abrirAuth(
                 ? "Já possui uma conta?"
                 : "Ainda não tem uma conta?";
 
+
     if(switchButton)
         switchButton.textContent =
             modo === "register"
                 ? "Entrar"
                 : "Criar conta";
+
 
     if(remember)
         remember.style.display =
@@ -2163,13 +2371,15 @@ function abrirAuth(
                 ? "none"
                 : "";
 
+
     limparMensagem(
         $("authMessage")
     );
 
+
     /*
-        Preenche automaticamente o último e-mail
-        usado neste dispositivo.
+        Recupera automaticamente o e-mail
+        usado anteriormente.
     */
 
     if(modo === "login"){
@@ -2177,14 +2387,17 @@ function abrirAuth(
         const email =
             emailSalvo();
 
-        if(email &&
+        if(
+            email &&
             $("email") &&
             !$("email").value
         ){
+
             $("email").value =
                 email;
         }
     }
+
 
     abrirModal(
         "authModal"
@@ -2208,6 +2421,7 @@ function configurarLogin(){
     if(!form)
         return;
 
+
     form.addEventListener(
         "submit",
         async event => {
@@ -2219,6 +2433,7 @@ function configurarLogin(){
 
             limparMensagem(msg);
 
+
             try{
 
                 const email =
@@ -2229,15 +2444,26 @@ function configurarLogin(){
                 const password =
                     $("password")?.value || "";
 
-                if(!email)
+
+                if(!email){
+
                     throw new Error(
                         "Digite seu e-mail."
                     );
+                }
 
-                if(!password)
+
+                if(!password){
+
                     throw new Error(
                         "Digite sua senha."
                     );
+                }
+
+
+                /* =====================
+                   CADASTRO
+                ===================== */
 
                 if(
                     authMode ===
@@ -2248,18 +2474,24 @@ function configurarLogin(){
                         ($("username")?.value || "")
                         .trim();
 
-                    if(!username)
+
+                    if(!username){
+
                         throw new Error(
                             "Digite seu nome de usuário."
                         );
+                    }
+
 
                     emailParaVerificacao =
                         email;
+
 
                     await api(
                         "/api/auth/register",
                         {
                             method:"POST",
+
                             body:
                                 JSON.stringify({
                                     username,
@@ -2269,17 +2501,25 @@ function configurarLogin(){
                         }
                     );
 
+
                     const textoVerificacao =
                         $("verifyEmailText");
 
-                    if(textoVerificacao)
+
+                    if(textoVerificacao){
+
                         textoVerificacao.textContent =
                             "Enviamos um código para " +
                             email + ".";
+                    }
 
-                    if($("verificationCode"))
+
+                    if($("verificationCode")){
+
                         $("verificationCode").value =
                             "";
+                    }
+
 
                     fecharModal(
                         "authModal"
@@ -2293,11 +2533,16 @@ function configurarLogin(){
                 }
 
 
+                /* =====================
+                   LOGIN
+                ===================== */
+
                 const resposta =
                     await api(
                         "/api/auth/login",
                         {
                             method:"POST",
+
                             body:
                                 JSON.stringify({
                                     email,
@@ -2306,16 +2551,17 @@ function configurarLogin(){
                         }
                     );
 
-                if(!resposta.token)
+
+                if(!resposta.token){
+
                     throw new Error(
                         "O servidor não enviou o token de login."
                     );
+                }
+
 
                 /*
-                    O token fica no localStorage.
-                    Portanto o login continua depois de
-                    fechar/reabrir a página, desde que o
-                    servidor aceite esse token.
+                    SALVA O TOKEN IMEDIATAMENTE.
                 */
 
                 salvarToken(
@@ -2326,45 +2572,97 @@ function configurarLogin(){
                     email
                 );
 
+
+                /*
+                    Alguns backends já retornam
+                    o usuário no login.
+                */
+
                 usuario =
                     resposta.user ||
                     resposta.usuario ||
+                    resposta.data?.user ||
                     null;
 
-                if(!usuario){
 
-                    /*
-                        Alguns backends retornam apenas o
-                        token. Nesse caso buscamos o usuário.
-                    */
+                /*
+                    Caso o usuário não venha junto,
+                    tentamos consultar /me.
+                */
+
+                if(!usuario){
 
                     try{
 
                         const me =
                             await api(
-                                "/api/auth/me"
+                                "/api/auth/me",
+                                {},
+                                {
+                                    clearSession:true
+                                }
                             );
 
                         usuario =
                             me.user ||
                             me.usuario ||
+                            me.data?.user ||
                             null;
 
-                    }catch{}
+                    }catch{
+
+                        /*
+                            O token já foi salvo.
+                            Não obrigamos o usuário
+                            a fazer login novamente.
+                        */
+
+                        if(token()){
+
+                            usuario = {
+                                email:email
+                            };
+                        }
+                    }
                 }
 
-                if(!usuario)
-                    throw new Error(
-                        "Login realizado, mas o servidor não retornou o usuário."
-                    );
+
+                /*
+                    Último fallback.
+                */
+
+                if(!usuario){
+
+                    usuario = {
+                        email:email
+                    };
+                }
+
+
+                salvarUsuarioLocal(
+                    usuario
+                );
+
 
                 fecharModal(
                     "authModal"
                 );
 
+
                 atualizarInterface();
 
-                await carregarPerfil();
+
+                /*
+                    Atualiza os dados do usuário
+                    sem quebrar a sessão.
+                */
+
+                try{
+
+                    await carregarPerfil();
+
+                }catch{}
+
 
                 await carregarProdutos();
 
@@ -2396,63 +2694,122 @@ async function verificarCodigo(){
 
     limparMensagem(msg);
 
+
     try{
 
-        if(!emailParaVerificacao)
+        if(!emailParaVerificacao){
+
             throw new Error(
                 "E-mail de verificação não encontrado."
             );
+        }
 
-        if(!codigo)
+
+        if(!codigo){
+
             throw new Error(
                 "Digite o código recebido."
             );
+        }
+
 
         const resposta =
             await api(
                 "/api/auth/verify-email",
                 {
                     method:"POST",
+
                     body:
                         JSON.stringify({
                             email:
                                 emailParaVerificacao,
+
                             code:
                                 codigo
                         })
                 }
             );
 
-        if(resposta.token)
+
+        if(resposta.token){
+
             salvarToken(
                 resposta.token
             );
+        }
+
 
         usuario =
             resposta.user ||
             resposta.usuario ||
+            resposta.data?.user ||
             null;
 
+
         if(
-            usuario?.email
+            token() &&
+            !usuario
         ){
+
+            try{
+
+                const me =
+                    await api(
+                        "/api/auth/me",
+                        {},
+                        {
+                            clearSession:true
+                        }
+                    );
+
+                usuario =
+                    me.user ||
+                    me.usuario ||
+                    me.data?.user ||
+                    null;
+
+            }catch{}
+        }
+
+
+        if(!usuario){
+
+            usuario = {
+                email:
+                    emailParaVerificacao
+            };
+        }
+
+
+        salvarUsuarioLocal(
+            usuario
+        );
+
+
+        if(usuario.email){
+
             salvarEmailLogin(
                 usuario.email
             );
         }
 
+
         fecharModal(
             "verifyModal"
         );
 
+
         emailParaVerificacao =
             "";
 
+
         atualizarInterface();
+
 
         await carregarPerfil();
 
         await carregarProdutos();
+
 
     }catch(erro){
 
@@ -2471,17 +2828,22 @@ async function reenviarCodigo(){
 
     limparMensagem(msg);
 
+
     try{
 
-        if(!emailParaVerificacao)
+        if(!emailParaVerificacao){
+
             throw new Error(
                 "E-mail não encontrado."
             );
+        }
+
 
         await api(
             "/api/auth/resend-code",
             {
                 method:"POST",
+
                 body:
                     JSON.stringify({
                         email:
@@ -2490,11 +2852,13 @@ async function reenviarCodigo(){
             }
         );
 
+
         mensagem(
             msg,
             "Novo código enviado para seu e-mail.",
             "success"
         );
+
 
     }catch(erro){
 
@@ -2527,16 +2891,26 @@ async function sair(){
 
     }catch{}
 
+
+    /*
+        Só aqui apagamos tudo.
+    */
+
     usuario =
         null;
 
     removerToken();
 
+    removerUsuarioLocal();
+
+
     atualizarInterface();
+
 
     fecharModal(
         "profileModal"
     );
+
 
     await carregarProdutos();
 }
@@ -2551,47 +2925,79 @@ async function carregarPerfil(){
     if(!usuario)
         return;
 
+
     try{
 
         const resposta =
             await api(
-                "/api/auth/me"
+                "/api/auth/me",
+                {},
+                {
+                    clearSession:true
+                }
             );
+
 
         const novoUsuario =
             resposta.user ||
-            resposta.usuario;
+            resposta.usuario ||
+            resposta.data?.user ||
+            null;
+
 
         if(novoUsuario){
 
             usuario =
                 novoUsuario;
 
-            if(usuario.email)
+
+            salvarUsuarioLocal(
+                usuario
+            );
+
+
+            if(usuario.email){
+
                 salvarEmailLogin(
                     usuario.email
                 );
+            }
         }
+
 
         atualizarInterface();
 
+
     }catch(erro){
 
-        /*
-            Erro de rede não deve deslogar.
-        */
+        const erroTexto =
+            String(
+                erro.message || ""
+            ).toLowerCase();
+
 
         if(
-            String(erro.message)
-            .toLowerCase()
-            .includes("conectar")
+            erroTexto.includes(
+                "conectar"
+            )
         ){
+
+            atualizarInterface();
+
             return;
         }
+
+
+        /*
+            Só perdemos a sessão se o token
+            realmente foi removido.
+        */
 
         if(!token()){
 
             usuario = null;
+
+            removerUsuarioLocal();
 
             atualizarInterface();
         }
@@ -2600,34 +3006,62 @@ async function carregarPerfil(){
 
 async function abrirPerfil(){
 
+    if(!usuario && token()){
+
+        await verificarSessao();
+    }
+
+
     if(!usuario){
 
-        abrirAuth("login");
+        abrirAuth(
+            "login"
+        );
 
         return;
     }
 
+
     await carregarPerfil();
+
+
+    if(!usuario){
+
+        abrirAuth(
+            "login"
+        );
+
+        return;
+    }
+
 
     const nome =
         usuario.username ||
         usuario.nome ||
         "Usuário";
 
-    $("profileUsername").textContent =
-        nome;
 
-    $("profileEmail").textContent =
-        usuario.email || "";
+    $("profileUsername")
+        .textContent =
+            nome;
 
-    $("profileBalance").textContent =
-        dinheiro(
-            usuario.balance ??
-            usuario.saldo ??
-            0
-        );
+
+    $("profileEmail")
+        .textContent =
+            usuario.email || "";
+
+
+    $("profileBalance")
+        .textContent =
+            dinheiro(
+                usuario.balance ??
+                usuario.saldo ??
+                0
+            );
+
 
     atualizarAvatar();
+
 
     abrirModal(
         "profileModal"
@@ -2636,27 +3070,33 @@ async function abrirPerfil(){
 
 
 /* =========================
-   RESGATE DE SALDO
+   RESGATE
 ========================= */
 
 function abrirResgate(){
 
     if(!usuario){
 
-        abrirAuth("login");
+        abrirAuth(
+            "login"
+        );
 
         return;
     }
+
 
     limparMensagem(
         $("withdrawMessage")
     );
 
+
     if($("withdrawAmount"))
         $("withdrawAmount").value = "";
 
+
     if($("withdrawKey"))
         $("withdrawKey").value = "";
+
 
     abrirModal(
         "withdrawModal"
@@ -2667,21 +3107,27 @@ async function solicitarResgate(event){
 
     event.preventDefault();
 
+
     if(!usuario){
 
         fecharModal(
             "withdrawModal"
         );
 
-        abrirAuth("login");
+        abrirAuth(
+            "login"
+        );
 
         return;
     }
 
+
     const msg =
         $("withdrawMessage");
 
+
     limparMensagem(msg);
+
 
     try{
 
@@ -2690,23 +3136,32 @@ async function solicitarResgate(event){
                 $("withdrawAmount")?.value || 0
             );
 
+
         const chavePix =
             ($("withdrawKey")?.value || "")
             .trim();
+
 
         const metodo =
             $("withdrawMethod")?.value ||
             "pix";
 
-        if(valor < 2)
+
+        if(valor < 2){
+
             throw new Error(
                 "O valor mínimo para resgate é R$ 2,00."
             );
+        }
 
-        if(!chavePix)
+
+        if(!chavePix){
+
             throw new Error(
                 "Digite sua chave PIX."
             );
+        }
+
 
         const saldoCentavos =
             Number(
@@ -2715,32 +3170,44 @@ async function solicitarResgate(event){
                 0
             );
 
+
         const valorCentavos =
             Math.round(
                 valor * 100
             );
 
-        if(valorCentavos > saldoCentavos)
+
+        if(
+            valorCentavos >
+            saldoCentavos
+        ){
+
             throw new Error(
                 "Você não possui saldo suficiente."
             );
+        }
+
 
         const resposta =
             await api(
                 "/api/wallet/withdraw",
                 {
                     method:"POST",
+
                     body:
                         JSON.stringify({
                             amount:
                                 valorCentavos,
+
                             method:
                                 metodo,
+
                             pixKey:
                                 chavePix
                         })
                 }
             );
+
 
         mensagem(
             msg,
@@ -2749,11 +3216,9 @@ async function solicitarResgate(event){
             "success"
         );
 
-        /*
-            Atualiza o saldo depois do pedido.
-        */
 
         await carregarPerfil();
+
 
         setTimeout(
             () => {
@@ -2767,6 +3232,7 @@ async function solicitarResgate(event){
             },
             1200
         );
+
 
     }catch(erro){
 
@@ -2788,16 +3254,20 @@ async function carregarProdutos(){
     const container =
         $("productsGrid");
 
+
     if(!container)
         return;
 
+
     container.innerHTML =
         '<div class="loading">Carregando produtos...</div>';
+
 
     try{
 
         let endpoint =
             "/api/products";
+
 
         if(categoriaAtual){
 
@@ -2808,27 +3278,34 @@ async function carregarProdutos(){
                 );
         }
 
+
         const resposta =
             await api(endpoint);
+
 
         const produtos =
             Array.isArray(
                 resposta.products
             )
                 ? resposta.products
+
                 : Array.isArray(
                     resposta.produtos
                 )
                     ? resposta.produtos
+
                     : Array.isArray(
                         resposta
                     )
                         ? resposta
+
                         : [];
+
 
         renderizarProdutos(
             produtos
         );
+
 
     }catch(erro){
 
@@ -2849,8 +3326,10 @@ function renderizarProdutos(
     const container =
         $("productsGrid");
 
+
     if(!container)
         return;
+
 
     if(!produtos.length){
 
@@ -2862,115 +3341,125 @@ function renderizarProdutos(
         return;
     }
 
+
     container.innerHTML =
-        produtos.map(
-            produto => {
+        produtos
+            .map(
+                produto => {
 
-                const id =
-                    produto.id ||
-                    produto._id;
+                    const id =
+                        produto.id ||
+                        produto._id;
 
-                const nome =
-                    produto.name ||
-                    produto.nome ||
-                    "Produto";
+                    const nome =
+                        produto.name ||
+                        produto.nome ||
+                        "Produto";
 
-                const descricao =
-                    produto.description ||
-                    produto.descricao ||
-                    "";
+                    const descricao =
+                        produto.description ||
+                        produto.descricao ||
+                        "";
 
-                const imagem =
-                    produto.image ||
-                    produto.imageUrl ||
-                    produto.imagem ||
-                    "";
+                    const imagem =
+                        produto.image ||
+                        produto.imageUrl ||
+                        produto.imagem ||
+                        "";
 
-                const preco =
-                    produto.price ??
-                    produto.preco ??
-                    0;
+                    const preco =
+                        produto.price ??
+                        produto.preco ??
+                        0;
 
-                const vendedor =
-                    produto.sellerUsername ||
-                    produto.sellerName ||
-                    produto.seller?.username ||
-                    "Vendedor";
+                    const vendedor =
+                        produto.sellerUsername ||
+                        produto.sellerName ||
+                        produto.seller?.username ||
+                        "Vendedor";
 
-                return `
-                    <article
-                        class="product-card"
-                    >
 
-                        <div class="product-image">
+                    return `
+                        <article
+                            class="product-card"
+                        >
 
-                            ${
-                                imagem
-                                    ? `
-                                        <img
-                                            src="${escapeHTML(imagem)}"
-                                            alt="${escapeHTML(nome)}"
-                                            loading="lazy"
-                                        >
-                                      `
-                                    : `
-                                        <div class="no-image">
-                                            Sem imagem
-                                        </div>
-                                      `
-                            }
+                            <div class="product-image">
 
-                        </div>
-
-                        <div class="product-info">
-
-                            <h3>
-                                ${escapeHTML(nome)}
-                            </h3>
-
-                            <p>
-                                ${escapeHTML(
-                                    descricao
-                                )}
-                            </p>
-
-                            <div class="product-meta">
-
-                                <span>
-                                    ${escapeHTML(
-                                        vendedor
-                                    )}
-                                </span>
-
-                                <span>
-                                    ${escapeHTML(
-                                        produto.category ||
-                                        produto.categoria ||
-                                        "Outros"
-                                    )}
-                                </span>
+                                ${
+                                    imagem
+                                        ? `
+                                            <img
+                                                src="${escapeHTML(imagem)}"
+                                                alt="${escapeHTML(nome)}"
+                                                loading="lazy"
+                                            >
+                                          `
+                                        : `
+                                            <div class="no-image">
+                                                Sem imagem
+                                            </div>
+                                          `
+                                }
 
                             </div>
 
-                            <div class="product-price">
-                                ${dinheiro(preco)}
+
+                            <div class="product-info">
+
+                                <h3>
+                                    ${escapeHTML(nome)}
+                                </h3>
+
+
+                                <p>
+                                    ${escapeHTML(
+                                        descricao
+                                    )}
+                                </p>
+
+
+                                <div class="product-meta">
+
+                                    <span>
+                                        ${escapeHTML(
+                                            vendedor
+                                        )}
+                                    </span>
+
+
+                                    <span>
+                                        ${escapeHTML(
+                                            produto.category ||
+                                            produto.categoria ||
+                                            "Outros"
+                                        )}
+                                    </span>
+
+                                </div>
+
+
+                                <div class="product-price">
+                                    ${dinheiro(preco)}
+                                </div>
+
+
+                                <button
+                                    type="button"
+                                    class="btn primary"
+                                    data-product-id="${escapeHTML(id)}"
+                                >
+                                    Ver produto
+                                </button>
+
                             </div>
 
-                            <button
-                                type="button"
-                                class="btn primary"
-                                data-product-id="${escapeHTML(id)}"
-                            >
-                                Ver produto
-                            </button>
+                        </article>
+                    `;
+                }
+            )
+            .join("");
 
-                        </div>
-
-                    </article>
-                `;
-            }
-        )
-        .join("");
 
     container
         .querySelectorAll(
@@ -2994,13 +3483,14 @@ function renderizarProdutos(
 
 
 /* =========================
-   DETALHES
+   DETALHES DO PRODUTO
 ========================= */
 
 async function abrirProduto(id){
 
     if(!id)
         return;
+
 
     try{
 
@@ -3010,25 +3500,30 @@ async function abrirProduto(id){
                 encodeURIComponent(id)
             );
 
+
         produtoAtual =
             resposta.product ||
             resposta.produto ||
             resposta;
+
 
         const nome =
             produtoAtual.name ||
             produtoAtual.nome ||
             "Produto";
 
+
         $("productModalName")
             .textContent =
                 nome;
+
 
         $("productModalDescription")
             .textContent =
                 produtoAtual.description ||
                 produtoAtual.descricao ||
                 "";
+
 
         $("productModalPrice")
             .textContent =
@@ -3038,14 +3533,17 @@ async function abrirProduto(id){
                     0
                 );
 
+
         const imagem =
             $("productModalImage");
+
 
         const url =
             produtoAtual.image ||
             produtoAtual.imageUrl ||
             produtoAtual.imagem ||
             "";
+
 
         if(url){
 
@@ -3065,15 +3563,18 @@ async function abrirProduto(id){
                 "none";
         }
 
+
         const vendedor =
             produtoAtual.sellerUsername ||
             produtoAtual.sellerName ||
             produtoAtual.seller?.username ||
             "Vendedor";
 
+
         $("sellerName")
             .textContent =
                 vendedor;
+
 
         $("sellerAvatar")
             .textContent =
@@ -3081,9 +3582,11 @@ async function abrirProduto(id){
                     .charAt(0)
                     .toUpperCase();
 
+
         abrirModal(
             "productModal"
         );
+
 
     }catch(erro){
 
@@ -3104,20 +3607,25 @@ async function comprarProduto(){
     if(!produtoAtual)
         return;
 
+
     if(!usuario){
 
         fecharModal(
             "productModal"
         );
 
-        abrirAuth("login");
+        abrirAuth(
+            "login"
+        );
 
         return;
     }
 
+
     const id =
         produtoAtual.id ||
         produtoAtual._id;
+
 
     if(!id){
 
@@ -3127,6 +3635,7 @@ async function comprarProduto(){
 
         return;
     }
+
 
     try{
 
@@ -3140,22 +3649,34 @@ async function comprarProduto(){
                 }
             );
 
-        if(resposta.user)
+
+        if(resposta.user){
+
             usuario =
                 resposta.user;
+
+            salvarUsuarioLocal(
+                usuario
+            );
+        }
+
 
         fecharModal(
             "productModal"
         );
 
+
         await carregarPerfil();
+
 
         alert(
             resposta.message ||
             "Compra realizada com sucesso!"
         );
 
+
         await carregarProdutos();
+
 
     }catch(erro){
 
@@ -3177,33 +3698,45 @@ async function pesquisarProdutos(valor){
         String(valor || "")
         .trim();
 
+
     if(!busca){
 
-        categoriaAtual = "";
+        categoriaAtual =
+            "";
+
 
         document
-            .querySelectorAll(".category")
-            .forEach(botao => {
+            .querySelectorAll(
+                ".category"
+            )
+            .forEach(
+                botao => {
 
-                botao.classList.toggle(
-                    "active",
-                    botao.dataset.category === ""
-                );
-            });
+                    botao.classList.toggle(
+                        "active",
+                        botao.dataset.category === ""
+                    );
+                }
+            );
+
 
         await carregarProdutos();
 
         return;
     }
 
+
     const container =
         $("productsGrid");
+
 
     if(!container)
         return;
 
+
     container.innerHTML =
         '<div class="loading">Pesquisando...</div>';
+
 
     try{
 
@@ -3213,20 +3746,25 @@ async function pesquisarProdutos(valor){
                 encodeURIComponent(busca)
             );
 
+
         const produtos =
             Array.isArray(
                 resposta.products
             )
                 ? resposta.products
+
                 : Array.isArray(
                     resposta.produtos
                 )
                     ? resposta.produtos
+
                     : [];
+
 
         renderizarProdutos(
             produtos
         );
+
 
     }catch(erro){
 
@@ -3245,8 +3783,10 @@ function configurarPesquisa(){
     const campo =
         $("searchInput");
 
+
     if(!campo)
         return;
+
 
     campo.addEventListener(
         "input",
@@ -3255,6 +3795,7 @@ function configurarPesquisa(){
             clearTimeout(
                 searchTimer
             );
+
 
             searchTimer =
                 setTimeout(
@@ -3285,6 +3826,7 @@ function selecionarCategoria(
             categoria || ""
         ).trim();
 
+
     document
         .querySelectorAll(
             ".category"
@@ -3300,11 +3842,14 @@ function selecionarCategoria(
             }
         );
 
+
     const busca =
         $("searchInput");
 
+
     if(busca)
         busca.value = "";
+
 
     carregarProdutos();
 }
@@ -3340,20 +3885,26 @@ function abrirCriarAnuncio(){
 
     if(!usuario){
 
-        abrirAuth("login");
+        abrirAuth(
+            "login"
+        );
 
         return;
     }
 
+
     const form =
         $("createProductForm");
+
 
     if(form)
         form.reset();
 
+
     limparMensagem(
         $("createProductMessage")
     );
+
 
     abrirModal(
         "createProductModal"
@@ -3364,17 +3915,23 @@ async function criarAnuncio(event){
 
     event.preventDefault();
 
+
     if(!usuario){
 
-        abrirAuth("login");
+        abrirAuth(
+            "login"
+        );
 
         return;
     }
 
+
     const msg =
         $("createProductMessage");
 
+
     limparMensagem(msg);
+
 
     try{
 
@@ -3383,10 +3940,12 @@ async function criarAnuncio(event){
             .value
             .trim();
 
+
         const descricao =
             $("productDescription")
             .value
             .trim();
+
 
         const preco =
             Number(
@@ -3394,46 +3953,62 @@ async function criarAnuncio(event){
                 .value
             );
 
+
         const categoria =
             $("productCategory")
             .value;
+
 
         const imagem =
             $("productImage")
             .value
             .trim();
 
-        if(!nome)
+
+        if(!nome){
+
             throw new Error(
                 "Digite o nome do produto."
             );
+        }
 
-        if(!preco || preco <= 0)
+
+        if(!preco || preco <= 0){
+
             throw new Error(
                 "Digite um preço válido."
             );
+        }
+
 
         const resposta =
             await api(
                 "/api/products",
                 {
                     method:"POST",
+
                     body:
                         JSON.stringify({
-                            name:nome,
+                            name:
+                                nome,
+
                             description:
                                 descricao,
+
                             price:
                                 Math.round(
                                     preco * 100
                                 ),
+
                             category:
                                 categoria,
+
                             image:
                                 imagem
                         })
                 }
             );
+
 
         mensagem(
             msg,
@@ -3442,10 +4017,13 @@ async function criarAnuncio(event){
             "success"
         );
 
+
         $("createProductForm")
             .reset();
 
+
         await carregarProdutos();
+
 
     }catch(erro){
 
@@ -3470,11 +4048,13 @@ function configurarBotoes(){
             () => abrirAuth("login")
         );
 
+
     $("profileButton")
         ?.addEventListener(
             "click",
             abrirPerfil
         );
+
 
     $("logoutButton")
         ?.addEventListener(
@@ -3482,11 +4062,13 @@ function configurarBotoes(){
             sair
         );
 
+
     $("authSwitch")
         ?.addEventListener(
             "click",
             alternarAuth
         );
+
 
     $("verifyForm")
         ?.addEventListener(
@@ -3499,11 +4081,13 @@ function configurarBotoes(){
             }
         );
 
+
     $("resendCode")
         ?.addEventListener(
             "click",
             reenviarCodigo
         );
+
 
     $("buyProductButton")
         ?.addEventListener(
@@ -3511,11 +4095,13 @@ function configurarBotoes(){
             comprarProduto
         );
 
+
     $("withdrawButton")
         ?.addEventListener(
             "click",
             abrirResgate
         );
+
 
     $("profileSellButton")
         ?.addEventListener(
@@ -3530,17 +4116,20 @@ function configurarBotoes(){
             }
         );
 
+
     $("withdrawForm")
         ?.addEventListener(
             "submit",
             solicitarResgate
         );
 
+
     $("createProductForm")
         ?.addEventListener(
             "submit",
             criarAnuncio
         );
+
 
     document
         .querySelectorAll(
@@ -3560,6 +4149,7 @@ function configurarBotoes(){
                 );
             }
         );
+
 
     document
         .querySelectorAll(
@@ -3597,6 +4187,7 @@ function rolarProdutos(){
     const produtos =
         $("productsGrid");
 
+
     if(produtos){
 
         produtos.scrollIntoView({
@@ -3621,8 +4212,9 @@ async function iniciarSlaxStore(){
 
     configurarBotoes();
 
+
     /*
-        Inicializa todos os modais fechados.
+        Fecha todos os modais ao iniciar.
     */
 
     document
@@ -3637,14 +4229,16 @@ async function iniciarSlaxStore(){
             }
         );
 
+
     /*
-        Primeiro recupera o login salvo.
+        Recupera a sessão salva.
     */
 
     await verificarSessao();
 
+
     /*
-        Depois carrega os produtos.
+        Carrega os produtos.
     */
 
     await carregarProdutos();
@@ -3669,4 +4263,3 @@ if(
 
 </body>
 </html>
-```
