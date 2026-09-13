@@ -1,1425 +1,1914 @@
-```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>SlaxStore — Marketplace Gamer</title>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{
-font-family:Arial,Helvetica,sans-serif;
-background:
-radial-gradient(circle at 20% 0%,rgba(0,132,255,.13),transparent 35%),
-radial-gradient(circle at 90% 20%,rgba(0,90,255,.09),transparent 30%),#05070c;
-color:#fff;min-height:100vh
-}
-header{
-height:72px;position:sticky;top:0;z-index:500;
-display:flex;align-items:center;justify-content:space-between;
-padding:0 5%;background:rgba(5,8,14,.9);
-backdrop-filter:blur(18px);border-bottom:1px solid #162238
-}
-.logo{font-size:25px;font-weight:900;color:#1494ff;cursor:pointer}
-.logo span{color:#fff}
-nav{display:flex;align-items:center;gap:25px}
-nav a{color:#8e9bb0;text-decoration:none;cursor:pointer;font-size:14px}
-nav a:hover{color:#1594ff}
-#authArea{display:flex;align-items:center}
-.btn{
-border:none;border-radius:9px;padding:11px 17px;font-weight:800;
-cursor:pointer;transition:.2s
-}
-.btn:hover{transform:translateY(-1px)}
-.blue{background:#128fff;color:#fff;box-shadow:0 5px 25px rgba(18,143,255,.2)}
-.blue:hover{background:#0878dd}
-.dark{background:#0c121d;color:#fff;border:1px solid #24334a}
-.red{background:#d93c45;color:#fff}
-.green{background:#19a66a;color:#fff}
-.yellow{background:#c99422;color:#fff}
-.hero{
-max-width:1200px;margin:auto;min-height:600px;padding:120px 25px 90px;
-text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center
-}
-.badge{
-padding:8px 13px;border-radius:30px;background:rgba(18,143,255,.1);
-border:1px solid rgba(18,143,255,.3);color:#5eb9ff;font-size:12px;
-font-weight:bold;margin-bottom:20px
-}
-.hero h1{max-width:900px;font-size:clamp(42px,7vw,78px);line-height:.98;font-weight:950;letter-spacing:-4px}
-.hero h1 span{color:#1494ff}
-.hero p{max-width:650px;color:#8794a9;font-size:17px;line-height:1.7;margin-top:25px}
-.hero-buttons{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap;justify-content:center}
-.stats{width:min(900px,100%);display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:65px}
-.stat{background:rgba(10,16,26,.7);border:1px solid #18263b;border-radius:14px;padding:20px}
-.stat strong{display:block;color:#fff;font-size:24px}.stat span{color:#68778d;font-size:12px}
-.section{width:min(1200px,92%);margin:auto;padding:70px 0}
-.section-title{font-size:30px;margin-bottom:8px}
-.section-description{color:#748197;margin-bottom:30px}
-.categories{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px}
-.category{
-background:linear-gradient(145deg,#0a111d,#080c14);border:1px solid #19273d;
-border-radius:15px;padding:25px;cursor:pointer;transition:.2s
-}
-.category:hover{border-color:#128fff;transform:translateY(-4px)}
-.category-icon{font-size:28px;margin-bottom:15px}.category h3{margin-bottom:8px}
-.category p{color:#68778d;font-size:13px}
-.product-toolbar{display:flex;gap:10px;margin-bottom:25px;flex-wrap:wrap}
-.product-toolbar input,.product-toolbar select{
-flex:1;min-width:180px;padding:13px;border-radius:9px;border:1px solid #24364f;
-background:#050910;color:#fff;outline:none
-}
-.products{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px}
-.product{
-overflow:hidden;background:#090f18;border:1px solid #17263b;
-border-radius:15px;transition:.2s
-}
-.product:hover{border-color:#128fff;transform:translateY(-3px)}
-.product-image{
-height:160px;background:linear-gradient(135deg,#07111e,#0d2740);
-display:flex;align-items:center;justify-content:center;color:#3e9fe8;
-font-size:45px;overflow:hidden
-}
-.product-image img{width:100%;height:100%;object-fit:cover}
-.product-body{padding:18px}.product-category{color:#4baeff;font-size:11px;font-weight:bold;text-transform:uppercase}
-.product h3{margin:8px 0;font-size:17px}
-.product-description{color:#738198;font-size:13px;min-height:38px;line-height:1.5}
-.product-bottom{display:flex;justify-content:space-between;align-items:end;margin-top:18px}
-.price{font-size:20px;font-weight:900}.seller{color:#66748a;font-size:11px}
-.user-box{display:flex;align-items:center;gap:10px}.username{font-size:13px;font-weight:bold}
-.modal-bg{
-position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.78);
-backdrop-filter:blur(7px);display:flex;justify-content:center;
-align-items:center;padding:20px;overflow:auto
-}
-.modal{
-width:100%;max-width:600px;max-height:92vh;overflow:auto;background:#080d16;
-border:1px solid #1c2e47;border-radius:18px;padding:30px;
-box-shadow:0 30px 100px rgba(0,0,0,.7)
-}
-.close{float:right;background:none;border:none;color:#78869b;font-size:25px;cursor:pointer}
-.modal h2{font-size:25px;margin-bottom:8px}
-.subtitle{color:#748197;font-size:13px;line-height:1.5;margin-bottom:22px}
-.field{margin-bottom:15px}.field label{display:block;color:#aab5c6;font-size:12px;font-weight:bold;margin-bottom:7px}
-.field input,.field textarea,.field select{
-width:100%;padding:13px;border-radius:9px;border:1px solid #24364f;
-background:#050910;color:#fff;outline:none;font-family:inherit
-}
-.field textarea{min-height:110px;resize:vertical}
-.field input:focus,.field textarea:focus,.field select:focus{border-color:#1494ff}
-.modal .btn{width:100%;margin-top:5px}
-.switch{text-align:center;margin-top:17px;color:#68778c;font-size:13px}
-.switch span,.link{color:#1494ff;cursor:pointer;font-weight:bold}
-.forgot{display:block;text-align:right;color:#1494ff;font-size:12px;margin:-5px 0 12px;cursor:pointer}
-.message{display:none;padding:11px;border-radius:9px;margin-bottom:15px;font-size:13px}
-.message.error{display:block;background:rgba(220,50,60,.1);border:1px solid rgba(220,50,60,.35);color:#ff8188}
-.message.success{display:block;background:rgba(18,143,255,.1);border:1px solid rgba(18,143,255,.35);color:#66bbff}
-.notice{
-padding:15px;background:rgba(18,143,255,.08);border:1px solid rgba(18,143,255,.2);
-border-radius:10px;color:#91cfff;font-size:13px;line-height:1.5;margin-bottom:20px
-}
-.dashboard{display:grid;grid-template-columns:200px 1fr;gap:20px}
-.side{background:#080e17;border:1px solid #18273d;border-radius:15px;padding:15px;height:max-content}
-.side button{
-width:100%;text-align:left;background:none;border:none;color:#8794a8;
-padding:13px;border-radius:8px;cursor:pointer;margin-bottom:4px
-}
-.side button:hover,.side button.active{color:#fff;background:#101c2d}
-.panel{background:#080e17;border:1px solid #18273d;border-radius:15px;padding:25px}
-.panel h2{margin-bottom:8px}.panel p{color:#748197}
-.dashboard-card{background:#0b131f;border:1px solid #1b2b42;border-radius:12px;padding:18px;margin-bottom:12px}
-.dashboard-card h3{margin-bottom:8px}.dashboard-card p{margin:4px 0}
-.dashboard-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}
-.dashboard-actions .btn{width:auto}
-.status{display:inline-block;padding:5px 9px;border-radius:20px;font-size:11px;font-weight:bold}
-.status.pending{background:#3a2d10;color:#f5c65b}
-.status.approved,.status.completed{background:#0c3927;color:#5de0a4}
-.status.rejected,.status.problem{background:#42161b;color:#ff7d87}
-.status.paused{background:#1b2638;color:#9aa9be}
-.order-message{background:#050a11;border:1px solid #18283e;border-radius:10px;padding:12px;margin-bottom:8px}
-.order-message strong{color:#4baeff}
-footer{border-top:1px solid #142238;padding:35px;text-align:center;color:#59677c;font-size:12px}
-.hidden{display:none!important}
-@media(max-width:750px){
-header{padding:0 15px}nav{display:none}.hero{min-height:540px;padding-top:80px}
-.hero h1{letter-spacing:-2px}.stats{grid-template-columns:1fr}.dashboard{grid-template-columns:1fr}
-.username{display:none}
-}
-</style>
+    <title>SlaxStore — Marketplace Gamer</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #05070d;
+            --panel: #0b101a;
+            --panel-2: #101827;
+            --border: #1c2b42;
+            --blue: #1683ff;
+            --blue-2: #0066ff;
+            --text: #f4f7ff;
+            --muted: #8c9ab0;
+            --danger: #ff405d;
+            --success: #25d989;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background:
+                radial-gradient(
+                    circle at 50% -20%,
+                    rgba(0, 119, 255, .18),
+                    transparent 40%
+                ),
+                var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        button,
+        input,
+        textarea,
+        select {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(5, 7, 13, .92);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-inner {
+            max-width: 1250px;
+            margin: auto;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 900;
+            color: white;
+            white-space: nowrap;
+        }
+
+        .logo span {
+            color: var(--blue);
+        }
+
+        .search {
+            flex: 1;
+            position: relative;
+        }
+
+        .search input {
+            width: 100%;
+            padding: 13px 18px;
+            background: #0b111d;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            outline: none;
+            color: white;
+        }
+
+        .search input:focus {
+            border-color: var(--blue);
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav button {
+            border: 0;
+            background: transparent;
+            color: var(--muted);
+            padding: 9px 10px;
+            border-radius: 8px;
+        }
+
+        .nav button:hover {
+            color: white;
+            background: #101827;
+        }
+
+        .primary {
+            background: var(--blue) !important;
+            color: white !important;
+            font-weight: bold;
+        }
+
+        .primary:hover {
+            background: var(--blue-2) !important;
+        }
+
+        main {
+            max-width: 1250px;
+            margin: auto;
+            padding: 30px 20px 70px;
+        }
+
+        .hero {
+            padding: 55px 30px;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(16, 31, 54, .95),
+                    rgba(6, 10, 18, .95)
+                );
+            margin-bottom: 25px;
+        }
+
+        .hero h1 {
+            font-size: clamp(32px, 6vw, 60px);
+            line-height: 1;
+            margin-bottom: 15px;
+        }
+
+        .hero h1 span {
+            color: var(--blue);
+        }
+
+        .hero p {
+            color: var(--muted);
+            max-width: 650px;
+            line-height: 1.6;
+            margin-bottom: 22px;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            border: 1px solid var(--border);
+            background: #0d1523;
+            color: white;
+            padding: 11px 17px;
+            border-radius: 9px;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            border-color: var(--blue);
+        }
+
+        .filters {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+            margin-bottom: 20px;
+        }
+
+        .filter {
+            white-space: nowrap;
+            border: 1px solid var(--border);
+            background: #0b111d;
+            color: var(--muted);
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+
+        .filter.active,
+        .filter:hover {
+            background: rgba(22, 131, 255, .12);
+            border-color: var(--blue);
+            color: white;
+        }
+
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .section-title h2 {
+            font-size: 22px;
+        }
+
+        .section-title span {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .products {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px;
+        }
+
+        .product {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            overflow: hidden;
+            transition: .2s;
+        }
+
+        .product:hover {
+            transform: translateY(-3px);
+            border-color: #27558d;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 150px;
+            background:
+                linear-gradient(
+                    135deg,
+                    #101a2c,
+                    #070b12
+                );
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #53627a;
+            overflow: hidden;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-content {
+            padding: 14px;
+        }
+
+        .product-category {
+            color: var(--blue);
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 7px;
+        }
+
+        .product-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .product-description {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.4;
+            height: 37px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .product-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .price {
+            font-weight: 900;
+            font-size: 18px;
+        }
+
+        .buy {
+            background: var(--blue);
+            color: white;
+            border: 0;
+            padding: 8px 11px;
+            border-radius: 7px;
+            font-weight: bold;
+        }
+
+        .buy:hover {
+            background: var(--blue-2);
+        }
+
+        .empty {
+            padding: 50px;
+            text-align: center;
+            color: var(--muted);
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            z-index: 500;
+            background: rgba(0, 0, 0, .72);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-box {
+            width: 100%;
+            max-width: 460px;
+            max-height: 90vh;
+            overflow-y: auto;
+            background: #0a101b;
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 24px;
+            box-shadow: 0 20px 70px rgba(0, 0, 0, .6);
+        }
+
+        .modal-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .modal-head h2 {
+            font-size: 22px;
+        }
+
+        .close {
+            border: 0;
+            background: transparent;
+            color: var(--muted);
+            font-size: 25px;
+        }
+
+        .form {
+            display: grid;
+            gap: 13px;
+        }
+
+        .form label {
+            color: #cbd5e5;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .form input,
+        .form textarea,
+        .form select {
+            width: 100%;
+            padding: 12px;
+            margin-top: 6px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: #070c14;
+            color: white;
+            outline: none;
+        }
+
+        .form textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form input:focus,
+        .form textarea:focus,
+        .form select:focus {
+            border-color: var(--blue);
+        }
+
+        .message {
+            padding: 11px;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .message.error {
+            background: rgba(255, 64, 93, .1);
+            color: #ff8295;
+            border: 1px solid rgba(255, 64, 93, .25);
+        }
+
+        .message.success {
+            background: rgba(37, 217, 137, .1);
+            color: #66e5ab;
+            border: 1px solid rgba(37, 217, 137, .25);
+        }
+
+        .profile {
+            display: grid;
+            grid-template-columns: 80px 1fr;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #13233a;
+            border: 2px solid var(--blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-info h3 {
+            margin-bottom: 4px;
+        }
+
+        .profile-info p {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 25px 20px;
+            color: var(--muted);
+            text-align: center;
+            font-size: 13px;
+        }
+
+        @media (max-width: 800px) {
+            .header-inner {
+                flex-wrap: wrap;
+            }
+
+            .search {
+                order: 3;
+                flex-basis: 100%;
+            }
+
+            .nav {
+                margin-left: auto;
+            }
+
+            .hero {
+                padding: 35px 20px;
+            }
+        }
+
+        @media (max-width: 500px) {
+            main {
+                padding: 20px 12px 50px;
+            }
+
+            .products {
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+                gap: 9px;
+            }
+
+            .product-image {
+                height: 110px;
+            }
+
+            .product-content {
+                padding: 10px;
+            }
+
+            .product-title {
+                font-size: 14px;
+            }
+
+            .price {
+                font-size: 15px;
+            }
+
+            .buy {
+                font-size: 11px;
+                padding: 7px;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
 <header>
-<div class="logo" onclick="inicio()">Slax<span>Store</span></div>
+    <div class="header-inner">
 
-<nav>
-<a onclick="inicio()">Início</a>
-<a onclick="mostrarProdutos()">Produtos</a>
-<a onclick="mostrarCategorias()">Categorias</a>
-<a onclick="abrirVender()">Vender</a>
-</nav>
+        <div class="logo">
+            Slax<span>Store</span>
+        </div>
 
-<div id="authArea"></div>
+        <div class="search">
+            <input
+                id="searchInput"
+                type="search"
+                placeholder="Pesquisar produtos..."
+            >
+        </div>
+
+        <nav class="nav">
+            <button onclick="carregarProdutos()">
+                Explorar
+            </button>
+
+            <button
+                id="loginButton"
+                class="primary"
+                onclick="abrirAuth('login')"
+            >
+                Entrar
+            </button>
+
+            <button
+                id="profileButton"
+                class="hidden"
+                onclick="abrirPerfil()"
+            >
+                Perfil
+            </button>
+
+            <button
+                id="logoutButton"
+                class="hidden"
+                onclick="logout()"
+            >
+                Sair
+            </button>
+        </nav>
+
+    </div>
 </header>
 
-<main id="conteudo">
+<main>
 
-<section class="hero" id="home">
-<div class="badge">MARKETPLACE GAMER</div>
+    <section class="hero">
 
-<h1>Compre. Venda.<br><span>Jogue mais.</span></h1>
+        <h1>
+            O marketplace<br>
+            <span>gamer.</span>
+        </h1>
 
-<p>
-O marketplace criado para jogadores comprarem
-produtos digitais e serviços de games em um só lugar.
-</p>
+        <p>
+            Compre e venda produtos e serviços para jogos
+            em um marketplace feito para gamers.
+        </p>
 
-<div class="hero-buttons">
-<button class="btn blue" onclick="mostrarProdutos()">Explorar produtos</button>
-<button class="btn dark" onclick="abrirVender()">Quero vender</button>
-</div>
+        <div class="hero-actions">
+            <button
+                class="btn primary"
+                onclick="document.getElementById('marketplace').scrollIntoView({behavior:'smooth'})"
+            >
+                Explorar produtos
+            </button>
 
-<div class="stats">
-<div class="stat"><strong id="statProducts">0</strong><span>Produtos</span></div>
-<div class="stat"><strong id="statSellers">0</strong><span>Vendedores</span></div>
-<div class="stat"><strong id="statSales">R$ 0</strong><span>Produtos listados</span></div>
-</div>
-</section>
+            <button
+                class="btn"
+                onclick="abrirAuth('register')"
+            >
+                Criar conta
+            </button>
+        </div>
 
-<section class="section" id="categorias">
-<h2 class="section-title">Categorias</h2>
-<p class="section-description">Encontre exatamente o que procura.</p>
+    </section>
 
-<div class="categories">
-<div class="category" onclick="filtrarCategoria('Contas')">
-<div class="category-icon">🎮</div><h3>Contas</h3>
-<p>Contas e produtos relacionados a jogos.</p>
-</div>
+    <section id="marketplace">
 
-<div class="category" onclick="filtrarCategoria('Itens')">
-<div class="category-icon">⚔️</div><h3>Itens</h3>
-<p>Itens, skins e produtos digitais.</p>
-</div>
+        <div class="filters">
 
-<div class="category" onclick="filtrarCategoria('Serviços')">
-<div class="category-icon">🚀</div><h3>Serviços</h3>
-<p>Serviços realizados por jogadores.</p>
-</div>
+            <button
+                class="filter active"
+                data-category=""
+                onclick="selecionarCategoria(this)"
+            >
+                Todos
+            </button>
 
-<div class="category" onclick="filtrarCategoria('Outros')">
-<div class="category-icon">💎</div><h3>Outros</h3>
-<p>Outros produtos digitais.</p>
-</div>
-</div>
-</section>
+            <button
+                class="filter"
+                data-category="Contas"
+                onclick="selecionarCategoria(this)"
+            >
+                Contas
+            </button>
 
-<section class="section" id="produtos">
-<h2 class="section-title">Produtos</h2>
-<p class="section-description">Anúncios aprovados no SlaxStore.</p>
+            <button
+                class="filter"
+                data-category="Itens"
+                onclick="selecionarCategoria(this)"
+            >
+                Itens
+            </button>
 
-<div class="product-toolbar">
-<input id="searchProducts" type="text" placeholder="Pesquisar produtos..." oninput="pesquisarProdutos()">
+            <button
+                class="filter"
+                data-category="Serviços"
+                onclick="selecionarCategoria(this)"
+            >
+                Serviços
+            </button>
 
-<select id="sortProducts" onchange="carregarProdutos()">
-<option value="newest">Mais recentes</option>
-<option value="popular">Mais populares</option>
-<option value="price_asc">Menor preço</option>
-<option value="price_desc">Maior preço</option>
-</select>
-</div>
+            <button
+                class="filter"
+                data-category="Outros"
+                onclick="selecionarCategoria(this)"
+            >
+                Outros
+            </button>
 
-<div id="productList" class="products"></div>
-</section>
+        </div>
+
+        <div class="section-title">
+            <h2>Produtos disponíveis</h2>
+
+            <span id="productCount">
+                Carregando...
+            </span>
+        </div>
+
+        <div
+            id="products"
+            class="products"
+        ></div>
+
+    </section>
 
 </main>
 
-<footer>© 2026 SlaxStore — Marketplace Gamer</footer>
+<footer>
+    SlaxStore © 2026 — Marketplace Gamer
+</footer>
+
+<!-- AUTH MODAL -->
+
+<div
+    id="authModal"
+    class="modal hidden"
+>
+
+    <div class="modal-box">
+
+        <div class="modal-head">
+            <h2 id="authTitle">
+                Entrar
+            </h2>
+
+            <button
+                class="close"
+                onclick="fecharModal('authModal')"
+            >
+                ×
+            </button>
+        </div>
+
+        <form
+            id="authForm"
+            class="form"
+        >
+
+            <div
+                id="usernameField"
+                class="hidden"
+            >
+                <label>
+                    Usuário
+
+                    <input
+                        id="username"
+                        type="text"
+                        maxlength="30"
+                    >
+                </label>
+            </div>
+
+            <label>
+                E-mail
+
+                <input
+                    id="email"
+                    type="email"
+                    required
+                    autocomplete="email"
+                >
+            </label>
+
+            <label>
+                Senha
+
+                <input
+                    id="password"
+                    type="password"
+                    required
+                    minlength="6"
+                    autocomplete="current-password"
+                >
+            </label>
+
+            <div
+                id="authMessage"
+                class="hidden"
+            ></div>
+
+            <button
+                id="authSubmit"
+                class="btn primary"
+                type="submit"
+            >
+                Entrar
+            </button>
+
+        </form>
+
+        <div
+            style="
+                text-align:center;
+                margin-top:15px;
+                color:#8c9ab0;
+                font-size:13px;
+            "
+        >
+            <span id="authSwitchText">
+                Ainda não tem uma conta?
+            </span>
+
+            <button
+                id="authSwitch"
+                onclick="alternarAuth()"
+                style="
+                    border:0;
+                    background:none;
+                    color:#1683ff;
+                    cursor:pointer;
+                "
+            >
+                Criar conta
+            </button>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- VERIFY MODAL -->
+
+<div
+    id="verifyModal"
+    class="modal hidden"
+>
+
+    <div class="modal-box">
+
+        <div class="modal-head">
+
+            <h2>
+                Verificar e-mail
+            </h2>
+
+            <button
+                class="close"
+                onclick="fecharModal('verifyModal')"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <form
+            id="verifyForm"
+            class="form"
+        >
+
+            <label>
+                Código recebido por e-mail
+
+                <input
+                    id="verificationCode"
+                    type="text"
+                    maxlength="6"
+                    inputmode="numeric"
+                    placeholder="000000"
+                    required
+                >
+            </label>
+
+            <div
+                id="verifyMessage"
+                class="hidden"
+            ></div>
+
+            <button
+                class="btn primary"
+                type="submit"
+            >
+                Verificar e-mail
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+<!-- PRODUCT MODAL -->
+
+<div
+    id="productModal"
+    class="modal hidden"
+>
+
+    <div class="modal-box">
+
+        <div class="modal-head">
+
+            <h2 id="productModalTitle">
+                Produto
+            </h2>
+
+            <button
+                class="close"
+                onclick="fecharModal('productModal')"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <div id="productDetails"></div>
+
+    </div>
+
+</div>
+
+<!-- PROFILE MODAL -->
+
+<div
+    id="profileModal"
+    class="modal hidden"
+>
+
+    <div class="modal-box">
+
+        <div class="modal-head">
+
+            <h2>
+                Meu perfil
+            </h2>
+
+            <button
+                class="close"
+                onclick="fecharModal('profileModal')"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <div id="profileContent"></div>
+
+    </div>
+
+</div>
 
 <script>
-
-const API_URL="https://slaxstore.onrender.com";
-let categoriaAtual="";
-let pesquisaTimer=null;
-
-function escaparHTML(texto){
-const div=document.createElement("div");
-div.textContent=texto??"";
-return div.innerHTML;
-}
-
-function criarModal(html){
-const antigo=document.getElementById("authModal");
-if(antigo) antigo.remove();
-
-const fundo=document.createElement("div");
-fundo.id="authModal";
-fundo.className="modal-bg";
-
-fundo.innerHTML=`
-<div class="modal">
-<button class="close" onclick="fecharModal()">×</button>
-${html}
-</div>`;
-
-fundo.addEventListener("click",e=>{
-if(e.target===fundo) fecharModal();
-});
-
-document.body.appendChild(fundo);
-}
-
-function fecharModal(){
-document.getElementById("authModal")?.remove();
-}
-
-function mostrarMensagem(el,texto,tipo){
-if(!el)return;
-el.textContent=texto;
-el.className="message "+tipo;
-}
-
-function inicio(){
-window.scrollTo({top:0,behavior:"smooth"});
-}
-
-function mostrarProdutos(){
-document.getElementById("produtos")?.scrollIntoView({behavior:"smooth"});
-carregarProdutos();
-}
-
-function mostrarCategorias(){
-document.getElementById("categorias")?.scrollIntoView({behavior:"smooth"});
-}
-
-function usuarioAtual(){
-try{
-const user=localStorage.getItem("slax_user");
-const token=localStorage.getItem("slax_token");
-if(!user||!token)return null;
-return JSON.parse(user);
-}catch{return null}
-}
-
-function tokenAtual(){
-return localStorage.getItem("slax_token");
-}
-
-function atualizarAuthArea(){
-const area=document.getElementById("authArea");
-const usuario=usuarioAtual();
-
-if(!usuario){
-area.innerHTML=`<button class="btn blue" onclick="mostrarLogin()">Entrar</button>`;
-return;
-}
-
-area.innerHTML=`
-<div class="user-box">
-<span class="username">${escaparHTML(usuario.username)}</span>
-<button class="btn dark" onclick="abrirPainel()">Painel</button>
-<button class="btn red" onclick="logout()">Sair</button>
-</div>`;
-}
-
-function logout(){
-localStorage.removeItem("slax_token");
-localStorage.removeItem("slax_user");
-atualizarAuthArea();
-alert("Você saiu da sua conta.");
-}
-
-function mostrarCadastro(){
-criarModal(`
-<h2>Criar conta</h2>
-<p class="subtitle">Crie sua conta gratuita na SlaxStore.</p>
-<div id="registerMessage" class="message"></div>
-
-<div class="field">
-<label>Nome de usuário</label>
-<input id="registerUsername" maxlength="30" placeholder="Seu nome de usuário">
-</div>
-
-<div class="field">
-<label>E-mail</label>
-<input id="registerEmail" type="email" placeholder="seu@email.com">
-</div>
-
-<div class="field">
-<label>Senha</label>
-<input id="registerPassword" type="password" placeholder="Mínimo 8 caracteres">
-</div>
-
-<button class="btn blue" onclick="cadastrar()">Criar conta</button>
-
-<div class="switch">Já possui uma conta?
-<span onclick="mostrarLogin()">Entrar</span></div>
-`);
-}
-
-async function cadastrar(){
-const username=document.getElementById("registerUsername").value.trim();
-const email=document.getElementById("registerEmail").value.trim();
-const password=document.getElementById("registerPassword").value;
-const message=document.getElementById("registerMessage");
-
-if(!username||!email||!password){
-mostrarMensagem(message,"Preencha todos os campos.","error");
-return;
-}
-
-try{
-const resposta=await fetch(API_URL+"/api/auth/register",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({username,email,password})
-});
-
-const dados=await resposta.json();
-
-if(!resposta.ok){
-mostrarMensagem(message,dados.error||"Não foi possível criar a conta.","error");
-return;
-}
-
-mostrarVerificacao(email);
-
-}catch(erro){
-console.error(erro);
-mostrarMensagem(message,"Não foi possível conectar ao servidor.","error");
-}
-}
-
-function mostrarVerificacao(email){
-window.emailVerificacao=email;
-
-criarModal(`
-<h2>Verifique seu e-mail</h2>
-<p class="subtitle">
-Enviamos um código de 6 números para:<br><br>
-<strong>${escaparHTML(email)}</strong>
-</p>
-
-<div id="verifyMessage" class="message"></div>
-
-<div class="field">
-<label>Código</label>
-<input id="verifyCode" maxlength="6" inputmode="numeric" placeholder="000000">
-</div>
-
-<button class="btn blue" onclick="verificarEmail()">Verificar e-mail</button>
-`);
-}
-
-async function verificarEmail(){
-const email=window.emailVerificacao;
-const code=document.getElementById("verifyCode").value.trim();
-const message=document.getElementById("verifyMessage");
-
-try{
-const resposta=await fetch(API_URL+"/api/auth/verify-email",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({email,code})
-});
-
-const dados=await resposta.json();
-
-if(!resposta.ok){
-mostrarMensagem(message,dados.error||"Código inválido.","error");
-return;
-}
-
-mostrarMensagem(message,"E-mail verificado!","success");
-setTimeout(()=>mostrarLogin(email),900);
-
-}catch(erro){
-mostrarMensagem(message,"Erro ao conectar ao servidor.","error");
-}
-}
-
-function mostrarLogin(email=""){
-criarModal(`
-<h2>Entrar</h2>
-<p class="subtitle">Acesse sua conta SlaxStore.</p>
-<div id="loginMessage" class="message"></div>
-
-<div class="field">
-<label>E-mail</label>
-<input id="loginEmail" type="email" value="${escaparHTML(email)}" placeholder="seu@email.com">
-</div>
-
-<div class="field">
-<label>Senha</label>
-<input id="loginPassword" type="password" placeholder="Sua senha">
-</div>
-
-<span class="forgot" onclick="mostrarEsqueciSenha()">Esqueci minha senha</span>
-
-<button class="btn blue" onclick="fazerLogin()">Entrar</button>
-
-<div class="switch">Não possui conta?
-<span onclick="mostrarCadastro()">Criar conta</span></div>
-`);
-}
-
-async function fazerLogin(){
-const email=document.getElementById("loginEmail").value.trim();
-const password=document.getElementById("loginPassword").value;
-const message=document.getElementById("loginMessage");
-
-if(!email||!password){
-mostrarMensagem(message,"Preencha o e-mail e a senha.","error");
-return;
-}
-
-try{
-const resposta=await fetch(API_URL+"/api/auth/login",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({email,password})
-});
-
-const dados=await resposta.json();
-
-if(!resposta.ok){
-mostrarMensagem(message,dados.error||"Erro ao fazer login.","error");
-return;
-}
-
-localStorage.setItem("slax_token",dados.token);
-localStorage.setItem("slax_user",JSON.stringify(dados.user));
-
-atualizarAuthArea();
-fecharModal();
-alert("Login realizado com sucesso!");
-
-}catch(erro){
-mostrarMensagem(message,"Não foi possível conectar ao servidor.","error");
-}
-}
-
-function mostrarEsqueciSenha(){
-criarModal(`
-<h2>Recuperar senha</h2>
-<p class="subtitle">Digite o e-mail da sua conta.</p>
-<div id="forgotMessage" class="message"></div>
-
-<div class="field">
-<label>E-mail</label>
-<input id="forgotEmail" type="email" placeholder="seu@email.com">
-</div>
-
-<button class="btn blue" onclick="enviarCodigoRecuperacao()">Enviar código</button>
-
-<div class="switch">
-<span onclick="mostrarLogin()">Voltar para o login</span>
-</div>
-`);
-}
-
-async function enviarCodigoRecuperacao(){
-const email=document.getElementById("forgotEmail").value.trim();
-const message=document.getElementById("forgotMessage");
-
-if(!email){
-mostrarMensagem(message,"Digite seu e-mail.","error");
-return;
-}
-
-try{
-const resposta=await fetch(API_URL+"/api/auth/forgot-password",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({email})
-});
-
-const dados=await resposta.json();
-
-if(!resposta.ok){
-mostrarMensagem(message,dados.error||"Não foi possível enviar o código.","error");
-return;
-}
-
-mostrarRedefinirSenha(email);
-
-}catch{
-mostrarMensagem(message,"Erro ao conectar ao servidor.","error");
-}
-}
-
-function mostrarRedefinirSenha(email){
-window.emailReset=email;
-
-criarModal(`
-<h2>Nova senha</h2>
-<p class="subtitle">Digite o código recebido e sua nova senha.</p>
-<div id="resetMessage" class="message"></div>
-
-<div class="field">
-<label>Código</label>
-<input id="resetCode" maxlength="6" inputmode="numeric" placeholder="000000">
-</div>
-
-<div class="field">
-<label>Nova senha</label>
-<input id="newPassword" type="password" placeholder="Mínimo 8 caracteres">
-</div>
-
-<button class="btn blue" onclick="redefinirSenha()">Alterar senha</button>
-`);
-}
-
-async function redefinirSenha(){
-const email=window.emailReset;
-const code=document.getElementById("resetCode").value.trim();
-const newPassword=document.getElementById("newPassword").value;
-const message=document.getElementById("resetMessage");
-
-try{
-const resposta=await fetch(API_URL+"/api/auth/reset-password",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({email,code,newPassword})
-});
-
-const dados=await resposta.json();
-
-if(!resposta.ok){
-mostrarMensagem(message,dados.error||"Não foi possível alterar a senha.","error");
-return;
-}
-
-mostrarMensagem(message,"Senha alterada com sucesso!","success");
-setTimeout(()=>mostrarLogin(email),900);
-
-}catch{
-mostrarMensagem(message,"Erro ao conectar ao servidor.","error");
-}
-}
-
-function abrirVender(){
-if(!usuarioAtual()){
-alert("Você precisa entrar na sua conta para vender.");
-mostrarLogin();
-return;
-}
-
-criarModal(`
-<h2>Criar anúncio</h2>
-<p class="subtitle">Publique seu produto no SlaxStore.</p>
-
-<div class="notice">
-O anúncio será enviado para moderação antes de aparecer publicamente.
-</div>
-
-<div id="productMessage" class="message"></div>
-
-<div class="field">
-<label>Título do anúncio</label>
-<input id="productTitle" maxlength="100" placeholder="Ex: Item raro do jogo">
-</div>
-
-<div class="field">
-<label>Categoria</label>
-<select id="productCategory">
-<option value="Contas">Contas</option>
-<option value="Itens">Itens</option>
-<option value="Serviços">Serviços</option>
-<option value="Outros">Outros</option>
-</select>
-</div>
-
-<div class="field">
-<label>Descrição</label>
-<textarea id="productDescription" maxlength="3000" placeholder="Explique exatamente o que está sendo vendido..."></textarea>
-</div>
-
-<div class="field">
-<label>Preço em R$</label>
-<input id="productPrice" type="number" min="0" step="0.01" placeholder="10.00" oninput="calcularTaxa()">
-</div>
-
-<div class="field">
-<label>Estoque</label>
-<input id="productStock" type="number" min="1" value="1">
-</div>
-
-<div class="field">
-<label>Tipo de entrega</label>
-<select id="productDelivery">
-<option value="manual">Manual</option>
-<option value="automatic">Automática</option>
-</select>
-</div>
-
-<div id="feePreview" class="notice">
-Taxa da plataforma: <strong>R$ 0,97</strong><br>
-Você receberá: <strong>R$ 0,00</strong>
-</div>
-
-<div class="field">
-<label>Imagem do anúncio</label>
-<input id="productImage" type="file" accept="image/*">
-</div>
-
-<button class="btn blue" onclick="publicarProduto()">Publicar anúncio</button>
-`);
-}
-
-function calcularTaxa(){
-const campo=document.getElementById("productPrice");
-const preview=document.getElementById("feePreview");
-if(!campo||!preview)return;
-
-const preco=Number(campo.value)||0;
-const vendedor=Math.max(0,preco-.97);
-
-preview.innerHTML=`
-Taxa da plataforma: <strong>R$ 0,97</strong><br>
-Você receberá: <strong>R$ ${vendedor.toFixed(2)}</strong>`;
-}
-
-function lerImagemArquivo(input){
-return new Promise((resolve,reject)=>{
-if(!input?.files?.[0])return resolve(null);
-
-const arquivo=input.files[0];
-
-if(!arquivo.type.startsWith("image/"))
-return reject(new Error("O arquivo precisa ser uma imagem."));
-
-if(arquivo.size>500*1024)
-return reject(new Error("A imagem precisa ter no máximo 500 KB."));
-
-const leitor=new FileReader();
-leitor.onload=()=>resolve(leitor.result);
-leitor.onerror=()=>reject(new Error("Não foi possível ler a imagem."));
-leitor.readAsDataURL(arquivo);
-});
-}
-
-async function publicarProduto(){
-const token=tokenAtual();
-if(!token){
-mostrarLogin();
-return;
-}
-
-const title=document.getElementById("productTitle").value.trim();
-const category=document.getElementById("productCategory").value;
-const description=document.getElementById("productDescription").value.trim();
-const price=Number(document.getElementById("productPrice").value);
-const stock=Number(document.getElementById("productStock").value);
-const delivery_type=document.getElementById("productDelivery").value;
-const message=document.getElementById("productMessage");
-
-if(!title||!description||!Number.isFinite(price)||price<0||!Number.isInteger(stock)||stock<1){
-mostrarMensagem(message,"Preencha corretamente todos os campos.","error");
-return;
-}
-
-try{
-mostrarMensagem(message,"Preparando anúncio...","success");
-
-const image_url=await lerImagemArquivo(document.getElementById("productImage"));
-
-const resposta=await fetch(API_URL+"/api/products",{
-method:"POST",
-headers:{
-"Content-Type":"application/json",
-"Authorization":`Bearer ${token}`
-},
-body:JSON.stringify({title,category,description,price,stock,delivery_type,image_url})
-});
-
-const dados=await resposta.json();
-
-if(!resposta.ok){
-mostrarMensagem(message,dados.error||"Não foi possível publicar o anúncio.","error");
-return;
-}
-
-mostrarMensagem(message,"Anúncio enviado para moderação!","success");
-
-setTimeout(()=>{
-fecharModal();
-carregarProdutos();
-},1200);
-
-}catch(erro){
-mostrarMensagem(message,erro.message||"Erro ao publicar anúncio.","error");
-}
-}
-
-async function carregarProdutos(categoria=categoriaAtual){
-categoriaAtual=categoria||"";
-
-const lista=document.getElementById("productList");
-if(!lista)return;
-
-const busca=document.getElementById("searchProducts")?.value.trim()||"";
-const ordem=document.getElementById("sortProducts")?.value||"newest";
-
-lista.innerHTML=`<div class="product"><div class="product-image">⏳</div><div class="product-body"><h3>Carregando produtos...</h3></div></div>`;
-
-try{
-const params=new URLSearchParams();
-if(categoria)params.set("category",categoria);
-if(busca)params.set("search",busca);
-params.set("sort",ordem);
-
-const resposta=await fetch(`${API_URL}/api/products?${params}`);
-const dados=await resposta.json();
-
-if(!resposta.ok)throw new Error(dados.error||"Erro ao carregar produtos.");
-
-atualizarEstatisticas(dados);
-
-if(!dados.products?.length){
-lista.innerHTML=`
-<div class="product">
-<div class="product-image">🛒</div>
-<div class="product-body">
-<div class="product-category">SLAXSTORE</div>
-<h3>Nenhum anúncio encontrado</h3>
-<p class="product-description">
-${categoria||busca?"Não encontramos produtos para sua pesquisa.":"Seja o primeiro vendedor a publicar."}
-</p>
-</div>
-</div>`;
-return;
-}
-
-lista.innerHTML=dados.products.map(criarCardProduto).join("");
-
-}catch(erro){
-lista.innerHTML=`
-<div class="product">
-<div class="product-image">⚠️</div>
-<div class="product-body">
-<h3>Erro ao carregar anúncios</h3>
-<p class="product-description">${escaparHTML(erro.message)}</p>
-</div>
-</div>`;
-}
-}
-
-function criarCardProduto(produto){
-const imagem=produto.image_url
-?`<img src="${escaparHTML(produto.image_url)}" alt="${escaparHTML(produto.title)}">`
-:"🛒";
-
-const seller=produto.seller||{};
-const verificado=seller.seller_verified?" ✓":"";
-
-return `
-<div class="product" onclick="abrirProduto(${Number(produto.id)})" style="cursor:pointer">
-<div class="product-image">${imagem}</div>
-<div class="product-body">
-<div class="product-category">${escaparHTML(produto.category)}</div>
-<h3>${escaparHTML(produto.title)}</h3>
-<p class="product-description">${escaparHTML(produto.description)}</p>
-
-<div class="product-bottom">
-<div>
-<div class="price">R$ ${Number(produto.price).toFixed(2)}</div>
-<div class="seller">${escaparHTML(seller.username||"Vendedor")}${verificado}</div>
-</div>
-<small>${Number(produto.stock)||0} disponível(is)</small>
-</div>
-</div>
-</div>`;
-}
-
-async function abrirProduto(id){
-try{
-const resposta=await fetch(`${API_URL}/api/products/${id}`);
-const dados=await resposta.json();
-
-if(!resposta.ok){
-alert(dados.error||"Produto não encontrado.");
-return;
-}
-
-const produto=dados.product;
-const seller=produto.seller||{};
-
-criarModal(`
-${produto.image_url?`<img src="${escaparHTML(produto.image_url)}" style="width:100%;max-height:260px;object-fit:cover;border-radius:12px;margin-bottom:18px">`:""}
-
-<div class="product-category">${escaparHTML(produto.category)}</div>
-<h2>${escaparHTML(produto.title)}</h2>
-
-<p class="subtitle">${escaparHTML(produto.description)}</p>
-
-<div class="notice">
-<strong>R$ ${Number(produto.price).toFixed(2)}</strong><br>
-Estoque: ${Number(produto.stock)}<br>
-Vendedor: ${escaparHTML(seller.username||"Vendedor")}
-${seller.seller_verified?" ✓ Vendedor verificado":""}
-</div>
-
-<button class="btn blue" onclick="comprarProduto(${Number(produto.id)})">Comprar</button>
-`);
-}catch(erro){
-console.error(erro);
-alert("Erro ao abrir produto.");
-}
-}
-
-async function comprarProduto(productId){
-const token=tokenAtual();
-
-if(!token){
-fecharModal();
-mostrarLogin();
-return;
-}
-
-if(!confirm("Deseja realmente criar este pedido?"))return;
-
-try{
-const resposta=await fetch(`${API_URL}/api/orders/${productId}`,{
-method:"POST",
-headers:{Authorization:`Bearer ${token}`}
-});
-
-const dados=await resposta.json();
-
-if(!resposta.ok){
-alert(dados.error||"Não foi possível criar o pedido.");
-return;
-}
-
-alert(
-"Pedido criado!\n\n"+
-`Valor: R$ ${Number(dados.payment.amount).toFixed(2)}\n`+
-`Taxa SlaxStore: R$ ${Number(dados.payment.platform_fee).toFixed(2)}\n`+
-`Vendedor: R$ ${Number(dados.payment.seller_amount).toFixed(2)}`
-);
-
-fecharModal();
-abrirPainel();
-
-}catch{
-alert("Erro de conexão com o servidor.");
-}
-}
-
-function pesquisarProdutos(){
-clearTimeout(pesquisaTimer);
-pesquisaTimer=setTimeout(()=>carregarProdutos(),300);
-}
-
-function filtrarCategoria(categoria){
-categoriaAtual=categoria;
-document.getElementById("produtos")?.scrollIntoView({behavior:"smooth"});
-carregarProdutos(categoria);
-}
-
-function atualizarEstatisticas(dados){
-document.getElementById("statProducts").textContent=dados.pagination?.total??dados.products?.length??0;
-}
-
-function abrirPainel(){
-if(!usuarioAtual()){
-mostrarLogin();
-return;
-}
-painelMeusAnuncios();
-}
-
-function painelBase(conteudo){
-criarModal(`
-<h2>SlaxPanel</h2>
-<p class="subtitle">Gerencie sua conta e seus anúncios.</p>
-
-<div class="dashboard">
-<div class="side">
-
-<button onclick="painelMeusAnuncios()">📦 Meus anúncios</button>
-<button onclick="painelPedidos()">🛒 Pedidos</button>
-<button onclick="painelPerfil()">👤 Perfil</button>
-<button onclick="abrirVender()">➕ Novo anúncio</button>
-
-</div>
-
-<div class="panel">${conteudo}</div>
-</div>
-`);
-}
-
-async function painelMeusAnuncios(){
-const token=tokenAtual();
-if(!token){
-mostrarLogin();
-return;
-}
-
-painelBase(`
-<h2>Meus anúncios</h2>
-<p>Carregando seus anúncios...</p>
-<div id="myProducts" style="margin-top:20px"></div>
-`);
-
-try{
-const resposta=await fetch(API_URL+"/api/products/mine",{
-headers:{Authorization:`Bearer ${token}`}
-});
-
-const dados=await resposta.json();
-
-if(!resposta.ok)throw new Error(dados.error||"Erro ao carregar anúncios.");
-
-const area=document.getElementById("myProducts");
-
-if(!dados.products?.length){
-area.innerHTML=`
-<div class="notice">Você ainda não possui anúncios.</div>
-<button class="btn blue" onclick="abrirVender()">Criar meu primeiro anúncio</button>`;
-return;
-}
-
-area.innerHTML=dados.products.map(criarMeuProduto).join("");
-
-}catch(erro){
-const area=document.getElementById("myProducts");
-if(area)area.innerHTML=`<div class="notice">${escaparHTML(erro.message)}</div>`;
-}
-}
-
-function criarMeuProduto(produto){
-return `
-<div class="dashboard-card">
-<h3>${escaparHTML(produto.title)}</h3>
-<p>Categoria: ${escaparHTML(produto.category)}</p>
-<p>Preço: R$ ${(Number(produto.price_cents)/100).toFixed(2)}</p>
-<p>Estoque: ${Number(produto.stock)}</p>
-<p>Status:
-<span class="status ${escaparHTML(produto.status)}">
-${traduzirStatus(produto.status)}
-</span>
-</p>
-
-<div class="dashboard-actions">
-
-${
-produto.status==="approved"||produto.status==="paused"
-?`<button class="btn dark" onclick="alternarProduto(${Number(produto.id)})">
-${produto.status==="paused"?"Ativar":"Pausar"}
-</button>`:""
-}
-
-<button class="btn red" onclick="excluirProduto(${Number(produto.id)})">Excluir</button>
-
-</div>
-</div>`;
-}
-
-function traduzirStatus(status){
-return{
-pending:"Em moderação",
-approved:"Aprovado",
-rejected:"Rejeitado",
-paused:"Pausado"
-}[status]||status;
-}
-
-/* CORRIGIDO: backend usa /pause, não /toggle */
-async function alternarProduto(id){
-const token=tokenAtual();
-
-try{
-const resposta=await fetch(`${API_URL}/api/products/${id}/pause`,{
-method:"POST",
-headers:{Authorization:`Bearer ${token}`}
-});
-
-const dados=await resposta.json();
-
-if(!resposta.ok){
-alert(dados.error||"Erro ao alterar anúncio.");
-return;
-}
-
-painelMeusAnuncios();
-carregarProdutos();
-
-}catch{
-alert("Erro de conexão.");
-}
-}
-
-async function excluirProduto(id){
-if(!confirm("Tem certeza que deseja excluir este anúncio?"))return;
-
-try{
-const resposta=await fetch(`${API_URL}/api/products/${id}`,{
-method:"DELETE",
-headers:{Authorization:`Bearer ${tokenAtual()}`}
-});
-
-const dados=await resposta.json();
-
-if(!resposta.ok){
-alert(dados.error||"Não foi possível excluir.");
-return;
-}
-
-painelMeusAnuncios();
-carregarProdutos();
-
-}catch{
-alert("Erro de conexão.");
-}
-}
-
-async function painelPedidos(){
-const token=tokenAtual();
-
-painelBase(`
-<h2>Meus pedidos</h2>
-<p>Carregando...</p>
-<div id="ordersArea" style="margin-top:20px"></div>
-`);
-
-try{
-const resposta=await fetch(API_URL+"/api/orders",{
-headers:{Authorization:`Bearer ${token}`}
-});
-
-const dados=await resposta.json();
-
-if(!resposta.ok)throw new Error(dados.error||"Erro ao carregar pedidos.");
-
-const area=document.getElementById("ordersArea");
-
-if(!dados.orders?.length){
-area.innerHTML=`<div class="notice">Você ainda não possui pedidos.</div>`;
-return;
-}
-
-area.innerHTML=dados.orders.map(criarPedidoCard).join("");
-
-}catch(erro){
-const area=document.getElementById("ordersArea");
-if(area)area.innerHTML=`<div class="notice">${escaparHTML(erro.message)}</div>`;
-}
-}
-
-function criarPedidoCard(pedido){
-const nome=pedido.role==="buyer"?pedido.seller_username:pedido.buyer_username;
-
-return `
-<div class="dashboard-card">
-<h3>${escaparHTML(pedido.product_title)}</h3>
-<p>Valor: R$ ${Number(pedido.amount).toFixed(2)}</p>
-<p>${pedido.role==="buyer"?"Vendedor":"Comprador"}: ${escaparHTML(nome||"Usuário")}</p>
-
-<p>Status:
-<span class="status ${escaparHTML(pedido.status)}">
-${traduzirStatusPedido(pedido.status)}
-</span>
-</p>
-
-<div class="dashboard-actions">
-<button class="btn dark" onclick="abrirPedido(${Number(pedido.id)})">Abrir pedido</button>
-</div>
-</div>`;
-}
-
-function traduzirStatusPedido(status){
-return{
-pending:"Pendente",
-completed:"Concluído",
-problem:"Em análise",
-cancelled:"Cancelado"
-}[status]||status;
-}
-
-async function abrirPedido(id){
-try{
-const resposta=await fetch(`${API_URL}/api/orders/${id}`,{
-headers:{Authorization:`Bearer ${tokenAtual()}`}
-});
-
-const dados=await resposta.json();
-
-if(!resposta.ok){
-alert(dados.error||"Pedido não encontrado.");
-return;
-}
-
-const pedido=dados.order;
-
-criarModal(`
-<h2>Pedido #${Number(pedido.id)}</h2>
-<p class="subtitle">${escaparHTML(pedido.product_title)}</p>
-
-<div class="notice">
-Valor: <strong>R$ ${Number(pedido.amount).toFixed(2)}</strong><br>
-Status: ${traduzirStatusPedido(pedido.status)}
-</div>
-
-<div id="messagesArea" style="max-height:260px;overflow:auto;margin-bottom:15px">
-Carregando mensagens...
-</div>
-
-${
-pedido.status==="pending"
-?`
-<div class="field">
-<textarea id="orderMessage" maxlength="2000" placeholder="Digite uma mensagem..."></textarea>
-</div>
-
-<button class="btn blue" onclick="enviarMensagemPedido(${Number(pedido.id)})">Enviar mensagem</button>
-
-<button class="btn yellow" onclick="abrirProblema(${Number(pedido.id)})">Tenho um problema</button>
-
-${pedido.role==="buyer"
-?`<button class="btn green" onclick="concluirPedido(${Number(pedido.id)})">Concluir pedido</button>`
-:""}
-`:""}
-`);
-
-carregarMensagens(pedido.id);
-
-}catch{
-alert("Erro ao abrir pedido.");
-}
-}
-
-async function carregarMensagens(id){
-const area=document.getElementById("messagesArea");
-if(!area)return;
-
-try{
-const resposta=await fetch(`${API_URL}/api/orders/${id}/messages`,{
-headers:{Authorization:`Bearer ${tokenAtual()}`}
-});
-
-const dados=await resposta.json();
-
-if(!resposta.ok)throw new Error();
-
-if(!dados.messages?.length){
-area.innerHTML=`<div class="notice">Nenhuma mensagem ainda.</div>`;
-return;
-}
-
-area.innerHTML=dados.messages.map(m=>`
-<div class="order-message">
-<strong>${escaparHTML(m.username)}</strong><br>
-${escaparHTML(m.message)}
-</div>`).join("");
-
-area.scrollTop=area.scrollHeight;
-
-}catch{
-area.innerHTML=`<div class="notice">Não foi possível carregar as mensagens.</div>`;
-}
-}
-
-async function enviarMensagemPedido(id){
-const campo=document.getElementById("orderMessage");
-if(!campo)return;
-
-const message=campo.value.trim();
-if(!message){
-alert("Digite uma mensagem.");
-return;
-}
-
-try{
-const resposta=await fetch(`${API_URL}/api/orders/${id}/message`,{
-method:"POST",
-headers:{
-Authorization:`Bearer ${tokenAtual()}`,
-"Content-Type":"application/json"
-},
-body:JSON.stringify({message})
-});
-
-const dados=await resposta.json();
-
-if(!resposta.ok){
-alert(dados.error||"Erro ao enviar mensagem.");
-return;
-}
-
-campo.value="";
-carregarMensagens(id);
-
-}catch{
-alert("Erro de conexão.");
-}
-}
-
-async function concluirPedido(id){
-if(!confirm("Confirma que recebeu o produto/serviço?"))return;
-
-try{
-const resposta=await fetch(`${API_URL}/api/orders/${id}/complete`,{
-method:"POST",
-headers:{Authorization:`Bearer ${tokenAtual()}`}
-});
-
-const dados=await resposta.json();
-
-if(!resposta.ok){
-alert(dados.error||"Erro ao concluir pedido.");
-return;
-}
-
-alert("Pedido concluído!");
-fecharModal();
-painelPedidos();
-
-}catch{
-alert("Erro de conexão.");
-}
-}
-
-async function abrirProblema(id){
-const descricao=prompt("Explique o problema:");
-if(!descricao)return;
-
-try{
-const resposta=await fetch(`${API_URL}/api/orders/${id}/problem`,{
-method:"POST",
-headers:{
-Authorization:`Bearer ${tokenAtual()}`,
-"Content-Type":"application/json"
-},
-body:JSON.stringify({description:descricao})
-});
-
-const dados=await resposta.json();
-
-if(!resposta.ok){
-alert(dados.error||"Erro ao abrir problema.");
-return;
-}
-
-alert("Problema enviado para análise.");
-abrirPedido(id);
-
-}catch{
-alert("Erro de conexão.");
-}
-}
-
-async function painelPerfil(){
-const token=tokenAtual();
-
-try{
-const resposta=await fetch(API_URL+"/api/auth/me",{
-headers:{Authorization:`Bearer ${token}`}
-});
-
-const dados=await resposta.json();
-
-if(!resposta.ok)throw new Error(dados.error);
-
-const user=dados.user;
-
-localStorage.setItem("slax_user",JSON.stringify(user));
-
-painelBase(`
-<h2>Meu perfil</h2>
-<p>${escaparHTML(user.email)}</p>
-
-<div class="dashboard-card" style="margin-top:20px">
-<h3>${escaparHTML(user.username)}</h3>
-
-<p>E-mail verificado: ${user.email_verified?"Sim":"Não"}</p>
-<p>Vendedor verificado: ${user.seller_verified?"Sim":"Não"}</p>
-<p>Avaliações positivas: ${Number(user.rating_positive)||0}</p>
-<p>Neutras: ${Number(user.rating_neutral)||0}</p>
-<p>Negativas: ${Number(user.rating_negative)||0}</p>
-
-${user.bio?`<p>Bio: ${escaparHTML(user.bio)}</p>`:""}
-</div>
-
-<button class="btn blue" onclick='abrirEditarPerfil(${JSON.stringify(user).replace(/'/g,"&#39;")})'>
-Editar perfil
-</button>
-`);
-
-}catch(erro){
-console.error(erro);
-alert("Não foi possível carregar seu perfil.");
-}
-}
-
-/* CORRIGIDO: agora recebe e mostra a bio atual */
-function abrirEditarPerfil(usuario=usuarioAtual()){
-usuario=usuario||{};
-
-criarModal(`
-<h2>Editar perfil</h2>
-<p class="subtitle">Atualize suas informações.</p>
-
-<div id="profileMessage" class="message"></div>
-
-<div class="field">
-<label>Nome de usuário</label>
-<input id="profileUsername" maxlength="30" value="${escaparHTML(usuario.username||"")}">
-</div>
-
-<div class="field">
-<label>Bio</label>
-<textarea id="profileBio" maxlength="500" placeholder="Fale um pouco sobre você...">${escaparHTML(usuario.bio||"")}</textarea>
-</div>
-
-<button class="btn blue" onclick="salvarPerfil()">Salvar alterações</button>
-`);
-}
-
-async function salvarPerfil(){
-const username=document.getElementById("profileUsername").value.trim();
-const bio=document.getElementById("profileBio").value.trim();
-const message=document.getElementById("profileMessage");
-
-try{
-const resposta=await fetch(API_URL+"/api/auth/profile",{
-method:"PUT",
-headers:{
-Authorization:`Bearer ${tokenAtual()}`,
-"Content-Type":"application/json"
-},
-body:JSON.stringify({username,bio})
-});
-
-const dados=await resposta.json();
-
-if(!resposta.ok){
-mostrarMensagem(message,dados.error||"Erro ao atualizar perfil.","error");
-return;
-}
-
-localStorage.setItem("slax_user",JSON.stringify(dados.user));
-atualizarAuthArea();
-
-mostrarMensagem(message,"Perfil atualizado!","success");
-
-setTimeout(()=>painelPerfil(),800);
-
-}catch{
-mostrarMensagem(message,"Erro de conexão.","error");
-}
-}
-
-document.addEventListener("DOMContentLoaded",()=>{
-atualizarAuthArea();
-carregarProdutos();
-});
-
+    const API_URL = window.location.origin;
+
+    let usuario = null;
+    let authMode = "login";
+    let categoriaAtual = "";
+    let produtoAtual = null;
+
+    async function api(
+        endpoint,
+        options = {}
+    ) {
+        const resposta = await fetch(
+            API_URL + endpoint,
+            {
+                credentials: "include",
+                ...options,
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(options.headers || {})
+                }
+            }
+        );
+
+        let dados = {};
+
+        try {
+            dados = await resposta.json();
+        } catch {
+            dados = {};
+        }
+
+        if (!resposta.ok) {
+            throw new Error(
+                dados.error ||
+                "Ocorreu um erro."
+            );
+        }
+
+        return dados;
+    }
+
+    function escapeHTML(valor) {
+        return String(valor ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+    function dinheiro(cents) {
+        return (
+            Number(cents || 0) / 100
+        ).toLocaleString(
+            "pt-BR",
+            {
+                style: "currency",
+                currency: "BRL"
+            }
+        );
+    }
+
+    function abrirModal(id) {
+        document
+            .getElementById(id)
+            .classList.remove("hidden");
+    }
+
+    function fecharModal(id) {
+        document
+            .getElementById(id)
+            .classList.add("hidden");
+    }
+
+    function mostrarMensagem(
+        elemento,
+        texto,
+        tipo = "error"
+    ) {
+        elemento.className =
+            "message " + tipo;
+
+        elemento.textContent = texto;
+    }
+
+    function abrirAuth(modo) {
+        authMode = modo;
+
+        const title =
+            document.getElementById("authTitle");
+
+        const usernameField =
+            document.getElementById("usernameField");
+
+        const submit =
+            document.getElementById("authSubmit");
+
+        const switchText =
+            document.getElementById("authSwitchText");
+
+        const switchButton =
+            document.getElementById("authSwitch");
+
+        document
+            .getElementById("authMessage")
+            .className = "hidden";
+
+        if (modo === "register") {
+            title.textContent =
+                "Criar conta";
+
+            usernameField.classList.remove(
+                "hidden"
+            );
+
+            submit.textContent =
+                "Criar conta";
+
+            switchText.textContent =
+                "Já possui uma conta?";
+
+            switchButton.textContent =
+                "Entrar";
+        } else {
+            title.textContent =
+                "Entrar";
+
+            usernameField.classList.add(
+                "hidden"
+            );
+
+            submit.textContent =
+                "Entrar";
+
+            switchText.textContent =
+                "Ainda não tem uma conta?";
+
+            switchButton.textContent =
+                "Criar conta";
+        }
+
+        abrirModal("authModal");
+    }
+
+    function alternarAuth() {
+        abrirAuth(
+            authMode === "login"
+                ? "register"
+                : "login"
+        );
+    }
+
+    document
+        .getElementById("authForm")
+        .addEventListener(
+            "submit",
+            async event => {
+                event.preventDefault();
+
+                const message =
+                    document.getElementById(
+                        "authMessage"
+                    );
+
+                try {
+                    const email =
+                        document.getElementById(
+                            "email"
+                        ).value.trim();
+
+                    const password =
+                        document.getElementById(
+                            "password"
+                        ).value;
+
+                    if (
+                        authMode === "register"
+                    ) {
+                        const username =
+                            document.getElementById(
+                                "username"
+                            ).value.trim();
+
+                        const resposta =
+                            await api(
+                                "/api/auth/register",
+                                {
+                                    method: "POST",
+                                    body: JSON.stringify({
+                                        username,
+                                        email,
+                                        password
+                                    })
+                                }
+                            );
+
+                        mostrarMensagem(
+                            message,
+                            resposta.message ||
+                            "Conta criada.",
+                            "success"
+                        );
+
+                        setTimeout(
+                            () => {
+                                fecharModal(
+                                    "authModal"
+                                );
+
+                                document.getElementById(
+                                    "email"
+                                ).value = email;
+
+                                abrirModal(
+                                    "verifyModal"
+                                );
+                            },
+                            700
+                        );
+
+                    } else {
+
+                        const resposta =
+                            await api(
+                                "/api/auth/login",
+                                {
+                                    method: "POST",
+                                    body: JSON.stringify({
+                                        email,
+                                        password
+                                    })
+                                }
+                            );
+
+                        usuario =
+                            resposta.user;
+
+                        atualizarInterface();
+
+                        fecharModal(
+                            "authModal"
+                        );
+
+                        carregarProdutos();
+                    }
+
+                } catch (erro) {
+                    mostrarMensagem(
+                        message,
+                        erro.message
+                    );
+                }
+            }
+        );
+
+    document
+        .getElementById("verifyForm")
+        .addEventListener(
+            "submit",
+            async event => {
+                event.preventDefault();
+
+                const message =
+                    document.getElementById(
+                        "verifyMessage"
+                    );
+
+                try {
+                    const email =
+                        document.getElementById(
+                            "email"
+                        ).value.trim();
+
+                    const code =
+                        document.getElementById(
+                            "verificationCode"
+                        ).value.trim();
+
+                    const resposta =
+                        await api(
+                            "/api/auth/verify-email",
+                            {
+                                method: "POST",
+                                body: JSON.stringify({
+                                    email,
+                                    code
+                                })
+                            }
+                        );
+
+                    mostrarMensagem(
+                        message,
+                        resposta.message ||
+                        "E-mail verificado.",
+                        "success"
+                    );
+
+                    setTimeout(
+                        () => {
+                            fecharModal(
+                                "verifyModal"
+                            );
+
+                            abrirAuth(
+                                "login"
+                            );
+                        },
+                        900
+                    );
+
+                } catch (erro) {
+                    mostrarMensagem(
+                        message,
+                        erro.message
+                    );
+                }
+            }
+        );
+
+    async function verificarSessao() {
+        try {
+            const resposta =
+                await api(
+                    "/api/auth/me"
+                );
+
+            usuario =
+                resposta.user;
+
+            atualizarInterface();
+
+        } catch {
+            usuario = null;
+            atualizarInterface();
+        }
+    }
+
+    function atualizarInterface() {
+        const loginButton =
+            document.getElementById(
+                "loginButton"
+            );
+
+        const profileButton =
+            document.getElementById(
+                "profileButton"
+            );
+
+        const logoutButton =
+            document.getElementById(
+                "logoutButton"
+            );
+
+        if (usuario) {
+            loginButton.classList.add(
+                "hidden"
+            );
+
+            profileButton.classList.remove(
+                "hidden"
+            );
+
+            logoutButton.classList.remove(
+                "hidden"
+            );
+
+        } else {
+            loginButton.classList.remove(
+                "hidden"
+            );
+
+            profileButton.classList.add(
+                "hidden"
+            );
+
+            logoutButton.classList.add(
+                "hidden"
+            );
+        }
+    }
+
+    async function logout() {
+        try {
+            await api(
+                "/api/auth/logout",
+                {
+                    method: "POST"
+                }
+            );
+        } catch {}
+
+        usuario = null;
+
+        atualizarInterface();
+
+        carregarProdutos();
+    }
+
+    function selecionarCategoria(
+        botao
+    ) {
+        document
+            .querySelectorAll(".filter")
+            .forEach(
+                item =>
+                    item.classList.remove(
+                        "active"
+                    )
+            );
+
+        botao.classList.add(
+            "active"
+        );
+
+        categoriaAtual =
+            botao.dataset.category ||
+            "";
+
+        carregarProdutos();
+    }
+
+    async function carregarProdutos() {
+        const container =
+            document.getElementById(
+                "products"
+            );
+
+        const count =
+            document.getElementById(
+                "productCount"
+            );
+
+        const pesquisa =
+            document.getElementById(
+                "searchInput"
+            ).value.trim();
+
+        container.innerHTML =
+            '<div class="empty">Carregando produtos...</div>';
+
+        try {
+            const params =
+                new URLSearchParams();
+
+            params.set(
+                "page",
+                "1"
+            );
+
+            params.set(
+                "limit",
+                "40"
+            );
+
+            if (pesquisa) {
+                params.set(
+                    "search",
+                    pesquisa
+                );
+            }
+
+            if (categoriaAtual) {
+                params.set(
+                    "category",
+                    categoriaAtual
+                );
+            }
+
+            const resposta =
+                await api(
+                    "/api/products?" +
+                    params.toString()
+                );
+
+            const produtos =
+                resposta.products ||
+                resposta.items ||
+                [];
+
+            count.textContent =
+                `${produtos.length} produto(s)`;
+
+            if (!produtos.length) {
+                container.innerHTML =
+                    '<div class="empty">Nenhum produto encontrado.</div>';
+
+                return;
+            }
+
+            container.innerHTML =
+                produtos
+                    .map(
+                        produto =>
+                            criarCardProduto(
+                                produto
+                            )
+                    )
+                    .join("");
+
+        } catch (erro) {
+
+            container.innerHTML =
+                `<div class="empty">
+                    Não foi possível carregar os produtos.<br>
+                    ${escapeHTML(
+                        erro.message
+                    )}
+                </div>`;
+        }
+    }
+
+    function criarCardProduto(
+        produto
+    ) {
+        const imagem =
+            produto.image_url;
+
+        return `
+            <article class="product">
+
+                <div class="product-image">
+                    ${
+                        imagem
+                            ? `
+                                <img
+                                    src="${escapeHTML(
+                                        imagem
+                                    )}"
+                                    alt=""
+                                    onerror="this.style.display='none'"
+                                >
+                            `
+                            : `
+                                <span>
+                                    SLAX
+                                </span>
+                            `
+                    }
+                </div>
+
+                <div class="product-content">
+
+                    <div class="product-category">
+                        ${escapeHTML(
+                            produto.category
+                        )}
+                    </div>
+
+                    <div class="product-title">
+                        ${escapeHTML(
+                            produto.title
+                        )}
+                    </div>
+
+                    <div class="product-description">
+                        ${escapeHTML(
+                            produto.description
+                        )}
+                    </div>
+
+                    <div class="product-bottom">
+
+                        <div class="price">
+                            ${dinheiro(
+                                produto.price_cents
+                            )}
+                        </div>
+
+                        <button
+                            class="buy"
+                            onclick="abrirProduto(${produto.id})"
+                        >
+                            Ver
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </article>
+        `;
+    }
+
+    async function abrirProduto(
+        id
+    ) {
+        const details =
+            document.getElementById(
+                "productDetails"
+            );
+
+        details.innerHTML =
+            '<div class="empty">Carregando...</div>';
+
+        abrirModal(
+            "productModal"
+        );
+
+        try {
+            const produto =
+                await api(
+                    "/api/products/" +
+                    id
+                );
+
+            produtoAtual =
+                produto.product ||
+                produto;
+
+            const p =
+                produtoAtual;
+
+            document.getElementById(
+                "productModalTitle"
+            ).textContent =
+                p.title;
+
+            details.innerHTML = `
+                ${
+                    p.image_url
+                        ? `
+                            <img
+                                src="${escapeHTML(
+                                    p.image_url
+                                )}"
+                                style="
+                                    width:100%;
+                                    max-height:260px;
+                                    object-fit:cover;
+                                    border-radius:10px;
+                                    margin-bottom:15px;
+                                "
+                            >
+                        `
+                        : ""
+                }
+
+                <div class="product-category">
+                    ${escapeHTML(
+                        p.category
+                    )}
+                </div>
+
+                <h3
+                    style="
+                        margin-bottom:10px;
+                    "
+                >
+                    ${escapeHTML(
+                        p.title
+                    )}
+                </h3>
+
+                <p
+                    style="
+                        color:#9aa8bc;
+                        line-height:1.6;
+                        margin-bottom:15px;
+                    "
+                >
+                    ${escapeHTML(
+                        p.description
+                    )}
+                </p>
+
+                <div
+                    style="
+                        display:flex;
+                        justify-content:space-between;
+                        align-items:center;
+                        gap:15px;
+                        margin-bottom:18px;
+                    "
+                >
+                    <strong
+                        style="
+                            font-size:25px;
+                        "
+                    >
+                        ${dinheiro(
+                            p.price_cents
+                        )}
+                    </strong>
+
+                    <span
+                        style="
+                            color:#8c9ab0;
+                            font-size:12px;
+                        "
+                    >
+                        Estoque:
+                        ${Number(
+                            p.stock || 0
+                        )}
+                    </span>
+                </div>
+
+                <button
+                    class="btn primary"
+                    style="width:100%;"
+                    onclick="comprarProduto(${p.id})"
+                >
+                    Comprar
+                </button>
+            `;
+
+        } catch (erro) {
+            details.innerHTML =
+                `<div class="message error">
+                    ${escapeHTML(
+                        erro.message
+                    )}
+                </div>`;
+        }
+    }
+
+    async function comprarProduto(
+        id
+    ) {
+        if (!usuario) {
+            fecharModal(
+                "productModal"
+            );
+
+            abrirAuth(
+                "login"
+            );
+
+            return;
+        }
+
+        if (
+            !confirm(
+                "Deseja criar este pedido?"
+            )
+        ) {
+            return;
+        }
+
+        try {
+            const resposta =
+                await api(
+                    "/api/orders/" +
+                    id,
+                    {
+                        method: "POST"
+                    }
+                );
+
+            alert(
+                resposta.message ||
+                "Pedido criado com sucesso."
+            );
+
+            fecharModal(
+                "productModal"
+            );
+
+        } catch (erro) {
+            alert(
+                erro.message
+            );
+        }
+    }
+
+    async function abrirPerfil() {
+        const content =
+            document.getElementById(
+                "profileContent"
+            );
+
+        content.innerHTML =
+            '<div class="empty">Carregando perfil...</div>';
+
+        abrirModal(
+            "profileModal"
+        );
+
+        try {
+            const resposta =
+                await api(
+                    "/api/auth/me"
+                );
+
+            usuario =
+                resposta.user;
+
+            const inicial =
+                (
+                    usuario.username ||
+                    "U"
+                )
+                    .charAt(0)
+                    .toUpperCase();
+
+            content.innerHTML = `
+                <div class="profile">
+
+                    <div class="avatar">
+
+                        ${
+                            usuario.avatar_url
+                                ? `
+                                    <img
+                                        src="${escapeHTML(
+                                            usuario.avatar_url
+                                        )}"
+                                        alt=""
+                                    >
+                                `
+                                : inicial
+                        }
+
+                    </div>
+
+                    <div class="profile-info">
+
+                        <h3>
+                            ${escapeHTML(
+                                usuario.username
+                            )}
+                        </h3>
+
+                        <p>
+                            ${escapeHTML(
+                                usuario.email
+                            )}
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <form
+                    id="profileForm"
+                    class="form"
+                >
+
+                    <label>
+                        Bio
+
+                        <textarea
+                            id="bio"
+                            maxlength="500"
+                        >${escapeHTML(
+                            usuario.bio || ""
+                        )}</textarea>
+                    </label>
+
+                    <label>
+                        URL da foto de perfil
+
+                        <input
+                            id="avatarUrl"
+                            type="text"
+                            value="${escapeHTML(
+                                usuario.avatar_url ||
+                                ""
+                            )}"
+                            placeholder="https://..."
+                        >
+                    </label>
+
+                    <div
+                        id="profileMessage"
+                        class="hidden"
+                    ></div>
+
+                    <button
+                        class="btn primary"
+                        type="submit"
+                    >
+                        Salvar perfil
+                    </button>
+
+                </form>
+
+                <div
+                    style="
+                        margin-top:20px;
+                        padding:15px;
+                        background:#0d1523;
+                        border:1px solid #1c2b42;
+                        border-radius:10px;
+                    "
+                >
+
+                    <strong>
+                        Status do vendedor
+                    </strong>
+
+                    <p
+                        style="
+                            color:#8c9ab0;
+                            margin-top:7px;
+                            font-size:13px;
+                        "
+                    >
+                        ${
+                            usuario.seller_verified
+                                ? "Vendedor verificado"
+                                : "Ainda não verificado"
+                        }
+                    </p>
+
+                </div>
+            `;
+
+            document
+                .getElementById(
+                    "profileForm"
+                )
+                .addEventListener(
+                    "submit",
+                    salvarPerfil
+                );
+
+        } catch (erro) {
+            content.innerHTML =
+                `<div class="message error">
+                    ${escapeHTML(
+                        erro.message
+                    )}
+                </div>`;
+        }
+    }
+
+    async function salvarPerfil(
+        event
+    ) {
+        event.preventDefault();
+
+        const message =
+            document.getElementById(
+                "profileMessage"
+            );
+
+        try {
+            const bio =
+                document.getElementById(
+                    "bio"
+                ).value;
+
+            const avatar_url =
+                document.getElementById(
+                    "avatarUrl"
+                ).value.trim();
+
+            const resposta =
+                await api(
+                    "/api/auth/profile",
+                    {
+                        method: "PUT",
+                        body: JSON.stringify({
+                            bio,
+                            avatar_url
+                        })
+                    }
+                );
+
+            usuario =
+                resposta.user ||
+                usuario;
+
+            mostrarMensagem(
+                message,
+                resposta.message ||
+                "Perfil atualizado.",
+                "success"
+            );
+
+        } catch (erro) {
+            mostrarMensagem(
+                message,
+                erro.message
+            );
+        }
+    }
+
+    let searchTimer;
+
+    document
+        .getElementById("searchInput")
+        .addEventListener(
+            "input",
+            () => {
+                clearTimeout(
+                    searchTimer
+                );
+
+                searchTimer =
+                    setTimeout(
+                        carregarProdutos,
+                        350
+                    );
+            }
+        );
+
+    verificarSessao();
+
+    carregarProdutos();
 </script>
 
 </body>
 </html>
-```
