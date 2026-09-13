@@ -1,4 +1,8 @@
+```html
 <script>
+(() => {
+"use strict";
+
 const API_URL = window.location.origin;
 
 let usuario = null;
@@ -9,37 +13,100 @@ let emailParaVerificacao = "";
 let searchTimer = null;
 
 
-/* =========================
-   TOKEN / SESSÃO
-========================= */
+/* =========================================================
+   UTILIDADES
+========================================================= */
 
-function obterToken() {
+const $ = id => document.getElementById(id);
+
+function token() {
     return localStorage.getItem("slaxstore_token") || "";
 }
 
-function salvarToken(token) {
-    if (token) {
-        localStorage.setItem(
-            "slaxstore_token",
-            token
-        );
+function salvarToken(value) {
+    if (value) {
+        localStorage.setItem("slaxstore_token", value);
     }
 }
 
 function removerToken() {
-    localStorage.removeItem(
-        "slaxstore_token"
+    localStorage.removeItem("slaxstore_token");
+}
+
+function texto(value) {
+    return String(value ?? "");
+}
+
+function escapeHTML(value) {
+    return texto(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function dinheiro(cents) {
+    return (Number(cents || 0) / 100).toLocaleString(
+        "pt-BR",
+        {
+            style: "currency",
+            currency: "BRL"
+        }
     );
 }
 
+function mostrar(elemento, mostrar = true) {
+    if (!elemento) return;
 
-/* =========================
+    elemento.classList.toggle(
+        "hidden",
+        !mostrar
+    );
+
+    if (!mostrar) {
+        elemento.style.display = "none";
+    } else {
+        elemento.style.display = "";
+    }
+}
+
+function abrirModal(id) {
+    const elemento = $(id);
+
+    if (!elemento) return false;
+
+    mostrar(elemento, true);
+    return true;
+}
+
+function fecharModal(id) {
+    const elemento = $(id);
+
+    if (!elemento) return;
+
+    mostrar(elemento, false);
+}
+
+function mensagem(elemento, msg, tipo = "error") {
+    if (!elemento) {
+        alert(msg);
+        return;
+    }
+
+    elemento.textContent = msg;
+    elemento.className =
+        "message " + tipo;
+
+    elemento.style.display = "block";
+}
+
+
+/* =========================================================
    API
-========================= */
+========================================================= */
 
 async function api(endpoint, options = {}) {
-
-    const token = obterToken();
 
     const headers = {
         ...(options.body
@@ -51,9 +118,11 @@ async function api(endpoint, options = {}) {
         ...(options.headers || {})
     };
 
-    if (token) {
+    const authToken = token();
+
+    if (authToken) {
         headers.Authorization =
-            "Bearer " + token;
+            "Bearer " + authToken;
     }
 
     const resposta = await fetch(
@@ -73,21 +142,22 @@ async function api(endpoint, options = {}) {
         dados = {};
     }
 
-    if (
-        resposta.status === 401 &&
-        endpoint !== "/api/auth/login" &&
-        endpoint !== "/api/auth/register"
-    ) {
-        usuario = null;
-        removerToken();
-        atualizarInterface();
-    }
-
     if (!resposta.ok) {
+
+        if (
+            resposta.status === 401 &&
+            !endpoint.includes("/login") &&
+            !endpoint.includes("/register")
+        ) {
+            usuario = null;
+            removerToken();
+            atualizarInterface();
+        }
+
         throw new Error(
             dados.error ||
             dados.message ||
-            "Ocorreu um erro."
+            "Erro no servidor."
         );
     }
 
@@ -95,450 +165,15 @@ async function api(endpoint, options = {}) {
 }
 
 
-/* =========================
-   HTML
-========================= */
-
-function escapeHTML(valor) {
-    return String(valor ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-}
-
-
-/* =========================
-   DINHEIRO
-========================= */
-
-function dinheiro(cents) {
-    return (
-        Number(cents || 0) / 100
-    ).toLocaleString(
-        "pt-BR",
-        {
-            style: "currency",
-            currency: "BRL"
-        }
-    );
-}
-
-
-/* =========================
-   MODAIS
-========================= */
-
-function abrirModal(id) {
-    document
-        .getElementById(id)
-        .classList.remove("hidden");
-}
-
-function fecharModal(id) {
-    document
-        .getElementById(id)
-        .classList.add("hidden");
-}
-
-
-/* =========================
-   MENSAGENS
-========================= */
-
-function mostrarMensagem(
-    elemento,
-    texto,
-    tipo = "error"
-) {
-    elemento.className =
-        "message " + tipo;
-
-    elemento.textContent = texto;
-}
-
-
-/* =========================
-   LOGIN / CADASTRO
-========================= */
-
-function abrirAuth(modo) {
-
-    authMode = modo;
-
-    const title =
-        document.getElementById(
-            "authTitle"
-        );
-
-    const usernameField =
-        document.getElementById(
-            "usernameField"
-        );
-
-    const submit =
-        document.getElementById(
-            "authSubmit"
-        );
-
-    const switchText =
-        document.getElementById(
-            "authSwitchText"
-        );
-
-    const switchButton =
-        document.getElementById(
-            "authSwitch"
-        );
-
-    const message =
-        document.getElementById(
-            "authMessage"
-        );
-
-    message.className = "hidden";
-
-    if (modo === "register") {
-
-        title.textContent =
-            "Criar conta";
-
-        usernameField.classList.remove(
-            "hidden"
-        );
-
-        submit.textContent =
-            "Criar conta";
-
-        switchText.textContent =
-            "Já possui uma conta?";
-
-        switchButton.textContent =
-            "Entrar";
-
-    } else {
-
-        title.textContent =
-            "Entrar";
-
-        usernameField.classList.add(
-            "hidden"
-        );
-
-        submit.textContent =
-            "Entrar";
-
-        switchText.textContent =
-            "Ainda não tem uma conta?";
-
-        switchButton.textContent =
-            "Criar conta";
-    }
-
-    abrirModal("authModal");
-}
-
-
-function alternarAuth() {
-    abrirAuth(
-        authMode === "login"
-            ? "register"
-            : "login"
-    );
-}
-
-
-/* =========================
-   LOGIN / CADASTRO
-========================= */
-
-document
-    .getElementById("authForm")
-    .addEventListener(
-        "submit",
-        async function(event) {
-
-            event.preventDefault();
-
-            const message =
-                document.getElementById(
-                    "authMessage"
-                );
-
-            message.className = "hidden";
-
-            try {
-
-                const email =
-                    document
-                        .getElementById("email")
-                        .value
-                        .trim()
-                        .toLowerCase();
-
-                const password =
-                    document
-                        .getElementById("password")
-                        .value;
-
-                if (authMode === "register") {
-
-                    const username =
-                        document
-                            .getElementById(
-                                "username"
-                            )
-                            .value
-                            .trim();
-
-                    if (!username) {
-                        throw new Error(
-                            "Informe seu usuário."
-                        );
-                    }
-
-                    emailParaVerificacao =
-                        email;
-
-                    const resposta =
-                        await api(
-                            "/api/auth/register",
-                            {
-                                method: "POST",
-                                body:
-                                    JSON.stringify({
-                                        username,
-                                        email,
-                                        password
-                                    })
-                            }
-                        );
-
-                    document
-                        .getElementById(
-                            "verifyEmailText"
-                        )
-                        .textContent =
-                        "Enviamos um código para " +
-                        email +
-                        ".";
-
-                    document
-                        .getElementById(
-                            "verificationCode"
-                        )
-                        .value = "";
-
-                    fecharModal("authModal");
-
-                    abrirModal("verifyModal");
-
-                    return;
-                }
-
-
-                /* LOGIN */
-
-                const resposta =
-                    await api(
-                        "/api/auth/login",
-                        {
-                            method: "POST",
-                            body:
-                                JSON.stringify({
-                                    email,
-                                    password
-                                })
-                        }
-                    );
-
-                if (!resposta.token) {
-                    throw new Error(
-                        "O servidor não retornou o token de login."
-                    );
-                }
-
-                salvarToken(
-                    resposta.token
-                );
-
-                usuario =
-                    resposta.user ||
-                    resposta.usuario ||
-                    null;
-
-                if (!usuario) {
-                    throw new Error(
-                        "O servidor não retornou os dados do usuário."
-                    );
-                }
-
-                atualizarInterface();
-
-                fecharModal("authModal");
-
-                carregarProdutos();
-
-            } catch (erro) {
-
-                mostrarMensagem(
-                    message,
-                    erro.message
-                );
-            }
-        }
-    );
-
-
-/* =========================
-   VERIFICAÇÃO
-========================= */
-
-document
-    .getElementById("verifyForm")
-    .addEventListener(
-        "submit",
-        async function(event) {
-
-            event.preventDefault();
-
-            const message =
-                document.getElementById(
-                    "verifyMessage"
-                );
-
-            message.className = "hidden";
-
-            try {
-
-                const code =
-                    document
-                        .getElementById(
-                            "verificationCode"
-                        )
-                        .value
-                        .trim();
-
-                if (!/^\d{6}$/.test(code)) {
-                    throw new Error(
-                        "Informe um código de 6 números."
-                    );
-                }
-
-                const resposta =
-                    await api(
-                        "/api/auth/verify-email",
-                        {
-                            method: "POST",
-                            body:
-                                JSON.stringify({
-                                    email:
-                                        emailParaVerificacao,
-                                    code
-                                })
-                        }
-                    );
-
-                mostrarMensagem(
-                    message,
-                    resposta.message ||
-                    "E-mail verificado com sucesso.",
-                    "success"
-                );
-
-                setTimeout(() => {
-
-                    fecharModal(
-                        "verifyModal"
-                    );
-
-                    document
-                        .getElementById(
-                            "email"
-                        )
-                        .value =
-                        emailParaVerificacao;
-
-                    document
-                        .getElementById(
-                            "password"
-                        )
-                        .value = "";
-
-                    abrirAuth("login");
-
-                }, 1000);
-
-            } catch (erro) {
-
-                mostrarMensagem(
-                    message,
-                    erro.message
-                );
-            }
-        }
-    );
-
-
-/* =========================
-   REENVIAR CÓDIGO
-========================= */
-
-async function reenviarCodigo() {
-
-    const message =
-        document.getElementById(
-            "verifyMessage"
-        );
-
-    try {
-
-        if (!emailParaVerificacao) {
-            throw new Error(
-                "E-mail não encontrado."
-            );
-        }
-
-        const resposta =
-            await api(
-                "/api/auth/resend-code",
-                {
-                    method: "POST",
-                    body:
-                        JSON.stringify({
-                            email:
-                                emailParaVerificacao
-                        })
-                }
-            );
-
-        mostrarMensagem(
-            message,
-            resposta.message ||
-            "Novo código enviado.",
-            "success"
-        );
-
-    } catch (erro) {
-
-        mostrarMensagem(
-            message,
-            erro.message
-        );
-    }
-}
-
-
-/* =========================
+/* =========================================================
    SESSÃO
-========================= */
+========================================================= */
 
 async function verificarSessao() {
 
-    const token = obterToken();
+    const authToken = token();
 
-    if (!token) {
+    if (!authToken) {
         usuario = null;
         atualizarInterface();
         return;
@@ -547,9 +182,7 @@ async function verificarSessao() {
     try {
 
         const resposta =
-            await api(
-                "/api/auth/me"
-            );
+            await api("/api/auth/me");
 
         usuario =
             resposta.user ||
@@ -570,118 +203,491 @@ async function verificarSessao() {
 }
 
 
-/* =========================
+/* =========================================================
    INTERFACE
-========================= */
+========================================================= */
 
 function atualizarInterface() {
 
     const loginButton =
-        document.getElementById(
-            "loginButton"
-        );
+        $("loginButton");
 
     const profileButton =
-        document.getElementById(
-            "profileButton"
-        );
+        $("profileButton");
 
     const logoutButton =
-        document.getElementById(
-            "logoutButton"
-        );
+        $("logoutButton");
 
     if (usuario) {
 
-        loginButton.classList.add(
-            "hidden"
-        );
+        if (loginButton) {
+            loginButton.style.display =
+                "none";
+        }
 
-        profileButton.classList.remove(
-            "hidden"
-        );
+        if (profileButton) {
+            profileButton.style.display =
+                "";
+        }
 
-        logoutButton.classList.remove(
-            "hidden"
-        );
+        if (logoutButton) {
+            logoutButton.style.display =
+                "";
+        }
 
-        adicionarBotaoVender();
+        criarBotaoVender();
 
     } else {
 
-        loginButton.classList.remove(
-            "hidden"
-        );
+        if (loginButton) {
+            loginButton.style.display =
+                "";
+        }
 
-        profileButton.classList.add(
-            "hidden"
-        );
+        if (profileButton) {
+            profileButton.style.display =
+                "none";
+        }
 
-        logoutButton.classList.add(
-            "hidden"
-        );
+        if (logoutButton) {
+            logoutButton.style.display =
+                "none";
+        }
 
-        removerBotaoVender();
+        const vender =
+            $("slaxSellButton");
+
+        if (vender) {
+            vender.remove();
+        }
     }
 }
 
 
-/* =========================
+/* =========================================================
    BOTÃO VENDER
-========================= */
+========================================================= */
 
-function adicionarBotaoVender() {
+function criarBotaoVender() {
 
-    if (
-        document.getElementById(
-            "sellButton"
-        )
-    ) {
-        return;
-    }
+    if (!usuario) return;
+
+    if ($("slaxSellButton")) return;
+
+    const possiveisNav = [
+        document.querySelector(".nav"),
+        document.querySelector("nav"),
+        document.querySelector("header")
+    ];
 
     const nav =
-        document.querySelector(".nav");
+        possiveisNav.find(Boolean);
 
     if (!nav) return;
 
     const botao =
         document.createElement("button");
 
-    botao.id = "sellButton";
-    botao.className = "primary";
-    botao.textContent = "Vender";
+    botao.id =
+        "slaxSellButton";
 
-    botao.onclick =
-        abrirCriarAnuncio;
+    botao.type =
+        "button";
 
-    nav.insertBefore(
-        botao,
-        document.getElementById(
-            "profileButton"
-        )
+    botao.textContent =
+        "Vender";
+
+    botao.className =
+        "primary";
+
+    botao.style.cursor =
+        "pointer";
+
+    botao.addEventListener(
+        "click",
+        abrirCriarAnuncio
+    );
+
+    nav.appendChild(botao);
+}
+
+
+/* =========================================================
+   LOGIN
+========================================================= */
+
+function abrirAuth(modo = "login") {
+
+    authMode = modo;
+
+    const modal =
+        $("authModal");
+
+    if (!modal) {
+        alert(
+            "O modal de login não existe no HTML."
+        );
+        return;
+    }
+
+    const title =
+        $("authTitle");
+
+    const usernameField =
+        $("usernameField");
+
+    const submit =
+        $("authSubmit");
+
+    const switchText =
+        $("authSwitchText");
+
+    const switchButton =
+        $("authSwitch");
+
+    if (title) {
+        title.textContent =
+            modo === "register"
+                ? "Criar conta"
+                : "Entrar";
+    }
+
+    if (usernameField) {
+        usernameField.classList.toggle(
+            "hidden",
+            modo !== "register"
+        );
+
+        usernameField.style.display =
+            modo === "register"
+                ? ""
+                : "none";
+    }
+
+    if (submit) {
+        submit.textContent =
+            modo === "register"
+                ? "Criar conta"
+                : "Entrar";
+    }
+
+    if (switchText) {
+        switchText.textContent =
+            modo === "register"
+                ? "Já possui uma conta?"
+                : "Ainda não tem uma conta?";
+    }
+
+    if (switchButton) {
+        switchButton.textContent =
+            modo === "register"
+                ? "Entrar"
+                : "Criar conta";
+    }
+
+    const msg =
+        $("authMessage");
+
+    if (msg) {
+        msg.textContent = "";
+        msg.style.display = "none";
+    }
+
+    abrirModal("authModal");
+}
+
+function alternarAuth() {
+    abrirAuth(
+        authMode === "login"
+            ? "register"
+            : "login"
     );
 }
 
 
-function removerBotaoVender() {
+/* =========================================================
+   FORM LOGIN
+========================================================= */
 
-    const botao =
-        document.getElementById(
-            "sellButton"
+function configurarLogin() {
+
+    const form =
+        $("authForm");
+
+    if (!form) return;
+
+    form.addEventListener(
+        "submit",
+        async event => {
+
+            event.preventDefault();
+
+            const msg =
+                $("authMessage");
+
+            try {
+
+                const email =
+                    ($("email")?.value || "")
+                        .trim()
+                        .toLowerCase();
+
+                const password =
+                    $("password")?.value || "";
+
+                if (!email) {
+                    throw new Error(
+                        "Digite seu e-mail."
+                    );
+                }
+
+                if (!password) {
+                    throw new Error(
+                        "Digite sua senha."
+                    );
+                }
+
+
+                /* =====================
+                   CADASTRO
+                ===================== */
+
+                if (
+                    authMode === "register"
+                ) {
+
+                    const username =
+                        ($("username")?.value || "")
+                            .trim();
+
+                    if (!username) {
+                        throw new Error(
+                            "Digite seu nome de usuário."
+                        );
+                    }
+
+                    emailParaVerificacao =
+                        email;
+
+                    await api(
+                        "/api/auth/register",
+                        {
+                            method: "POST",
+                            body:
+                                JSON.stringify({
+                                    username,
+                                    email,
+                                    password
+                                })
+                        }
+                    );
+
+                    const textoVerificacao =
+                        $("verifyEmailText");
+
+                    if (textoVerificacao) {
+                        textoVerificacao.textContent =
+                            "Enviamos um código para " +
+                            email + ".";
+                    }
+
+                    const codigo =
+                        $("verificationCode");
+
+                    if (codigo) {
+                        codigo.value = "";
+                    }
+
+                    fecharModal(
+                        "authModal"
+                    );
+
+                    abrirModal(
+                        "verifyModal"
+                    );
+
+                    return;
+                }
+
+
+                /* =====================
+                   LOGIN
+                ===================== */
+
+                const resposta =
+                    await api(
+                        "/api/auth/login",
+                        {
+                            method: "POST",
+                            body:
+                                JSON.stringify({
+                                    email,
+                                    password
+                                })
+                        }
+                    );
+
+                if (!resposta.token) {
+                    throw new Error(
+                        "O servidor não enviou o token."
+                    );
+                }
+
+                salvarToken(
+                    resposta.token
+                );
+
+                usuario =
+                    resposta.user ||
+                    resposta.usuario;
+
+                if (!usuario) {
+                    throw new Error(
+                        "Usuário não retornado pelo servidor."
+                    );
+                }
+
+                fecharModal(
+                    "authModal"
+                );
+
+                atualizarInterface();
+
+                await carregarProdutos();
+
+            } catch (erro) {
+
+                mensagem(
+                    msg,
+                    erro.message
+                );
+            }
+        }
+    );
+}
+
+
+/* =========================================================
+   VERIFICAÇÃO DE E-MAIL
+========================================================= */
+
+function configurarVerificacao() {
+
+    const form =
+        $("verifyForm");
+
+    if (!form) return;
+
+    form.addEventListener(
+        "submit",
+        async event => {
+
+            event.preventDefault();
+
+            const msg =
+                $("verifyMessage");
+
+            try {
+
+                const code =
+                    ($("verificationCode")?.value || "")
+                        .trim();
+
+                if (!/^\d{6}$/.test(code)) {
+                    throw new Error(
+                        "Digite os 6 números do código."
+                    );
+                }
+
+                const resposta =
+                    await api(
+                        "/api/auth/verify-email",
+                        {
+                            method: "POST",
+                            body:
+                                JSON.stringify({
+                                    email:
+                                        emailParaVerificacao,
+                                    code
+                                })
+                        }
+                    );
+
+                mensagem(
+                    msg,
+                    resposta.message ||
+                    "E-mail verificado.",
+                    "success"
+                );
+
+                setTimeout(() => {
+
+                    fecharModal(
+                        "verifyModal"
+                    );
+
+                    abrirAuth(
+                        "login"
+                    );
+
+                }, 1000);
+
+            } catch (erro) {
+
+                mensagem(
+                    msg,
+                    erro.message
+                );
+            }
+        }
+    );
+}
+
+async function reenviarCodigo() {
+
+    try {
+
+        if (!emailParaVerificacao) {
+            throw new Error(
+                "Nenhum e-mail para reenviar."
+            );
+        }
+
+        const resposta =
+            await api(
+                "/api/auth/resend-code",
+                {
+                    method: "POST",
+                    body:
+                        JSON.stringify({
+                            email:
+                                emailParaVerificacao
+                        })
+                }
+            );
+
+        mensagem(
+            $("verifyMessage"),
+            resposta.message ||
+            "Código reenviado.",
+            "success"
         );
 
-    if (botao) {
-        botao.remove();
+    } catch (erro) {
+
+        mensagem(
+            $("verifyMessage"),
+            erro.message
+        );
     }
 }
 
 
-/* =========================
+/* =========================================================
    LOGOUT
-========================= */
+========================================================= */
 
-async function logout() {
+function logout() {
 
     removerToken();
 
@@ -693,58 +699,18 @@ async function logout() {
 }
 
 
-/* =========================
-   CATEGORIAS
-========================= */
-
-function selecionarCategoria(
-    botao
-) {
-
-    document
-        .querySelectorAll(".filter")
-        .forEach(
-            item =>
-                item.classList.remove(
-                    "active"
-                )
-        );
-
-    botao.classList.add(
-        "active"
-    );
-
-    categoriaAtual =
-        botao.dataset.category ||
-        "";
-
-    carregarProdutos();
-}
-
-
-/* =========================
+/* =========================================================
    PRODUTOS
-========================= */
+========================================================= */
 
 async function carregarProdutos() {
 
     const container =
-        document.getElementById(
-            "products"
-        );
+        $("products");
 
-    const count =
-        document.getElementById(
-            "productCount"
-        );
-
-    const pesquisa =
-        document
-            .getElementById(
-                "searchInput"
-            )
-            .value
-            .trim();
+    if (!container) {
+        return;
+    }
 
     container.innerHTML =
         `
@@ -752,6 +718,10 @@ async function carregarProdutos() {
             Carregando produtos...
         </div>
         `;
+
+    const pesquisa =
+        ($("searchInput")?.value || "")
+            .trim();
 
     try {
 
@@ -793,15 +763,20 @@ async function carregarProdutos() {
             resposta.items ||
             [];
 
-        count.textContent =
-            `${produtos.length} produto(s)`;
+        const contador =
+            $("productCount");
+
+        if (contador) {
+            contador.textContent =
+                `${produtos.length} produto(s)`;
+        }
 
         if (!produtos.length) {
 
             container.innerHTML =
                 `
                 <div class="empty">
-                    Nenhum produto encontrado.
+                    Nenhum anúncio disponível.
                 </div>
                 `;
 
@@ -810,9 +785,7 @@ async function carregarProdutos() {
 
         container.innerHTML =
             produtos
-                .map(
-                    criarCardProduto
-                )
+                .map(criarCardProduto)
                 .join("");
 
     } catch (erro) {
@@ -820,19 +793,13 @@ async function carregarProdutos() {
         container.innerHTML =
             `
             <div class="empty">
-                Não foi possível carregar os produtos.<br><br>
-                ${escapeHTML(
-                    erro.message
-                )}
+                Nenhum anúncio disponível.
             </div>
             `;
     }
 }
 
-
-function criarCardProduto(
-    produto
-) {
+function criarCardProduto(produto) {
 
     return `
         <article class="product">
@@ -885,6 +852,7 @@ function criarCardProduto(
                     </div>
 
                     <button
+                        type="button"
                         class="buy"
                         onclick="abrirProduto(${produto.id})"
                     >
@@ -900,18 +868,48 @@ function criarCardProduto(
 }
 
 
-/* =========================
-   PRODUTO
-========================= */
+/* =========================================================
+   CATEGORIAS
+========================================================= */
+
+function selecionarCategoria(botao) {
+
+    document
+        .querySelectorAll(".filter")
+        .forEach(item => {
+
+            item.classList.remove(
+                "active"
+            );
+
+        });
+
+    if (botao) {
+        botao.classList.add(
+            "active"
+        );
+
+        categoriaAtual =
+            botao.dataset.category ||
+            "";
+    }
+
+    carregarProdutos();
+}
+
+
+/* =========================================================
+   DETALHES DO PRODUTO
+========================================================= */
 
 async function abrirProduto(id) {
 
-    const details =
-        document.getElementById(
-            "productDetails"
-        );
+    const detalhes =
+        $("productDetails");
 
-    details.innerHTML =
+    if (!detalhes) return;
+
+    detalhes.innerHTML =
         `
         <div class="empty">
             Carregando...
@@ -937,12 +935,15 @@ async function abrirProduto(id) {
         const p =
             produtoAtual;
 
-        document.getElementById(
-            "productModalTitle"
-        ).textContent =
-            p.title;
+        const titulo =
+            $("productModalTitle");
 
-        details.innerHTML =
+        if (titulo) {
+            titulo.textContent =
+                p.title || "Produto";
+        }
+
+        detalhes.innerHTML =
             `
             ${
                 p.image_url
@@ -953,9 +954,9 @@ async function abrirProduto(id) {
                             )}"
                             style="
                                 width:100%;
-                                max-height:260px;
+                                max-height:280px;
                                 object-fit:cover;
-                                border-radius:10px;
+                                border-radius:12px;
                                 margin-bottom:15px;
                             "
                         >
@@ -975,33 +976,23 @@ async function abrirProduto(id) {
                 )}
             </h3>
 
-            <p
-                style="
-                    color:#9aa8bc;
-                    line-height:1.6;
-                    margin:15px 0;
-                "
-            >
+            <p>
                 ${escapeHTML(
                     p.description
                 )}
             </p>
 
-            <strong
-                style="
-                    font-size:25px;
-                    display:block;
-                    margin-bottom:15px;
-                "
-            >
+            <strong>
                 ${dinheiro(
                     p.price_cents
                 )}
             </strong>
 
+            <br><br>
+
             <button
+                type="button"
                 class="btn primary"
-                style="width:100%;"
                 onclick="comprarProduto(${p.id})"
             >
                 Comprar
@@ -1010,7 +1001,7 @@ async function abrirProduto(id) {
 
     } catch (erro) {
 
-        details.innerHTML =
+        detalhes.innerHTML =
             `
             <div class="message error">
                 ${escapeHTML(
@@ -1022,9 +1013,9 @@ async function abrirProduto(id) {
 }
 
 
-/* =========================
-   COMPRAR
-========================= */
+/* =========================================================
+   COMPRA
+========================================================= */
 
 async function comprarProduto(id) {
 
@@ -1034,7 +1025,9 @@ async function comprarProduto(id) {
             "productModal"
         );
 
-        abrirAuth("login");
+        abrirAuth(
+            "login"
+        );
 
         return;
     }
@@ -1051,8 +1044,7 @@ async function comprarProduto(id) {
 
         const resposta =
             await api(
-                "/api/orders/" +
-                id,
+                "/api/orders/" + id,
                 {
                     method: "POST"
                 }
@@ -1060,7 +1052,7 @@ async function comprarProduto(id) {
 
         alert(
             resposta.message ||
-            "Pedido criado com sucesso."
+            "Pedido criado."
         );
 
         fecharModal(
@@ -1078,16 +1070,30 @@ async function comprarProduto(id) {
 }
 
 
-/* =========================
+/* =========================================================
    PERFIL
-========================= */
+========================================================= */
 
 async function abrirPerfil() {
 
+    if (!usuario) {
+        abrirAuth("login");
+        return;
+    }
+
     const content =
-        document.getElementById(
-            "profileContent"
+        $("profileContent");
+
+    if (!content) {
+        alert(
+            "Área de perfil não encontrada."
         );
+        return;
+    }
+
+    abrirModal(
+        "profileModal"
+    );
 
     content.innerHTML =
         `
@@ -1095,10 +1101,6 @@ async function abrirPerfil() {
             Carregando perfil...
         </div>
         `;
-
-    abrirModal(
-        "profileModal"
-    );
 
     try {
 
@@ -1113,55 +1115,10 @@ async function abrirPerfil() {
 
         atualizarInterface();
 
-        const inicial =
-            (
-                usuario.username ||
-                "U"
-            )
-                .charAt(0)
-                .toUpperCase();
-
         content.innerHTML =
             `
-            <div class="profile">
-
-                <div class="avatar">
-
-                    ${
-                        usuario.avatar_url
-                            ? `
-                                <img
-                                    src="${escapeHTML(
-                                        usuario.avatar_url
-                                    )}"
-                                    alt=""
-                                >
-                            `
-                            : inicial
-                    }
-
-                </div>
-
-                <div class="profile-info">
-
-                    <h3>
-                        ${escapeHTML(
-                            usuario.username
-                        )}
-                    </h3>
-
-                    <p>
-                        ${escapeHTML(
-                            usuario.email
-                        )}
-                    </p>
-
-                </div>
-
-            </div>
-
             <form
-                id="profileForm"
+                id="slaxProfileForm"
                 class="form"
             >
 
@@ -1169,11 +1126,11 @@ async function abrirPerfil() {
                     Usuário
 
                     <input
-                        id="profileUsername"
+                        id="slaxProfileUsername"
                         type="text"
                         maxlength="30"
                         value="${escapeHTML(
-                            usuario.username || ""
+                            usuario.username
                         )}"
                     >
                 </label>
@@ -1182,19 +1139,18 @@ async function abrirPerfil() {
                     Bio
 
                     <textarea
-                        id="bio"
+                        id="slaxProfileBio"
                         maxlength="500"
                     >${escapeHTML(
                         usuario.bio || ""
                     )}</textarea>
-
                 </label>
 
                 <label>
-                    URL da foto de perfil
+                    Foto
 
                     <input
-                        id="avatarUrl"
+                        id="slaxProfileAvatar"
                         type="text"
                         value="${escapeHTML(
                             usuario.avatar_url || ""
@@ -1204,13 +1160,13 @@ async function abrirPerfil() {
                 </label>
 
                 <div
-                    id="profileMessage"
-                    class="hidden"
+                    id="slaxProfileMessage"
+                    style="display:none"
                 ></div>
 
                 <button
-                    class="btn primary"
                     type="submit"
+                    class="btn primary"
                 >
                     Salvar perfil
                 </button>
@@ -1221,23 +1177,15 @@ async function abrirPerfil() {
                 style="
                     margin-top:20px;
                     padding:15px;
-                    background:#0d1523;
-                    border:1px solid #1c2b42;
                     border-radius:10px;
+                    background:#0d1523;
                 "
             >
-
                 <strong>
                     Status do vendedor
                 </strong>
 
-                <p
-                    style="
-                        color:#8c9ab0;
-                        margin-top:7px;
-                        font-size:13px;
-                    "
-                >
+                <p>
                     ${
                         usuario.seller_verified
                             ? "Vendedor verificado"
@@ -1245,17 +1193,38 @@ async function abrirPerfil() {
                     }
                 </p>
 
+                ${
+                    !usuario.seller_verified
+                        ? `
+                            <button
+                                type="button"
+                                class="btn primary"
+                                id="slaxVerificationButton"
+                            >
+                                Solicitar verificação
+                            </button>
+                        `
+                        : ""
+                }
+
             </div>
             `;
 
-        document
-            .getElementById(
-                "profileForm"
-            )
+        $("slaxProfileForm")
             .addEventListener(
                 "submit",
                 salvarPerfil
             );
+
+        const verificar =
+            $("slaxVerificationButton");
+
+        if (verificar) {
+            verificar.addEventListener(
+                "click",
+                solicitarVerificacao
+            );
+        }
 
     } catch (erro) {
 
@@ -1271,43 +1240,30 @@ async function abrirPerfil() {
 }
 
 
-/* =========================
+/* =========================================================
    SALVAR PERFIL
-========================= */
+========================================================= */
 
-async function salvarPerfil(
-    event
-) {
+async function salvarPerfil(event) {
 
     event.preventDefault();
 
-    const message =
-        document.getElementById(
-            "profileMessage"
-        );
+    const msg =
+        $("slaxProfileMessage");
 
     try {
 
         const username =
-            document
-                .getElementById(
-                    "profileUsername"
-                )
+            $("slaxProfileUsername")
                 .value
                 .trim();
 
         const bio =
-            document
-                .getElementById(
-                    "bio"
-                )
+            $("slaxProfileBio")
                 .value;
 
         const avatar_url =
-            document
-                .getElementById(
-                    "avatarUrl"
-                )
+            $("slaxProfileAvatar")
                 .value
                 .trim();
 
@@ -1329,10 +1285,9 @@ async function salvarPerfil(
             resposta.user ||
             usuario;
 
-        mostrarMensagem(
-            message,
-            resposta.message ||
-            "Perfil atualizado com sucesso.",
+        mensagem(
+            msg,
+            "Perfil salvo com sucesso.",
             "success"
         );
 
@@ -1340,17 +1295,49 @@ async function salvarPerfil(
 
     } catch (erro) {
 
-        mostrarMensagem(
-            message,
+        mensagem(
+            msg,
             erro.message
         );
     }
 }
 
 
-/* =========================
+/* =========================================================
+   VERIFICAÇÃO DE VENDEDOR
+========================================================= */
+
+async function solicitarVerificacao() {
+
+    try {
+
+        const resposta =
+            await api(
+                "/api/auth/verification/request",
+                {
+                    method: "POST"
+                }
+            );
+
+        alert(
+            resposta.message ||
+            "Solicitação enviada."
+        );
+
+        abrirPerfil();
+
+    } catch (erro) {
+
+        alert(
+            erro.message
+        );
+    }
+}
+
+
+/* =========================================================
    CRIAR ANÚNCIO
-========================= */
+========================================================= */
 
 function abrirCriarAnuncio() {
 
@@ -1363,17 +1350,28 @@ function abrirCriarAnuncio() {
         "productModal"
     );
 
-    document.getElementById(
-        "productModalTitle"
-    ).textContent =
-        "Criar anúncio";
+    const titulo =
+        $("productModalTitle");
 
-    document.getElementById(
-        "productDetails"
-    ).innerHTML =
+    if (titulo) {
+        titulo.textContent =
+            "Criar anúncio";
+    }
+
+    const detalhes =
+        $("productDetails");
+
+    if (!detalhes) {
+        alert(
+            "Área de anúncio não encontrada."
+        );
+        return;
+    }
+
+    detalhes.innerHTML =
         `
         <form
-            id="createProductForm"
+            id="slaxCreateProductForm"
             class="form"
         >
 
@@ -1381,11 +1379,10 @@ function abrirCriarAnuncio() {
                 Título
 
                 <input
-                    id="productTitle"
+                    id="slaxProductTitle"
                     type="text"
                     maxlength="100"
                     required
-                    placeholder="Ex: Conta de jogo"
                 >
             </label>
 
@@ -1393,10 +1390,9 @@ function abrirCriarAnuncio() {
                 Descrição
 
                 <textarea
-                    id="productDescription"
+                    id="slaxProductDescription"
                     maxlength="5000"
                     required
-                    placeholder="Descreva o produto..."
                 ></textarea>
             </label>
 
@@ -1404,8 +1400,7 @@ function abrirCriarAnuncio() {
                 Categoria
 
                 <select
-                    id="productCategory"
-                    required
+                    id="slaxProductCategory"
                 >
                     <option value="Contas">
                         Contas
@@ -1426,15 +1421,14 @@ function abrirCriarAnuncio() {
             </label>
 
             <label>
-                Preço em reais
+                Preço
 
                 <input
-                    id="productPrice"
+                    id="slaxProductPrice"
                     type="number"
                     min="0.97"
                     step="0.01"
                     required
-                    placeholder="2.00"
                 >
             </label>
 
@@ -1442,7 +1436,7 @@ function abrirCriarAnuncio() {
                 Estoque
 
                 <input
-                    id="productStock"
+                    id="slaxProductStock"
                     type="number"
                     min="1"
                     step="1"
@@ -1452,23 +1446,23 @@ function abrirCriarAnuncio() {
             </label>
 
             <label>
-                URL da imagem
+                Imagem
 
                 <input
-                    id="productImage"
-                    type="text"
+                    id="slaxProductImage"
+                    type="url"
                     placeholder="https://..."
                 >
             </label>
 
             <div
-                id="createProductMessage"
-                class="hidden"
+                id="slaxProductMessage"
+                style="display:none"
             ></div>
 
             <button
-                class="btn primary"
                 type="submit"
+                class="btn primary"
             >
                 Publicar anúncio
             </button>
@@ -1476,10 +1470,7 @@ function abrirCriarAnuncio() {
         </form>
         `;
 
-    document
-        .getElementById(
-            "createProductForm"
-        )
+    $("slaxCreateProductForm")
         .addEventListener(
             "submit",
             criarAnuncio
@@ -1487,77 +1478,55 @@ function abrirCriarAnuncio() {
 }
 
 
-async function criarAnuncio(
-    event
-) {
+async function criarAnuncio(event) {
 
     event.preventDefault();
 
-    const message =
-        document.getElementById(
-            "createProductMessage"
-        );
+    const msg =
+        $("slaxProductMessage");
 
     try {
 
         const title =
-            document
-                .getElementById(
-                    "productTitle"
-                )
+            $("slaxProductTitle")
                 .value
                 .trim();
 
         const description =
-            document
-                .getElementById(
-                    "productDescription"
-                )
+            $("slaxProductDescription")
                 .value
                 .trim();
 
         const category =
-            document
-                .getElementById(
-                    "productCategory"
-                )
+            $("slaxProductCategory")
                 .value;
 
         const price =
             Number(
-                document
-                    .getElementById(
-                        "productPrice"
-                    )
+                $("slaxProductPrice")
                     .value
             );
 
         const stock =
             Number(
-                document
-                    .getElementById(
-                        "productStock"
-                    )
+                $("slaxProductStock")
                     .value
             );
 
         const image_url =
-            document
-                .getElementById(
-                    "productImage"
-                )
+            $("slaxProductImage")
                 .value
                 .trim();
 
         if (!title) {
             throw new Error(
-                "Informe o título."
+                "Digite o título."
             );
         }
 
         if (!description) {
             throw new Error(
-                "Informe a descrição."
+                "Digite a descrição."
             );
         }
 
@@ -1575,7 +1544,7 @@ async function criarAnuncio(
             stock < 1
         ) {
             throw new Error(
-                "O estoque precisa ser pelo menos 1."
+                "Estoque inválido."
             );
         }
 
@@ -1594,8 +1563,7 @@ async function criarAnuncio(
                                     price * 100
                                 ),
                             image_url:
-                                image_url ||
-                                null,
+                                image_url || null,
                             stock,
                             delivery_type:
                                 "manual"
@@ -1603,8 +1571,8 @@ async function criarAnuncio(
                 }
             );
 
-        mostrarMensagem(
-            message,
+        mensagem(
+            msg,
             resposta.message ||
             "Anúncio enviado para análise.",
             "success"
@@ -1622,25 +1590,28 @@ async function criarAnuncio(
 
     } catch (erro) {
 
-        mostrarMensagem(
-            message,
+        mensagem(
+            msg,
             erro.message
         );
     }
 }
 
 
-/* =========================
+/* =========================================================
    PESQUISA
-========================= */
+========================================================= */
 
-document
-    .getElementById(
-        "searchInput"
-    )
-    .addEventListener(
+function configurarPesquisa() {
+
+    const input =
+        $("searchInput");
+
+    if (!input) return;
+
+    input.addEventListener(
         "input",
-        function() {
+        () => {
 
             clearTimeout(
                 searchTimer
@@ -1649,21 +1620,84 @@ document
             searchTimer =
                 setTimeout(
                     carregarProdutos,
-                    350
+                    300
                 );
         }
     );
+}
 
 
-/* =========================
-   INICIAR SITE
-========================= */
+/* =========================================================
+   FUNÇÕES GLOBAIS
+========================================================= */
 
-(async function iniciar() {
+window.abrirAuth =
+    abrirAuth;
 
-    await verificarSessao();
+window.alternarAuth =
+    alternarAuth;
 
-    await carregarProdutos();
+window.logout =
+    logout;
+
+window.abrirPerfil =
+    abrirPerfil;
+
+window.abrirProduto =
+    abrirProduto;
+
+window.comprarProduto =
+    comprarProduto;
+
+window.selecionarCategoria =
+    selecionarCategoria;
+
+window.abrirCriarAnuncio =
+    abrirCriarAnuncio;
+
+window.reenviarCodigo =
+    reenviarCodigo;
+
+window.carregarProdutos =
+    carregarProdutos;
+
+
+/* =========================================================
+   INICIALIZAÇÃO
+========================================================= */
+
+function iniciar() {
+
+    configurarLogin();
+
+    configurarVerificacao();
+
+    configurarPesquisa();
+
+    verificarSessao()
+        .then(() => {
+            carregarProdutos();
+        })
+        .catch(() => {
+            carregarProdutos();
+        });
+}
+
+if (
+    document.readyState ===
+    "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        iniciar
+    );
+
+} else {
+
+    iniciar();
+}
 
 })();
 </script>
+```
