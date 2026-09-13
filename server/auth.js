@@ -8,40 +8,45 @@ const { enviarCodigo } = require("./email");
 
 const router = express.Router();
 
-function gerarCodigo() {
-    return String(
-        crypto.randomInt(100000, 1000000)
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+    console.warn("AVISO: JWT_SECRET não configurado.");
+}
+
+function gerarToken(user) {
+    return jwt.sign(
+        {
+            id: user.id,
+            email: user.email,
+            role: user.role
+        },
+        JWT_SECRET,
+        {
+            expiresIn: "7d"
+        }
     );
 }
 
 function autenticar(req, res, next) {
-
-    const header =
-        req.headers.authorization || "";
+    const header = req.headers.authorization || "";
 
     if (!header.startsWith("Bearer ")) {
         return res.status(401).json({
-            error: "Você precisa estar conectado."
+            error: "Faça login para continuar."
         });
     }
 
-    const token =
-        header.substring(7);
+    const token = header.slice(7);
 
     try {
+        const payload = jwt.verify(token, JWT_SECRET);
 
-        const dados =
-            jwt.verify(
-                token,
-                process.env.JWT_SECRET
-            );
-
-        const user =
-            db.prepare(`
-                SELECT *
-                FROM users
-                WHERE id = ?
-            `).get(dados.id);
+        const user = db.prepare(`
+            SELECT *
+            FROM users
+            WHERE id = ?
+        `).get(payload.id);
 
         if (!user) {
             return res.status(401).json({
@@ -58,184 +63,182 @@ function autenticar(req, res, next) {
         req.user = user;
 
         next();
-
     } catch {
-
         return res.status(401).json({
             error: "Sessão inválida ou expirada."
         });
     }
 }
 
+function limparUsuario(user) {
+    return {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        email_verified: !!user.email_verified,
+        avatar_url: user.avatar_url,
+        bio: user.bio,
+        seller_verified: !!user.seller_verified,
+        verification_status: user.verification_status,
+        role: user.role,
+        suspended: !!user.suspended,
+        rating_positive: user.rating_positive,
+        rating_neutral: user.rating_neutral,
+        rating_negative: user.rating_negative,
+        created_at: user.created_at
+    };
+}
 
 /*
-========================================
-CADASTRO
-========================================
-*/
-
+ * CADASTRO
+ */
 router.post("/register", async (req, res) => {
-
     try {
+        const username = String(req.body.username || "").trim();
+        const email = String(req.body.email || "").trim().toLowerCase();
+        const password = String(req.body.password || "");
 
-        const {
-            username,
-            email,
-            password
-        } = req.body;
-
-        if (!username || !email || !password) {
+        if (!username || username.length < 3 || username.length > 30) {
             return res.status(400).json({
-                error: "Preencha todos os campos."
+                error: "O nome de usuário deve ter entre 3 e 30 caracteres."
             });
         }
 
-        if (username.length < 3) {
+        if (!/^[a-zA-Z0-9_.-]+$/.test(username)) {
             return res.status(400).json({
-                error:
-                    "O nome deve ter pelo menos 3 caracteres."
+                error: "O nome de usuário possui caracteres inválidos."
+            });
+        }
+
+        if (!email || !email.includes("@")) {
+            return res.status(400).json({
+                error: "Digite um e-mail válido."
             });
         }
 
         if (password.length < 8) {
             return res.status(400).json({
-                error:
-                    "A senha precisa ter pelo menos 8 caracteres."
+                error: "A senha precisa ter pelo menos 8 caracteres."
             });
         }
 
-        const emailNormalizado =
-            email.toLowerCase().trim();
-
-        const existente =
-            db.prepare(`
-                SELECT id
-                FROM users
-                WHERE email = ?
-                   OR username = ?
-            `).get(
-                emailNormalizado,
-                username
-            );
+        const existente = db.prepare(`
+            SELECT id
+            FROM users
+            WHERE LOWER(email) = ? OR LOWER(username) = ?
+        `).get(email, username.toLowerCase());
 
         if (existente) {
             return res.status(409).json({
-                error:
-                    "E-mail ou nome de usuário já cadastrado."
+                error: "Esse e-mail ou nome de usuário já está cadastrado."
             });
         }
 
-        const passwordHash =
-            await bcrypt.hash(
-                password,
-                12
-            );
+        const passwordHash = await bcrypt.hash(password, 12);
 
-        const codigo =
-            gerarCodigo();
+        const codigo = crypto
+            .randomInt(100000, 1000000)
+            .toString();
 
-        const codigoHash =
-            await bcrypt.hash(
-                codigo,
-                10
-            );
+        const codigoHash = crypto
+            .createHash("sha256")
+            .update(codigo)
+            .digest("hex");
 
-        const agora =
-            Date.now();
+        const expiracao = Date.now() + 15 * 60 * 1000;
 
-        const expiracao =
-            agora +
-            15 * 60 * 1000;
+        const adminEmail = String(
+            process.env.ADMIN_EMAIL || ""
+        ).trim().toLowerCase();
 
-        const result =
-            db.prepare(`
-                INSERT INTO users
-                (
-                    username,
-                    email,
-                    password_hash,
-                    verification_code_hash,
-                    verification_expires,
-                    created_at
-                )
-                VALUES (?, ?, ?, ?, ?, ?)
-            `).run(
+        const role =
+            email === adminEmail
+                ? "admin"
+                : "user";
+
+        const resultado = db.prepare(`
+            INSERT INTO users (
                 username,
-                emailNormalizado,
-                passwordHash,
-                codigoHash,
-                expiracao,
-                agora
-            );
-
-        await enviarCodigo(
-            emailNormalizado,
-            codigo
+                email,
+                password_hash,
+                email_verified,
+                role,
+                verification_code_hash,
+                verification_expires
+            )
+            VALUES (?, ?, ?, 0, ?, ?, ?)
+        `).run(
+            username,
+            email,
+            passwordHash,
+            role,
+            codigoHash,
+            expiracao
         );
 
-        res.status(201).json({
-            message:
-                "Conta criada. Verifique seu e-mail.",
+        try {
+            await enviarCodigo(email, codigo);
+        } catch (erro) {
+            db.prepare(`
+                DELETE FROM users
+                WHERE id = ?
+            `).run(resultado.lastInsertRowid);
 
-            userId:
-                result.lastInsertRowid
+            console.error(erro);
+
+            return res.status(500).json({
+                error: "Não foi possível enviar o código de verificação."
+            });
+        }
+
+        return res.status(201).json({
+            success: true,
+            message: "Conta criada. Verifique seu e-mail.",
+            user_id: resultado.lastInsertRowid
         });
 
-    } catch (error) {
+    } catch (erro) {
+        console.error("Erro no cadastro:", erro);
 
-        console.error(error);
-
-        res.status(500).json({
-            error:
-                "Erro interno ao criar a conta."
+        return res.status(500).json({
+            error: "Erro interno ao criar a conta."
         });
     }
 });
 
-
 /*
-========================================
-VERIFICAR E-MAIL
-========================================
-*/
-
+ * VERIFICAR E-MAIL
+ */
 router.post("/verify-email", async (req, res) => {
-
     try {
+        const email = String(req.body.email || "")
+            .trim()
+            .toLowerCase();
 
-        const {
-            email,
-            code
-        } = req.body;
+        const codigo = String(req.body.codigo || "").trim();
 
-        if (!email || !code) {
+        if (!email || !codigo) {
             return res.status(400).json({
-                error:
-                    "Informe o e-mail e o código."
+                error: "Informe o e-mail e o código."
             });
         }
 
-        const emailNormalizado =
-            email.toLowerCase().trim();
-
-        const user =
-            db.prepare(`
-                SELECT *
-                FROM users
-                WHERE email = ?
-            `).get(emailNormalizado);
+        const user = db.prepare(`
+            SELECT *
+            FROM users
+            WHERE LOWER(email) = ?
+        `).get(email);
 
         if (!user) {
             return res.status(404).json({
-                error:
-                    "Conta não encontrada."
+                error: "Usuário não encontrado."
             });
         }
 
         if (user.email_verified) {
             return res.json({
-                message:
-                    "E-mail já verificado."
+                success: true,
+                message: "E-mail já verificado."
             });
         }
 
@@ -244,21 +247,18 @@ router.post("/verify-email", async (req, res) => {
             Date.now() > user.verification_expires
         ) {
             return res.status(400).json({
-                error:
-                    "Código expirado."
+                error: "O código expirou. Solicite outro."
             });
         }
 
-        const correto =
-            await bcrypt.compare(
-                code,
-                user.verification_code_hash
-            );
+        const codigoHash = crypto
+            .createHash("sha256")
+            .update(codigo)
+            .digest("hex");
 
-        if (!correto) {
+        if (codigoHash !== user.verification_code_hash) {
             return res.status(400).json({
-                error:
-                    "Código incorreto."
+                error: "Código de verificação incorreto."
             });
         }
 
@@ -271,628 +271,407 @@ router.post("/verify-email", async (req, res) => {
             WHERE id = ?
         `).run(user.id);
 
-        res.json({
-            message:
-                "E-mail verificado com sucesso."
+        return res.json({
+            success: true,
+            message: "E-mail verificado com sucesso."
         });
 
-    } catch (error) {
+    } catch (erro) {
+        console.error("Erro na verificação:", erro);
 
-        console.error(error);
-
-        res.status(500).json({
-            error:
-                "Erro interno."
+        return res.status(500).json({
+            error: "Erro interno na verificação."
         });
     }
 });
 
-
 /*
-========================================
-LOGIN
-========================================
-*/
-
-router.post("/login", async (req, res) => {
-
+ * REENVIAR CÓDIGO
+ */
+router.post("/resend-code", async (req, res) => {
     try {
+        const email = String(req.body.email || "")
+            .trim()
+            .toLowerCase();
 
-        const {
-            email,
-            password
-        } = req.body;
+        const user = db.prepare(`
+            SELECT *
+            FROM users
+            WHERE LOWER(email) = ?
+        `).get(email);
 
-        if (!email || !password) {
-            return res.status(400).json({
-                error:
-                    "Informe seu e-mail e sua senha."
+        if (!user) {
+            return res.json({
+                success: true,
+                message: "Se o e-mail estiver cadastrado, um novo código será enviado."
             });
         }
 
-        const emailNormalizado =
-            email.toLowerCase().trim();
+        if (user.email_verified) {
+            return res.status(400).json({
+                error: "Esse e-mail já foi verificado."
+            });
+        }
 
-        const user =
-            db.prepare(`
-                SELECT *
-                FROM users
-                WHERE email = ?
-            `).get(emailNormalizado);
+        const codigo = crypto
+            .randomInt(100000, 1000000)
+            .toString();
+
+        const codigoHash = crypto
+            .createHash("sha256")
+            .update(codigo)
+            .digest("hex");
+
+        const expiracao = Date.now() + 15 * 60 * 1000;
+
+        db.prepare(`
+            UPDATE users
+            SET
+                verification_code_hash = ?,
+                verification_expires = ?
+            WHERE id = ?
+        `).run(
+            codigoHash,
+            expiracao,
+            user.id
+        );
+
+        await enviarCodigo(email, codigo);
+
+        return res.json({
+            success: true,
+            message: "Novo código enviado."
+        });
+
+    } catch (erro) {
+        console.error("Erro ao reenviar código:", erro);
+
+        return res.status(500).json({
+            error: "Não foi possível enviar o novo código."
+        });
+    }
+});
+
+/*
+ * LOGIN
+ */
+router.post("/login", async (req, res) => {
+    try {
+        const login = String(req.body.email || "")
+            .trim()
+            .toLowerCase();
+
+        const password = String(req.body.password || "");
+
+        const user = db.prepare(`
+            SELECT *
+            FROM users
+            WHERE LOWER(email) = ?
+        `).get(login);
 
         if (!user) {
             return res.status(401).json({
-                error:
-                    "E-mail ou senha incorretos."
-            });
-        }
-
-        const senhaCorreta =
-            await bcrypt.compare(
-                password,
-                user.password_hash
-            );
-
-        if (!senhaCorreta) {
-            return res.status(401).json({
-                error:
-                    "E-mail ou senha incorretos."
-            });
-        }
-
-        if (!user.email_verified) {
-            return res.status(403).json({
-                error:
-                    "Verifique seu e-mail antes de entrar."
+                error: "E-mail ou senha incorretos."
             });
         }
 
         if (user.suspended) {
             return res.status(403).json({
-                error:
-                    "Sua conta está suspensa."
+                error: "Sua conta está suspensa."
             });
         }
 
-        const token =
-            jwt.sign(
-                {
-                    id: user.id,
-                    username: user.username
-                },
-                process.env.JWT_SECRET,
-                {
-                    expiresIn: "7d"
-                }
-            );
+        const senhaCorreta = await bcrypt.compare(
+            password,
+            user.password_hash
+        );
 
-        res.json({
+        if (!senhaCorreta) {
+            return res.status(401).json({
+                error: "E-mail ou senha incorretos."
+            });
+        }
 
-            message:
-                "Login realizado.",
+        const token = gerarToken(user);
 
+        return res.json({
+            success: true,
             token,
-
-            user: {
-                id: user.id,
-                username: user.username,
-                email: user.email,
-                avatar_url: user.avatar_url,
-                bio: user.bio,
-                seller_verified:
-                    !!user.seller_verified,
-                verification_status:
-                    user.verification_status,
-                rating_positive:
-                    user.rating_positive,
-                rating_neutral:
-                    user.rating_neutral,
-                rating_negative:
-                    user.rating_negative
-            }
-
+            user: limparUsuario(user)
         });
 
-    } catch (error) {
+    } catch (erro) {
+        console.error("Erro no login:", erro);
 
-        console.error(error);
-
-        res.status(500).json({
-            error:
-                "Erro interno."
+        return res.status(500).json({
+            error: "Erro interno ao fazer login."
         });
     }
 });
 
+/*
+ * USUÁRIO LOGADO
+ */
+router.get("/me", autenticar, (req, res) => {
+    return res.json({
+        user: limparUsuario(req.user)
+    });
+});
 
 /*
-========================================
-RECUPERAR SENHA
-========================================
-*/
+ * ALTERAR PERFIL
+ */
+router.put("/profile", autenticar, (req, res) => {
+    try {
+        const username =
+            req.body.username !== undefined
+                ? String(req.body.username).trim()
+                : req.user.username;
 
-router.post(
-    "/forgot-password",
-    async (req, res) => {
+        const bio =
+            req.body.bio !== undefined
+                ? String(req.body.bio)
+                : req.user.bio;
 
-        try {
+        const avatarUrl =
+            req.body.avatar_url !== undefined
+                ? String(req.body.avatar_url)
+                : req.user.avatar_url;
 
-            const { email } =
-                req.body;
-
-            if (!email) {
-                return res.status(400).json({
-                    error:
-                        "Informe seu e-mail."
-                });
-            }
-
-            const emailNormalizado =
-                email.toLowerCase().trim();
-
-            const user =
-                db.prepare(`
-                    SELECT id
-                    FROM users
-                    WHERE email = ?
-                `).get(emailNormalizado);
-
-            if (!user) {
-                return res.status(404).json({
-                    error:
-                        "Nenhuma conta encontrada com esse e-mail."
-                });
-            }
-
-            const codigo =
-                gerarCodigo();
-
-            const codigoHash =
-                await bcrypt.hash(
-                    codigo,
-                    10
-                );
-
-            const expiracao =
-                Date.now() +
-                15 * 60 * 1000;
-
-            db.prepare(`
-                UPDATE users
-                SET
-                    verification_code_hash = ?,
-                    verification_expires = ?
-                WHERE id = ?
-            `).run(
-                codigoHash,
-                expiracao,
-                user.id
-            );
-
-            await enviarCodigo(
-                emailNormalizado,
-                codigo
-            );
-
-            res.json({
-                message:
-                    "Código enviado para seu e-mail."
-            });
-
-        } catch (error) {
-
-            console.error(error);
-
-            res.status(500).json({
-                error:
-                    "Erro interno ao enviar o código."
+        if (
+            username.length < 3 ||
+            username.length > 30
+        ) {
+            return res.status(400).json({
+                error: "O nome deve ter entre 3 e 30 caracteres."
             });
         }
-    }
-);
 
-
-/*
-========================================
-REDEFINIR SENHA
-========================================
-*/
-
-router.post(
-    "/reset-password",
-    async (req, res) => {
-
-        try {
-
-            const {
-                email,
-                code,
-                newPassword
-            } = req.body;
-
-            if (
-                !email ||
-                !code ||
-                !newPassword
-            ) {
-                return res.status(400).json({
-                    error:
-                        "Preencha todos os campos."
-                });
-            }
-
-            if (newPassword.length < 8) {
-                return res.status(400).json({
-                    error:
-                        "A nova senha precisa ter pelo menos 8 caracteres."
-                });
-            }
-
-            const emailNormalizado =
-                email.toLowerCase().trim();
-
-            const user =
-                db.prepare(`
-                    SELECT *
-                    FROM users
-                    WHERE email = ?
-                `).get(emailNormalizado);
-
-            if (!user) {
-                return res.status(404).json({
-                    error:
-                        "Conta não encontrada."
-                });
-            }
-
-            if (
-                !user.verification_code_hash ||
-                !user.verification_expires
-            ) {
-                return res.status(400).json({
-                    error:
-                        "Nenhum código foi solicitado."
-                });
-            }
-
-            if (
-                Date.now() >
-                user.verification_expires
-            ) {
-                return res.status(400).json({
-                    error:
-                        "Código expirado."
-                });
-            }
-
-            const correto =
-                await bcrypt.compare(
-                    code,
-                    user.verification_code_hash
-                );
-
-            if (!correto) {
-                return res.status(400).json({
-                    error:
-                        "Código incorreto."
-                });
-            }
-
-            const passwordHash =
-                await bcrypt.hash(
-                    newPassword,
-                    12
-                );
-
-            db.prepare(`
-                UPDATE users
-                SET
-                    password_hash = ?,
-                    verification_code_hash = NULL,
-                    verification_expires = NULL
-                WHERE id = ?
-            `).run(
-                passwordHash,
-                user.id
-            );
-
-            res.json({
-                message:
-                    "Senha alterada com sucesso."
-            });
-
-        } catch (error) {
-
-            console.error(error);
-
-            res.status(500).json({
-                error:
-                    "Erro interno ao redefinir a senha."
+        if (!/^[a-zA-Z0-9_.-]+$/.test(username)) {
+            return res.status(400).json({
+                error: "O nome possui caracteres inválidos."
             });
         }
-    }
-);
 
-
-/*
-========================================
-MEU PERFIL
-========================================
-*/
-
-router.get(
-    "/me",
-    autenticar,
-    (req, res) => {
-
-        const user = req.user;
-
-        res.json({
-            user: {
-                id: user.id,
-                username: user.username,
-                email: user.email,
-                avatar_url: user.avatar_url,
-                bio: user.bio,
-                email_verified:
-                    !!user.email_verified,
-                seller_verified:
-                    !!user.seller_verified,
-                verification_status:
-                    user.verification_status,
-                rating_positive:
-                    user.rating_positive,
-                rating_neutral:
-                    user.rating_neutral,
-                rating_negative:
-                    user.rating_negative,
-                created_at:
-                    user.created_at
-            }
-        });
-    }
-);
-
-
-/*
-========================================
-ATUALIZAR PERFIL
-========================================
-*/
-
-router.put(
-    "/profile",
-    autenticar,
-    (req, res) => {
-
-        try {
-
-            const {
-                username,
-                bio,
-                avatar_url
-            } = req.body;
-
-            if (
-                username &&
-                username.length < 3
-            ) {
-                return res.status(400).json({
-                    error:
-                        "O nome precisa ter pelo menos 3 caracteres."
-                });
-            }
-
-            if (username) {
-
-                const outro =
-                    db.prepare(`
-                        SELECT id
-                        FROM users
-                        WHERE username = ?
-                          AND id != ?
-                    `).get(
-                        username,
-                        req.user.id
-                    );
-
-                if (outro) {
-                    return res.status(409).json({
-                        error:
-                            "Esse nome de usuário já está sendo usado."
-                    });
-                }
-            }
-
-            db.prepare(`
-                UPDATE users
-                SET
-                    username = COALESCE(?, username),
-                    bio = COALESCE(?, bio),
-                    avatar_url = COALESCE(?, avatar_url)
-                WHERE id = ?
-            `).run(
-                username || null,
-                bio ?? null,
-                avatar_url ?? null,
-                req.user.id
-            );
-
-            const user =
-                db.prepare(`
-                    SELECT
-                        id,
-                        username,
-                        email,
-                        avatar_url,
-                        bio,
-                        seller_verified,
-                        verification_status,
-                        rating_positive,
-                        rating_neutral,
-                        rating_negative
-                    FROM users
-                    WHERE id = ?
-                `).get(req.user.id);
-
-            res.json({
-                message:
-                    "Perfil atualizado.",
-                user
-            });
-
-        } catch (error) {
-
-            console.error(error);
-
-            res.status(500).json({
-                error:
-                    "Erro ao atualizar perfil."
+        if (bio.length > 500) {
+            return res.status(400).json({
+                error: "A bio pode ter no máximo 500 caracteres."
             });
         }
-    }
-);
 
-
-/*
-========================================
-ALTERAR SENHA
-========================================
-*/
-
-router.put(
-    "/password",
-    autenticar,
-    async (req, res) => {
-
-        try {
-
-            const {
-                currentPassword,
-                newPassword
-            } = req.body;
-
-            if (
-                !currentPassword ||
-                !newPassword
-            ) {
-                return res.status(400).json({
-                    error:
-                        "Preencha as senhas."
-                });
-            }
-
-            if (newPassword.length < 8) {
-                return res.status(400).json({
-                    error:
-                        "A nova senha precisa ter pelo menos 8 caracteres."
-                });
-            }
-
-            const correto =
-                await bcrypt.compare(
-                    currentPassword,
-                    req.user.password_hash
-                );
-
-            if (!correto) {
-                return res.status(400).json({
-                    error:
-                        "A senha atual está incorreta."
-                });
-            }
-
-            const hash =
-                await bcrypt.hash(
-                    newPassword,
-                    12
-                );
-
-            db.prepare(`
-                UPDATE users
-                SET password_hash = ?
-                WHERE id = ?
-            `).run(
-                hash,
-                req.user.id
-            );
-
-            res.json({
-                message:
-                    "Senha alterada."
-            });
-
-        } catch (error) {
-
-            console.error(error);
-
-            res.status(500).json({
-                error:
-                    "Erro ao alterar senha."
+        if (avatarUrl && avatarUrl.length > 700000) {
+            return res.status(400).json({
+                error: "A foto de perfil é muito grande."
             });
         }
-    }
-);
 
+        if (
+            avatarUrl &&
+            !(
+                avatarUrl.startsWith("http://") ||
+                avatarUrl.startsWith("https://") ||
+                avatarUrl.startsWith("data:image/")
+            )
+        ) {
+            return res.status(400).json({
+                error: "Formato de foto inválido."
+            });
+        }
 
-/*
-========================================
-SOLICITAR VERIFICAÇÃO
-========================================
-*/
+        const outroUsuario = db.prepare(`
+            SELECT id
+            FROM users
+            WHERE LOWER(username) = ?
+            AND id != ?
+        `).get(
+            username.toLowerCase(),
+            req.user.id
+        );
 
-router.post(
-    "/verification/request",
-    autenticar,
-    (req, res) => {
-
-        const existente =
-            db.prepare(`
-                SELECT id
-                FROM verification_requests
-                WHERE user_id = ?
-                  AND status = 'pending'
-            `).get(req.user.id);
-
-        if (existente) {
+        if (outroUsuario) {
             return res.status(409).json({
-                error:
-                    "Você já possui uma verificação em análise."
+                error: "Esse nome de usuário já está sendo usado."
             });
         }
-
-        const agora =
-            Date.now();
 
         db.prepare(`
-            INSERT INTO verification_requests
-            (
-                user_id,
-                status,
-                provider,
-                created_at,
-                updated_at
-            )
-            VALUES (?, 'pending', 'external_kyc', ?, ?)
+            UPDATE users
+            SET
+                username = ?,
+                bio = ?,
+                avatar_url = ?
+            WHERE id = ?
         `).run(
-            req.user.id,
-            agora,
-            agora
+            username,
+            bio,
+            avatarUrl || null,
+            req.user.id
+        );
+
+        const atualizado = db.prepare(`
+            SELECT *
+            FROM users
+            WHERE id = ?
+        `).get(req.user.id);
+
+        return res.json({
+            success: true,
+            user: limparUsuario(atualizado)
+        });
+
+    } catch (erro) {
+        console.error("Erro ao atualizar perfil:", erro);
+
+        return res.status(500).json({
+            error: "Não foi possível atualizar o perfil."
+        });
+    }
+});
+
+/*
+ * ALTERAR SENHA
+ */
+router.put("/password", autenticar, async (req, res) => {
+    try {
+        const senhaAtual = String(
+            req.body.current_password || ""
+        );
+
+        const novaSenha = String(
+            req.body.new_password || ""
+        );
+
+        if (!senhaAtual || !novaSenha) {
+            return res.status(400).json({
+                error: "Preencha as duas senhas."
+            });
+        }
+
+        if (novaSenha.length < 8) {
+            return res.status(400).json({
+                error: "A nova senha precisa ter pelo menos 8 caracteres."
+            });
+        }
+
+        const correta = await bcrypt.compare(
+            senhaAtual,
+            req.user.password_hash
+        );
+
+        if (!correta) {
+            return res.status(400).json({
+                error: "A senha atual está incorreta."
+            });
+        }
+
+        const hash = await bcrypt.hash(
+            novaSenha,
+            12
         );
 
         db.prepare(`
             UPDATE users
-            SET verification_status = 'pending'
+            SET password_hash = ?
             WHERE id = ?
-        `).run(req.user.id);
+        `).run(
+            hash,
+            req.user.id
+        );
 
-        res.json({
-            message:
-                "Solicitação enviada para verificação."
+        return res.json({
+            success: true,
+            message: "Senha alterada com sucesso."
+        });
+
+    } catch (erro) {
+        console.error("Erro ao alterar senha:", erro);
+
+        return res.status(500).json({
+            error: "Não foi possível alterar a senha."
         });
     }
-);
+});
 
+/*
+ * SOLICITAR VERIFICAÇÃO DE VENDEDOR
+ *
+ * Não armazena documentos pessoais.
+ */
+router.post(
+    "/verification/request",
+    autenticar,
+    (req, res) => {
+        try {
+            if (!req.user.email_verified) {
+                return res.status(400).json({
+                    error: "Verifique seu e-mail antes de solicitar a verificação."
+                });
+            }
+
+            if (req.user.seller_verified) {
+                return res.status(400).json({
+                    error: "Sua conta já está verificada como vendedor."
+                });
+            }
+
+            const existente = db.prepare(`
+                SELECT *
+                FROM verification_requests
+                WHERE user_id = ?
+            `).get(req.user.id);
+
+            if (
+                existente &&
+                existente.status === "pending"
+            ) {
+                return res.status(400).json({
+                    error: "Sua solicitação já está em análise."
+                });
+            }
+
+            if (existente) {
+                db.prepare(`
+                    UPDATE verification_requests
+                    SET
+                        status = 'pending',
+                        note = NULL,
+                        reviewed_at = NULL,
+                        created_at = CURRENT_TIMESTAMP
+                    WHERE user_id = ?
+                `).run(req.user.id);
+            } else {
+                db.prepare(`
+                    INSERT INTO verification_requests (
+                        user_id,
+                        status
+                    )
+                    VALUES (?, 'pending')
+                `).run(req.user.id);
+            }
+
+            db.prepare(`
+                UPDATE users
+                SET verification_status = 'pending'
+                WHERE id = ?
+            `).run(req.user.id);
+
+            return res.json({
+                success: true,
+                message: "Solicitação enviada para análise."
+            });
+
+        } catch (erro) {
+            console.error(
+                "Erro na solicitação de verificação:",
+                erro
+            );
+
+            return res.status(500).json({
+                error: "Não foi possível enviar a solicitação."
+            });
+        }
+    }
+);
 
 module.exports = {
     router,
