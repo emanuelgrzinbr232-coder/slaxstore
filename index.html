@@ -1,3 +1,1131 @@
+```html
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SlaxStore</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #090909;
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        button,
+        input,
+        textarea,
+        select {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(9, 9, 9, .96);
+            border-bottom: 1px solid #242424;
+            backdrop-filter: blur(15px);
+        }
+
+        .nav {
+            max-width: 1250px;
+            margin: auto;
+            min-height: 70px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo {
+            color: #ff6a00;
+            font-size: 25px;
+            font-weight: 900;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .search-box {
+            flex: 1;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            height: 43px;
+            background: #151515;
+            border: 1px solid #2b2b2b;
+            border-radius: 12px;
+            color: #fff;
+            outline: none;
+            padding: 0 15px;
+        }
+
+        .search-box input:focus {
+            border-color: #ff6a00;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        button {
+            border: 0;
+            border-radius: 10px;
+            padding: 10px 15px;
+            color: white;
+            background: #202020;
+        }
+
+        button:hover {
+            filter: brightness(1.15);
+        }
+
+        .primary {
+            background: #ff6a00;
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .danger {
+            background: #b91c1c;
+        }
+
+        .container {
+            width: min(1250px, calc(100% - 30px));
+            margin: auto;
+        }
+
+        .hero {
+            margin-top: 30px;
+            padding: 45px 30px;
+            border: 1px solid #292929;
+            border-radius: 22px;
+            background:
+                radial-gradient(
+                    circle at top right,
+                    rgba(255,106,0,.18),
+                    transparent 35%
+                ),
+                #111;
+        }
+
+        .hero h1 {
+            font-size: clamp(30px, 6vw, 55px);
+            margin-bottom: 10px;
+        }
+
+        .hero h1 span {
+            color: #ff6a00;
+        }
+
+        .hero p {
+            color: #aaa;
+            max-width: 650px;
+            line-height: 1.6;
+        }
+
+        .categories {
+            display: flex;
+            gap: 9px;
+            overflow-x: auto;
+            padding: 25px 0 5px;
+            scrollbar-width: none;
+        }
+
+        .categories::-webkit-scrollbar {
+            display: none;
+        }
+
+        .category {
+            white-space: nowrap;
+            border: 1px solid #292929;
+        }
+
+        .category.active,
+        .category:hover {
+            background: #ff6a00;
+            border-color: #ff6a00;
+        }
+
+        .section-title {
+            margin: 35px 0 18px;
+            font-size: 25px;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fill, minmax(220px, 1fr));
+            gap: 18px;
+            padding-bottom: 60px;
+        }
+
+        .product-card {
+            overflow: hidden;
+            background: #111;
+            border: 1px solid #292929;
+            border-radius: 16px;
+            transition: transform .2s, border-color .2s;
+        }
+
+        .product-card:hover {
+            transform: translateY(-3px);
+            border-color: #ff6a00;
+        }
+
+        .product-image {
+            height: 180px;
+            background: #191919;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .no-image {
+            color: #666;
+        }
+
+        .product-info {
+            padding: 16px;
+        }
+
+        .product-info h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .product-info p {
+            color: #888;
+            min-height: 38px;
+            font-size: 13px;
+            line-height: 1.4;
+            margin-bottom: 12px;
+        }
+
+        .product-info strong {
+            color: #ff6a00;
+            display: block;
+            font-size: 20px;
+            margin-bottom: 13px;
+        }
+
+        .product-info button {
+            width: 100%;
+        }
+
+        .loading,
+        .empty {
+            grid-column: 1 / -1;
+            padding: 45px;
+            text-align: center;
+            color: #888;
+        }
+
+        footer {
+            border-top: 1px solid #242424;
+            padding: 30px 20px;
+            text-align: center;
+            color: #666;
+        }
+
+        /* MODAIS */
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: rgba(0,0,0,.78);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            overflow-y: auto;
+        }
+
+        .modal-box {
+            width: min(500px, 100%);
+            max-height: calc(100vh - 36px);
+            overflow-y: auto;
+            background: #111;
+            border: 1px solid #303030;
+            border-radius: 18px;
+            padding: 25px;
+            box-shadow: 0 20px 70px rgba(0,0,0,.5);
+        }
+
+        .modal-box.large {
+            width: min(700px, 100%);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 22px;
+        }
+
+        .modal-header h2 {
+            font-size: 24px;
+        }
+
+        .close {
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            border-radius: 50%;
+            font-size: 22px;
+            background: #222;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 7px;
+            color: #bbb;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            background: #191919;
+            border: 1px solid #303030;
+            color: #fff;
+            outline: none;
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: #ff6a00;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .form-actions button {
+            flex: 1;
+        }
+
+        .message {
+            display: none;
+            padding: 11px;
+            border-radius: 9px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .message.error {
+            display: block;
+            background: rgba(220,38,38,.15);
+            border: 1px solid #7f1d1d;
+            color: #fca5a5;
+        }
+
+        .message.success {
+            display: block;
+            background: rgba(22,163,74,.15);
+            border: 1px solid #166534;
+            color: #86efac;
+        }
+
+        .switch {
+            text-align: center;
+            margin-top: 18px;
+            color: #888;
+        }
+
+        .switch button {
+            background: transparent;
+            color: #ff6a00;
+            padding: 0;
+        }
+
+        .verify-code {
+            text-align: center;
+            letter-spacing: 8px;
+            font-size: 25px !important;
+        }
+
+        .profile-box {
+            text-align: center;
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #ff6a00;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            font-weight: 900;
+        }
+
+        .profile-email {
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .balance {
+            margin: 25px 0;
+            padding: 18px;
+            border-radius: 14px;
+            background: #191919;
+        }
+
+        .balance span {
+            display: block;
+            color: #888;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        .balance strong {
+            color: #ff6a00;
+            font-size: 28px;
+        }
+
+        .product-detail-image {
+            width: 100%;
+            max-height: 350px;
+            object-fit: cover;
+            border-radius: 14px;
+            background: #191919;
+            margin-bottom: 20px;
+        }
+
+        .product-detail-price {
+            color: #ff6a00;
+            font-size: 30px;
+            font-weight: 900;
+            margin: 15px 0;
+        }
+
+        .product-detail-description {
+            color: #aaa;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        @media (max-width: 700px) {
+            .nav {
+                flex-wrap: wrap;
+            }
+
+            .logo {
+                order: 1;
+            }
+
+            .nav-buttons {
+                order: 2;
+                margin-left: auto;
+            }
+
+            .search-box {
+                order: 3;
+                flex-basis: 100%;
+            }
+
+            .hero {
+                padding: 30px 20px;
+            }
+
+            .products-grid {
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+                gap: 10px;
+            }
+
+            .product-image {
+                height: 140px;
+            }
+
+            .product-info {
+                padding: 12px;
+            }
+
+            .product-info h3 {
+                font-size: 15px;
+            }
+
+            .product-info strong {
+                font-size: 17px;
+            }
+
+            .product-info p {
+                display: none;
+            }
+
+            .nav-buttons button {
+                padding: 9px 10px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <nav class="nav">
+
+        <a href="#" class="logo">
+            SlaxStore
+        </a>
+
+        <div class="search-box">
+            <input
+                id="searchInput"
+                type="search"
+                placeholder="Pesquisar produtos..."
+                autocomplete="off"
+            >
+        </div>
+
+        <div class="nav-buttons">
+
+            <button
+                id="loginButton"
+                type="button"
+                class="primary"
+            >
+                Entrar
+            </button>
+
+            <button
+                id="profileButton"
+                type="button"
+                style="display:none"
+            >
+                Perfil
+            </button>
+
+            <button
+                id="logoutButton"
+                type="button"
+                class="danger"
+                style="display:none"
+            >
+                Sair
+            </button>
+
+        </div>
+
+    </nav>
+</header>
+
+<main class="container">
+
+    <section class="hero">
+
+        <h1>
+            Bem-vindo à
+            <span>SlaxStore</span>
+        </h1>
+
+        <p>
+            Encontre produtos, publique seus próprios
+            anúncios e compre diretamente pela plataforma.
+        </p>
+
+    </section>
+
+    <div class="categories">
+
+        <button
+            class="category active"
+            data-category=""
+            type="button"
+        >
+            Todos
+        </button>
+
+        <button
+            class="category"
+            data-category="Jogos"
+            type="button"
+        >
+            Jogos
+        </button>
+
+        <button
+            class="category"
+            data-category="Roblox"
+            type="button"
+        >
+            Roblox
+        </button>
+
+        <button
+            class="category"
+            data-category="Minecraft"
+            type="button"
+        >
+            Minecraft
+        </button>
+
+        <button
+            class="category"
+            data-category="Contas"
+            type="button"
+        >
+            Contas
+        </button>
+
+        <button
+            class="category"
+            data-category="Itens"
+            type="button"
+        >
+            Itens
+        </button>
+
+        <button
+            class="category"
+            data-category="Outros"
+            type="button"
+        >
+            Outros
+        </button>
+
+    </div>
+
+    <h2 class="section-title">
+        Produtos
+    </h2>
+
+    <section
+        id="productsGrid"
+        class="products-grid"
+    >
+        <div class="loading">
+            Carregando produtos...
+        </div>
+    </section>
+
+</main>
+
+<footer>
+    SlaxStore © 2026
+</footer>
+
+
+<!-- LOGIN / CADASTRO -->
+
+<div
+    id="authModal"
+    class="modal hidden"
+>
+
+    <div class="modal-box">
+
+        <div class="modal-header">
+
+            <h2 id="authTitle">
+                Entrar
+            </h2>
+
+            <button
+                class="close"
+                type="button"
+                data-close-modal="authModal"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <div
+            id="authMessage"
+            class="message"
+        ></div>
+
+        <form id="authForm">
+
+            <div
+                id="usernameField"
+                class="form-group hidden"
+            >
+                <label for="username">
+                    Nome de usuário
+                </label>
+
+                <input
+                    id="username"
+                    type="text"
+                    autocomplete="username"
+                    placeholder="Seu nome"
+                >
+            </div>
+
+            <div class="form-group">
+
+                <label for="email">
+                    E-mail
+                </label>
+
+                <input
+                    id="email"
+                    type="email"
+                    autocomplete="email"
+                    placeholder="seu@email.com"
+                    required
+                >
+
+            </div>
+
+            <div class="form-group">
+
+                <label for="password">
+                    Senha
+                </label>
+
+                <input
+                    id="password"
+                    type="password"
+                    autocomplete="current-password"
+                    placeholder="Sua senha"
+                    required
+                >
+
+            </div>
+
+            <button
+                id="authSubmit"
+                class="primary"
+                type="submit"
+                style="width:100%"
+            >
+                Entrar
+            </button>
+
+        </form>
+
+        <div class="switch">
+
+            <span id="authSwitchText">
+                Ainda não tem uma conta?
+            </span>
+
+            <button
+                id="authSwitch"
+                type="button"
+            >
+                Criar conta
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- VERIFICAÇÃO -->
+
+<div
+    id="verifyModal"
+    class="modal hidden"
+>
+
+    <div class="modal-box">
+
+        <div class="modal-header">
+
+            <h2>
+                Verificar e-mail
+            </h2>
+
+            <button
+                class="close"
+                type="button"
+                data-close-modal="verifyModal"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <p
+            id="verifyEmailText"
+            style="color:#aaa; margin-bottom:20px"
+        >
+            Enviamos um código para seu e-mail.
+        </p>
+
+        <div
+            id="verifyMessage"
+            class="message"
+        ></div>
+
+        <form id="verifyForm">
+
+            <div class="form-group">
+
+                <label for="verificationCode">
+                    Código
+                </label>
+
+                <input
+                    id="verificationCode"
+                    class="verify-code"
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="8"
+                    placeholder="000000"
+                    required
+                >
+
+            </div>
+
+            <button
+                class="primary"
+                type="submit"
+                style="width:100%"
+            >
+                Verificar
+            </button>
+
+        </form>
+
+        <button
+            id="resendCode"
+            type="button"
+            style="width:100%; margin-top:10px"
+        >
+            Reenviar código
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- PERFIL -->
+
+<div
+    id="profileModal"
+    class="modal hidden"
+>
+
+    <div class="modal-box profile-box">
+
+        <div class="modal-header">
+
+            <h2>
+                Meu perfil
+            </h2>
+
+            <button
+                class="close"
+                type="button"
+                data-close-modal="profileModal"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <div class="profile-avatar">
+            S
+        </div>
+
+        <h2 id="profileUsername">
+            Usuário
+        </h2>
+
+        <p
+            id="profileEmail"
+            class="profile-email"
+        ></p>
+
+        <div class="balance">
+
+            <span>
+                Saldo
+            </span>
+
+            <strong id="profileBalance">
+                R$ 0,00
+            </strong>
+
+        </div>
+
+        <button
+            class="danger"
+            type="button"
+            onclick="sair()"
+            style="width:100%"
+        >
+            Sair da conta
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- CRIAR PRODUTO -->
+
+<div
+    id="createProductModal"
+    class="modal hidden"
+>
+
+    <div class="modal-box large">
+
+        <div class="modal-header">
+
+            <h2>
+                Criar anúncio
+            </h2>
+
+            <button
+                class="close"
+                type="button"
+                data-close-modal="createProductModal"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <div
+            id="createProductMessage"
+            class="message"
+        ></div>
+
+        <form id="createProductForm">
+
+            <div class="form-group">
+
+                <label for="productName">
+                    Nome do produto
+                </label>
+
+                <input
+                    id="productName"
+                    type="text"
+                    placeholder="Nome do produto"
+                    required
+                >
+
+            </div>
+
+            <div class="form-group">
+
+                <label for="productDescription">
+                    Descrição
+                </label>
+
+                <textarea
+                    id="productDescription"
+                    placeholder="Descreva seu produto..."
+                ></textarea>
+
+            </div>
+
+            <div class="form-group">
+
+                <label for="productPrice">
+                    Preço em reais
+                </label>
+
+                <input
+                    id="productPrice"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    placeholder="10,00"
+                    required
+                >
+
+            </div>
+
+            <div class="form-group">
+
+                <label for="productCategory">
+                    Categoria
+                </label>
+
+                <select id="productCategory">
+
+                    <option value="Outros">
+                        Outros
+                    </option>
+
+                    <option value="Jogos">
+                        Jogos
+                    </option>
+
+                    <option value="Roblox">
+                        Roblox
+                    </option>
+
+                    <option value="Minecraft">
+                        Minecraft
+                    </option>
+
+                    <option value="Contas">
+                        Contas
+                    </option>
+
+                    <option value="Itens">
+                        Itens
+                    </option>
+
+                </select>
+
+            </div>
+
+            <div class="form-group">
+
+                <label for="productImage">
+                    URL da imagem
+                </label>
+
+                <input
+                    id="productImage"
+                    type="url"
+                    placeholder="https://..."
+                >
+
+            </div>
+
+            <div class="form-actions">
+
+                <button
+                    type="button"
+                    data-close-modal="createProductModal"
+                >
+                    Cancelar
+                </button>
+
+                <button
+                    type="submit"
+                    class="primary"
+                >
+                    Publicar anúncio
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- PRODUTO -->
+
+<div
+    id="productModal"
+    class="modal hidden"
+>
+
+    <div class="modal-box large">
+
+        <div class="modal-header">
+
+            <h2>
+                Produto
+            </h2>
+
+            <button
+                class="close"
+                type="button"
+                data-close-modal="productModal"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <img
+            id="productModalImage"
+            class="product-detail-image"
+            alt="Produto"
+            style="display:none"
+        >
+
+        <h2 id="productModalName">
+            Produto
+        </h2>
+
+        <div
+            id="productModalPrice"
+            class="product-detail-price"
+        >
+            R$ 0,00
+        </div>
+
+        <p
+            id="productModalDescription"
+            class="product-detail-description"
+        ></p>
+
+        <button
+            id="buyProductButton"
+            class="primary"
+            type="button"
+            style="width:100%; margin-top:25px"
+        >
+            Comprar
+        </button>
+
+    </div>
+
+</div>
+
+
+<script>
 "use strict";
 
 const API_URL = window.location.origin;
@@ -17,12 +1145,17 @@ function token() {
 
 function salvarToken(value) {
     if (value) {
-        localStorage.setItem("slaxstore_token", value);
+        localStorage.setItem(
+            "slaxstore_token",
+            value
+        );
     }
 }
 
 function removerToken() {
-    localStorage.removeItem("slaxstore_token");
+    localStorage.removeItem(
+        "slaxstore_token"
+    );
 }
 
 function texto(value) {
@@ -39,7 +1172,9 @@ function escapeHTML(value) {
 }
 
 function dinheiro(cents) {
-    return (Number(cents || 0) / 100).toLocaleString(
+    return (
+        Number(cents || 0) / 100
+    ).toLocaleString(
         "pt-BR",
         {
             style: "currency",
@@ -56,11 +1191,8 @@ function mostrar(elemento, mostrar = true) {
         !mostrar
     );
 
-    if (!mostrar) {
-        elemento.style.display = "none";
-    } else {
-        elemento.style.display = "";
-    }
+    elemento.style.display =
+        mostrar ? "" : "none";
 }
 
 function abrirModal(id) {
@@ -80,22 +1212,31 @@ function fecharModal(id) {
     mostrar(elemento, false);
 }
 
-function mensagem(elemento, msg, tipo = "error") {
+function mensagem(
+    elemento,
+    msg,
+    tipo = "error"
+) {
     if (!elemento) {
         alert(msg);
         return;
     }
 
     elemento.textContent = msg;
-    elemento.className = "message " + tipo;
+    elemento.className =
+        "message " + tipo;
     elemento.style.display = "block";
 }
 
-async function api(endpoint, options = {}) {
+async function api(
+    endpoint,
+    options = {}
+) {
     const headers = {
         ...(options.body
             ? {
-                "Content-Type": "application/json"
+                "Content-Type":
+                    "application/json"
             }
             : {}),
         ...(options.headers || {})
@@ -108,24 +1249,27 @@ async function api(endpoint, options = {}) {
             "Bearer " + authToken;
     }
 
-    const resposta = await fetch(
-        API_URL + endpoint,
-        {
-            ...options,
-            credentials: "include",
-            headers
-        }
-    );
+    const resposta =
+        await fetch(
+            API_URL + endpoint,
+            {
+                ...options,
+                credentials: "include",
+                headers
+            }
+        );
 
     let dados = {};
 
     try {
-        dados = await resposta.json();
+        dados =
+            await resposta.json();
     } catch {
         dados = {};
     }
 
     if (!resposta.ok) {
+
         if (
             resposta.status === 401 &&
             !endpoint.includes("/login") &&
@@ -146,18 +1290,23 @@ async function api(endpoint, options = {}) {
     return dados;
 }
 
-async function verificarSessao() {
-    const authToken = token();
 
-    if (!authToken) {
+/* SESSÃO */
+
+async function verificarSessao() {
+
+    if (!token()) {
         usuario = null;
         atualizarInterface();
         return;
     }
 
     try {
+
         const resposta =
-            await api("/api/auth/me");
+            await api(
+                "/api/auth/me"
+            );
 
         usuario =
             resposta.user ||
@@ -169,14 +1318,20 @@ async function verificarSessao() {
         }
 
     } catch {
+
         usuario = null;
         removerToken();
+
     }
 
     atualizarInterface();
 }
 
+
+/* INTERFACE */
+
 function atualizarInterface() {
+
     const loginButton =
         $("loginButton");
 
@@ -187,87 +1342,90 @@ function atualizarInterface() {
         $("logoutButton");
 
     if (usuario) {
-        if (loginButton) {
-            loginButton.style.display = "none";
-        }
 
-        if (profileButton) {
-            profileButton.style.display = "";
-        }
+        if (loginButton)
+            loginButton.style.display =
+                "none";
 
-        if (logoutButton) {
-            logoutButton.style.display = "";
-        }
+        if (profileButton)
+            profileButton.style.display =
+                "";
+
+        if (logoutButton)
+            logoutButton.style.display =
+                "";
 
         criarBotaoVender();
 
     } else {
-        if (loginButton) {
-            loginButton.style.display = "";
-        }
 
-        if (profileButton) {
-            profileButton.style.display = "none";
-        }
+        if (loginButton)
+            loginButton.style.display =
+                "";
 
-        if (logoutButton) {
-            logoutButton.style.display = "none";
-        }
+        if (profileButton)
+            profileButton.style.display =
+                "none";
+
+        if (logoutButton)
+            logoutButton.style.display =
+                "none";
 
         const vender =
             $("slaxSellButton");
 
-        if (vender) {
+        if (vender)
             vender.remove();
-        }
     }
 }
 
 function criarBotaoVender() {
+
     if (!usuario) return;
 
-    if ($("slaxSellButton")) return;
-
-    const possiveisNav = [
-        document.querySelector(".nav"),
-        document.querySelector("nav"),
-        document.querySelector("header")
-    ];
+    if ($("slaxSellButton"))
+        return;
 
     const nav =
-        possiveisNav.find(Boolean);
+        document.querySelector(".nav");
 
     if (!nav) return;
 
     const botao =
-        document.createElement("button");
+        document.createElement(
+            "button"
+        );
 
-    botao.id = "slaxSellButton";
-    botao.type = "button";
-    botao.textContent = "Vender";
-    botao.className = "primary";
-    botao.style.cursor = "pointer";
+    botao.id =
+        "slaxSellButton";
+
+    botao.type =
+        "button";
+
+    botao.textContent =
+        "Vender";
+
+    botao.className =
+        "primary";
 
     botao.addEventListener(
         "click",
         abrirCriarAnuncio
     );
 
-    nav.appendChild(botao);
+    nav.querySelector(
+        ".nav-buttons"
+    ).appendChild(botao);
 }
 
-function abrirAuth(modo = "login") {
+
+/* LOGIN */
+
+function abrirAuth(
+    modo = "login"
+) {
+
     authMode = modo;
-
-    const modal =
-        $("authModal");
-
-    if (!modal) {
-        alert(
-            "O modal de login não existe no HTML."
-        );
-        return;
-    }
 
     const title =
         $("authTitle");
@@ -292,6 +1450,7 @@ function abrirAuth(modo = "login") {
     }
 
     if (usernameField) {
+
         usernameField.classList.toggle(
             "hidden",
             modo !== "register"
@@ -304,6 +1463,7 @@ function abrirAuth(modo = "login") {
     }
 
     if (submit) {
+
         submit.textContent =
             modo === "register"
                 ? "Criar conta"
@@ -311,6 +1471,7 @@ function abrirAuth(modo = "login") {
     }
 
     if (switchText) {
+
         switchText.textContent =
             modo === "register"
                 ? "Já possui uma conta?"
@@ -318,6 +1479,7 @@ function abrirAuth(modo = "login") {
     }
 
     if (switchButton) {
+
         switchButton.textContent =
             modo === "register"
                 ? "Entrar"
@@ -332,10 +1494,13 @@ function abrirAuth(modo = "login") {
         msg.style.display = "none";
     }
 
-    abrirModal("authModal");
+    abrirModal(
+        "authModal"
+    );
 }
 
 function alternarAuth() {
+
     abrirAuth(
         authMode === "login"
             ? "register"
@@ -344,6 +1509,7 @@ function alternarAuth() {
 }
 
 function configurarLogin() {
+
     const form =
         $("authForm");
 
@@ -352,12 +1518,14 @@ function configurarLogin() {
     form.addEventListener(
         "submit",
         async event => {
+
             event.preventDefault();
 
             const msg =
                 $("authMessage");
 
             try {
+
                 const email =
                     ($("email")?.value || "")
                         .trim()
@@ -366,30 +1534,28 @@ function configurarLogin() {
                 const password =
                     $("password")?.value || "";
 
-                if (!email) {
+                if (!email)
                     throw new Error(
                         "Digite seu e-mail."
                     );
-                }
 
-                if (!password) {
+                if (!password)
                     throw new Error(
                         "Digite sua senha."
                     );
-                }
 
                 if (
                     authMode === "register"
                 ) {
+
                     const username =
                         ($("username")?.value || "")
                             .trim();
 
-                    if (!username) {
+                    if (!username)
                         throw new Error(
                             "Digite seu nome de usuário."
                         );
-                    }
 
                     emailParaVerificacao =
                         email;
@@ -410,22 +1576,24 @@ function configurarLogin() {
                     const textoVerificacao =
                         $("verifyEmailText");
 
-                    if (textoVerificacao) {
+                    if (textoVerificacao)
                         textoVerificacao.textContent =
                             "Enviamos um código para " +
                             email + ".";
-                    }
 
                     const codigo =
                         $("verificationCode");
 
-                    if (codigo) {
+                    if (codigo)
                         codigo.value = "";
-                    }
 
-                    fecharModal("authModal");
+                    fecharModal(
+                        "authModal"
+                    );
 
-                    abrirModal("verifyModal");
+                    abrirModal(
+                        "verifyModal"
+                    );
 
                     return;
                 }
@@ -443,11 +1611,10 @@ function configurarLogin() {
                         }
                     );
 
-                if (!resposta.token) {
+                if (!resposta.token)
                     throw new Error(
                         "O servidor não enviou o token."
                     );
-                }
 
                 salvarToken(
                     resposta.token
@@ -457,19 +1624,21 @@ function configurarLogin() {
                     resposta.user ||
                     resposta.usuario;
 
-                if (!usuario) {
+                if (!usuario)
                     throw new Error(
                         "Usuário não retornado pelo servidor."
                     );
-                }
 
-                fecharModal("authModal");
+                fecharModal(
+                    "authModal"
+                );
 
                 atualizarInterface();
 
                 await carregarProdutos();
 
             } catch (erro) {
+
                 mensagem(
                     msg,
                     erro.message
@@ -478,44 +1647,49 @@ function configurarLogin() {
         }
     );
 }
+
+
+/* VERIFICAÇÃO */
+
 async function verificarCodigo() {
+
     const codigo =
-        ($("verificationCode")?.value || "").trim();
+        ($("verificationCode")?.value || "")
+            .trim();
 
     const msg =
         $("verifyMessage");
 
     try {
-        if (!emailParaVerificacao) {
+
+        if (!emailParaVerificacao)
             throw new Error(
                 "E-mail de verificação não encontrado."
             );
-        }
 
-        if (!codigo) {
+        if (!codigo)
             throw new Error(
                 "Digite o código recebido."
             );
-        }
 
         const resposta =
             await api(
                 "/api/auth/verify-email",
                 {
                     method: "POST",
-                    body: JSON.stringify({
-                        email:
-                            emailParaVerificacao,
-                        code: codigo
-                    })
+                    body:
+                        JSON.stringify({
+                            email:
+                                emailParaVerificacao,
+                            code: codigo
+                        })
                 }
             );
 
-        if (resposta.token) {
+        if (resposta.token)
             salvarToken(
                 resposta.token
             );
-        }
 
         usuario =
             resposta.user ||
@@ -526,43 +1700,43 @@ async function verificarCodigo() {
             "verifyModal"
         );
 
-        if (usuario) {
-            atualizarInterface();
-        }
-
-        if (typeof carregarProdutos === "function") {
-            await carregarProdutos();
-        }
-
         emailParaVerificacao = "";
 
+        atualizarInterface();
+
+        await carregarProdutos();
+
     } catch (erro) {
+
         mensagem(
             msg,
-            erro.message || "Código inválido."
+            erro.message ||
+            "Código inválido."
         );
     }
 }
 
 async function reenviarCodigo() {
+
     const msg =
         $("verifyMessage");
 
     try {
-        if (!emailParaVerificacao) {
+
+        if (!emailParaVerificacao)
             throw new Error(
                 "E-mail não encontrado."
             );
-        }
 
         await api(
             "/api/auth/resend-code",
             {
                 method: "POST",
-                body: JSON.stringify({
-                    email:
-                        emailParaVerificacao
-                })
+                body:
+                    JSON.stringify({
+                        email:
+                            emailParaVerificacao
+                    })
             }
         );
 
@@ -573,28 +1747,33 @@ async function reenviarCodigo() {
         );
 
     } catch (erro) {
+
         mensagem(
             msg,
             erro.message ||
-                "Não foi possível reenviar o código."
+            "Não foi possível reenviar o código."
         );
     }
 }
 
+
+/* LOGOUT */
+
 async function sair() {
+
     try {
+
         await api(
             "/api/auth/logout",
             {
                 method: "POST"
             }
         );
-    } catch {
-        // Mesmo que o servidor falhe,
-        // removemos a sessão local.
-    }
+
+    } catch {}
 
     usuario = null;
+
     removerToken();
 
     atualizarInterface();
@@ -606,42 +1785,31 @@ async function sair() {
     await carregarProdutos();
 }
 
+
+/* PERFIL */
+
 async function abrirPerfil() {
+
     if (!usuario) {
         abrirAuth("login");
         return;
     }
 
-    const nome =
-        $("profileUsername");
+    $("profileUsername").textContent =
+        usuario.username ||
+        usuario.nome ||
+        "Usuário";
 
-    const email =
-        $("profileEmail");
+    $("profileEmail").textContent =
+        usuario.email ||
+        "";
 
-    const saldo =
-        $("profileBalance");
-
-    if (nome) {
-        nome.textContent =
-            usuario.username ||
-            usuario.nome ||
-            "Usuário";
-    }
-
-    if (email) {
-        email.textContent =
-            usuario.email ||
-            "";
-    }
-
-    if (saldo) {
-        saldo.textContent =
-            dinheiro(
-                usuario.balance ||
-                usuario.saldo ||
-                0
-            );
-    }
+    $("profileBalance").textContent =
+        dinheiro(
+            usuario.balance ||
+            usuario.saldo ||
+            0
+        );
 
     abrirModal(
         "profileModal"
@@ -649,9 +1817,11 @@ async function abrirPerfil() {
 }
 
 async function carregarPerfil() {
+
     if (!usuario) return;
 
     try {
+
         const resposta =
             await api(
                 "/api/auth/me"
@@ -665,28 +1835,36 @@ async function carregarPerfil() {
         atualizarInterface();
 
     } catch {
+
         usuario = null;
+
         removerToken();
+
         atualizarInterface();
     }
 }
 
-async function carregarProdutos() {
-    const container =
-        $("productsGrid") ||
-        $("productGrid") ||
-        $("products");
 
-    if (!container) return;
+/* PRODUTOS */
+
+async function carregarProdutos() {
+
+    const container =
+        $("productsGrid");
+
+    if (!container)
+        return;
 
     container.innerHTML =
         '<div class="loading">Carregando produtos...</div>';
 
     try {
+
         let endpoint =
             "/api/products";
 
         if (categoriaAtual) {
+
             endpoint +=
                 "?category=" +
                 encodeURIComponent(
@@ -717,6 +1895,7 @@ async function carregarProdutos() {
         );
 
     } catch (erro) {
+
         container.innerHTML =
             '<div class="empty">' +
             escapeHTML(
@@ -727,15 +1906,18 @@ async function carregarProdutos() {
     }
 }
 
-function renderizarProdutos(produtos) {
-    const container =
-        $("productsGrid") ||
-        $("productGrid") ||
-        $("products");
+function renderizarProdutos(
+    produtos
+) {
 
-    if (!container) return;
+    const container =
+        $("productsGrid");
+
+    if (!container)
+        return;
 
     if (!produtos.length) {
+
         container.innerHTML =
             '<div class="empty">' +
             "Nenhum produto encontrado." +
@@ -745,113 +1927,99 @@ function renderizarProdutos(produtos) {
     }
 
     container.innerHTML =
-        produtos.map(produto => {
+        produtos.map(
+            produto => {
 
-            const id =
-                produto.id ||
-                produto._id;
+                const id =
+                    produto.id ||
+                    produto._id;
 
-            const nome =
-                produto.name ||
-                produto.nome ||
-                "Produto";
+                const nome =
+                    produto.name ||
+                    produto.nome ||
+                    "Produto";
 
-            const descricao =
-                produto.description ||
-                produto.descricao ||
-                "";
+                const descricao =
+                    produto.description ||
+                    produto.descricao ||
+                    "";
 
-            const imagem =
-                produto.image ||
-                produto.imageUrl ||
-                produto.imagem ||
-                "";
+                const imagem =
+                    produto.image ||
+                    produto.imageUrl ||
+                    produto.imagem ||
+                    "";
 
-            const preco =
-                produto.price ||
-                produto.preco ||
-                0;
+                const preco =
+                    produto.price ||
+                    produto.preco ||
+                    0;
 
-            return `
-                <article
-                    class="product-card"
-                    data-product-id="${escapeHTML(id)}"
-                >
+                return `
+                    <article
+                        class="product-card"
+                    >
 
-                    <div class="product-image">
-                        ${
-                            imagem
-                                ? `
-                                    <img
-                                        src="${escapeHTML(imagem)}"
-                                        alt="${escapeHTML(nome)}"
-                                    >
-                                  `
-                                : `
-                                    <div class="no-image">
-                                        Sem imagem
-                                    </div>
-                                  `
-                        }
-                    </div>
+                        <div class="product-image">
 
-                    <div class="product-info">
+                            ${
+                                imagem
+                                    ? `
+                                        <img
+                                            src="${escapeHTML(imagem)}"
+                                            alt="${escapeHTML(nome)}"
+                                        >
+                                      `
+                                    : `
+                                        <div class="no-image">
+                                            Sem imagem
+                                        </div>
+                                      `
+                            }
 
-                        <h3>
-                            ${escapeHTML(nome)}
-                        </h3>
+                        </div>
 
-                        ${
-                            descricao
-                                ? `
-                                    <p>
-                                        ${escapeHTML(
-                                            descricao
-                                        )}
-                                    </p>
-                                  `
-                                : ""
-                        }
+                        <div class="product-info">
 
-                        <strong>
-                            ${dinheiro(preco)}
-                        </strong>
+                            <h3>
+                                ${escapeHTML(nome)}
+                            </h3>
 
-                        <button
-                            type="button"
-                            class="primary product-view-button"
-                            data-product-id="${escapeHTML(id)}"
-                        >
-                            Ver produto
-                        </button>
+                            <p>
+                                ${escapeHTML(
+                                    descricao
+                                )}
+                            </p>
 
-                    </div>
+                            <strong>
+                                ${dinheiro(preco)}
+                            </strong>
 
-                </article>
-            `;
-        }).join("");
+                            <button
+                                type="button"
+                                class="primary"
+                                onclick="abrirProduto('${escapeHTML(id)}')"
+                            >
+                                Ver produto
+                            </button>
 
-    container
-        .querySelectorAll(
-            ".product-view-button"
-        )
-        .forEach(botao => {
+                        </div>
 
-            botao.addEventListener(
-                "click",
-                () => {
-                    abrirProduto(
-                        botao.dataset.productId
-                    );
-                }
-            );
-        });
+                    </article>
+                `;
+            }
+        ).join("");
 }
 
+
+/* DETALHES DO PRODUTO */
+
 async function abrirProduto(id) {
+
     if (!id) return;
 
     try {
+
         const resposta =
             await api(
                 "/api/products/" +
@@ -863,58 +2031,48 @@ async function abrirProduto(id) {
             resposta.produto ||
             resposta;
 
-        const nome =
-            $("productModalName");
-
-        const descricao =
-            $("productModalDescription");
-
-        const preco =
-            $("productModalPrice");
-
-        const imagem =
-            $("productModalImage");
-
-        if (nome) {
-            nome.textContent =
+        $("productModalName")
+            .textContent =
                 produtoAtual.name ||
                 produtoAtual.nome ||
                 "Produto";
-        }
 
-        if (descricao) {
-            descricao.textContent =
+        $("productModalDescription")
+            .textContent =
                 produtoAtual.description ||
                 produtoAtual.descricao ||
                 "";
-        }
 
-        if (preco) {
-            preco.textContent =
+        $("productModalPrice")
+            .textContent =
                 dinheiro(
                     produtoAtual.price ||
                     produtoAtual.preco ||
                     0
                 );
-        }
 
-        if (imagem) {
-            const url =
-                produtoAtual.image ||
-                produtoAtual.imageUrl ||
-                produtoAtual.imagem ||
-                "";
+        const imagem =
+            $("productModalImage");
 
-            if (url) {
-                imagem.src = url;
-                imagem.style.display = "";
-            } else {
-                imagem.removeAttribute(
-                    "src"
-                );
-                imagem.style.display =
-                    "none";
-            }
+        const url =
+            produtoAtual.image ||
+            produtoAtual.imageUrl ||
+            produtoAtual.imagem ||
+            "";
+
+        if (url) {
+
+            imagem.src = url;
+            imagem.style.display = "";
+
+        } else {
+
+            imagem.removeAttribute(
+                "src"
+            );
+
+            imagem.style.display =
+                "none";
         }
 
         abrirModal(
@@ -922,6 +2080,7 @@ async function abrirProduto(id) {
         );
 
     } catch (erro) {
+
         alert(
             erro.message ||
             "Não foi possível abrir o produto."
@@ -929,12 +2088,16 @@ async function abrirProduto(id) {
     }
 }
 
+
+/* COMPRA */
+
 async function comprarProduto() {
-    if (!produtoAtual) {
+
+    if (!produtoAtual)
         return;
-    }
 
     if (!usuario) {
+
         fecharModal(
             "productModal"
         );
@@ -950,15 +2113,8 @@ async function comprarProduto() {
         produtoAtual.id ||
         produtoAtual._id;
 
-    if (!id) {
-        alert(
-            "Produto inválido."
-        );
-
-        return;
-    }
-
     try {
+
         const resposta =
             await api(
                 "/api/products/" +
@@ -969,10 +2125,9 @@ async function comprarProduto() {
                 }
             );
 
-        if (resposta.user) {
+        if (resposta.user)
             usuario =
                 resposta.user;
-        }
 
         fecharModal(
             "productModal"
@@ -988,6 +2143,7 @@ async function comprarProduto() {
         await carregarProdutos();
 
     } catch (erro) {
+
         alert(
             erro.message ||
             "Não foi possível realizar a compra."
@@ -995,27 +2151,33 @@ async function comprarProduto() {
     }
 }
 
-async function pesquisarProdutos(valor) {
+
+/* PESQUISA */
+
+async function pesquisarProdutos(
+    valor
+) {
+
     const busca =
         String(valor || "").trim();
 
-    const container =
-        $("productsGrid") ||
-        $("productGrid") ||
-        $("products");
-
-    if (!container) return;
-
     if (!busca) {
+
         categoriaAtual = "";
+
         await carregarProdutos();
+
         return;
     }
+
+    const container =
+        $("productsGrid");
 
     container.innerHTML =
         '<div class="loading">Pesquisando...</div>';
 
     try {
+
         const resposta =
             await api(
                 "/api/products/search?q=" +
@@ -1038,6 +2200,7 @@ async function pesquisarProdutos(valor) {
         );
 
     } catch (erro) {
+
         container.innerHTML =
             '<div class="empty">' +
             escapeHTML(
@@ -1049,11 +2212,12 @@ async function pesquisarProdutos(valor) {
 }
 
 function configurarPesquisa() {
-    const campo =
-        $("searchInput") ||
-        $("search");
 
-    if (!campo) return;
+    const campo =
+        $("searchInput");
+
+    if (!campo)
+        return;
 
     campo.addEventListener(
         "input",
@@ -1063,14 +2227,11 @@ function configurarPesquisa() {
                 searchTimer
             );
 
-            const valor =
-                event.target.value;
-
             searchTimer =
                 setTimeout(
                     () => {
                         pesquisarProdutos(
-                            valor
+                            event.target.value
                         );
                     },
                     300
@@ -1079,63 +2240,85 @@ function configurarPesquisa() {
     );
 }
 
+
+/* CATEGORIAS */
+
 function selecionarCategoria(
     categoria
 ) {
+
     categoriaAtual =
         String(
             categoria || ""
         ).trim();
 
+    document
+        .querySelectorAll(
+            ".category"
+        )
+        .forEach(
+            botao => {
+
+                botao.classList.toggle(
+                    "active",
+                    botao.dataset.category ===
+                    categoriaAtual
+                );
+            }
+        );
+
     carregarProdutos();
 }
 
 function configurarCategorias() {
-    const botoes =
-        document.querySelectorAll(
+
+    document
+        .querySelectorAll(
             "[data-category]"
-        );
+        )
+        .forEach(
+            botao => {
 
-    botoes.forEach(botao => {
+                botao.addEventListener(
+                    "click",
+                    () => {
 
-        botao.addEventListener(
-            "click",
-            () => {
-
-                const categoria =
-                    botao.dataset.category;
-
-                selecionarCategoria(
-                    categoria
+                        selecionarCategoria(
+                            botao.dataset.category
+                        );
+                    }
                 );
-
             }
         );
-
-    });
 }
 
+
+/* CRIAR ANÚNCIO */
+
 function abrirCriarAnuncio() {
+
     if (!usuario) {
-        abrirAuth(
-            "login"
-        );
+
+        abrirAuth("login");
+
         return;
     }
 
     const form =
         $("createProductForm");
 
-    if (form) {
+    if (form)
         form.reset();
-    }
 
     const msg =
         $("createProductMessage");
 
     if (msg) {
+
         msg.textContent = "";
-        msg.style.display = "none";
+
+        msg.style.display =
+            "none";
     }
 
     abrirModal(
@@ -1143,13 +2326,16 @@ function abrirCriarAnuncio() {
     );
 }
 
-async function criarAnuncio(event) {
+async function criarAnuncio(
+    event
+) {
+
     event.preventDefault();
 
     if (!usuario) {
-        abrirAuth(
-            "login"
-        );
+
+        abrirAuth("login");
+
         return;
     }
 
@@ -1157,42 +2343,37 @@ async function criarAnuncio(event) {
         $("createProductMessage");
 
     try {
+
         const nome =
-            ($("productName")?.value || "")
-                .trim();
+            $("productName")
+                .value.trim();
 
         const descricao =
-            ($("productDescription")?.value || "")
-                .trim();
+            $("productDescription")
+                .value.trim();
 
         const preco =
             Number(
-                $("productPrice")?.value || 0
+                $("productPrice")
+                    .value
             );
 
         const categoria =
-            ($("productCategory")?.value || "")
-                .trim();
+            $("productCategory")
+                .value;
 
         const imagem =
-            ($("productImage")?.value || "")
-                .trim();
+            $("productImage")
+                .value.trim();
 
-        if (!nome) {
+        if (!nome)
             throw new Error(
                 "Digite o nome do produto."
             );
-        }
 
-        if (!preco || preco <= 0) {
+        if (!preco || preco <= 0)
             throw new Error(
                 "Digite um preço válido."
-            );
-        }
-
-        const precoCentavos =
-            Math.round(
-                preco * 100
             );
 
         const resposta =
@@ -1206,7 +2387,9 @@ async function criarAnuncio(event) {
                             description:
                                 descricao,
                             price:
-                                precoCentavos,
+                                Math.round(
+                                    preco * 100
+                                ),
                             category:
                                 categoria,
                             image:
@@ -1222,16 +2405,13 @@ async function criarAnuncio(event) {
             "success"
         );
 
-        const form =
-            $("createProductForm");
-
-        if (form) {
-            form.reset();
-        }
+        $("createProductForm")
+            .reset();
 
         await carregarProdutos();
 
     } catch (erro) {
+
         mensagem(
             msg,
             erro.message ||
@@ -1240,115 +2420,110 @@ async function criarAnuncio(event) {
     }
 }
 
-function configurarCriarAnuncio() {
-    const form =
-        $("createProductForm");
 
-    if (!form) return;
-
-    form.addEventListener(
-        "submit",
-        criarAnuncio
-    );
-}
+/* BOTÕES */
 
 function configurarBotoes() {
 
-    const login =
-        $("loginButton");
-
-    if (login) {
-        login.addEventListener(
+    $("loginButton")
+        ?.addEventListener(
             "click",
             () => abrirAuth("login")
         );
-    }
 
-    const perfil =
-        $("profileButton");
-
-    if (perfil) {
-        perfil.addEventListener(
+    $("profileButton")
+        ?.addEventListener(
             "click",
             abrirPerfil
         );
-    }
 
-    const logout =
-        $("logoutButton");
-
-    if (logout) {
-        logout.addEventListener(
+    $("logoutButton")
+        ?.addEventListener(
             "click",
             sair
         );
-    }
 
-    const authSwitch =
-        $("authSwitch");
-
-    if (authSwitch) {
-        authSwitch.addEventListener(
+    $("authSwitch")
+        ?.addEventListener(
             "click",
             alternarAuth
         );
-    }
 
-    const verifyForm =
-        $("verifyForm");
-
-    if (verifyForm) {
-        verifyForm.addEventListener(
+    $("verifyForm")
+        ?.addEventListener(
             "submit",
             event => {
+
                 event.preventDefault();
+
                 verificarCodigo();
             }
         );
-    }
 
-    const resend =
-        $("resendCode");
-
-    if (resend) {
-        resend.addEventListener(
+    $("resendCode")
+        ?.addEventListener(
             "click",
             reenviarCodigo
         );
-    }
 
-    const buy =
-        $("buyProductButton");
-
-    if (buy) {
-        buy.addEventListener(
+    $("buyProductButton")
+        ?.addEventListener(
             "click",
             comprarProduto
         );
-    }
 
-    const closeButtons =
-        document.querySelectorAll(
+    document
+        .querySelectorAll(
             "[data-close-modal]"
+        )
+        .forEach(
+            botao => {
+
+                botao.addEventListener(
+                    "click",
+                    () => {
+
+                        fecharModal(
+                            botao.dataset.closeModal
+                        );
+                    }
+                );
+            }
         );
 
-    closeButtons.forEach(
-        botao => {
+    document
+        .querySelectorAll(
+            ".modal"
+        )
+        .forEach(
+            modal => {
 
-            botao.addEventListener(
-                "click",
-                () => {
+                modal.addEventListener(
+                    "click",
+                    event => {
 
-                    fecharModal(
-                        botao.dataset.closeModal
-                    );
+                        if (
+                            event.target ===
+                            modal
+                        ) {
+                            fecharModal(
+                                modal.id
+                            );
+                        }
+                    }
+                );
+            }
+        );
 
-                }
-            );
-
-        }
-    );
+    $("createProductForm")
+        ?.addEventListener(
+            "submit",
+            criarAnuncio
+        );
 }
+
+
+/* INICIALIZAÇÃO */
 
 async function iniciarSlaxStore() {
 
@@ -1358,20 +2533,7 @@ async function iniciarSlaxStore() {
 
     configurarCategorias();
 
-    configurarCriarAnuncio();
-
     configurarBotoes();
-
-    document
-        .querySelectorAll(
-            ".modal"
-        )
-        .forEach(modal => {
-            mostrar(
-                modal,
-                false
-            );
-        });
 
     await verificarSessao();
 
@@ -1393,3 +2555,8 @@ if (
     iniciarSlaxStore();
 
 }
+</script>
+
+</body>
+</html>
+```
