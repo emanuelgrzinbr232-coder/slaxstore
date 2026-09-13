@@ -5,677 +5,547 @@ const { autenticar } = require("./auth");
 
 const router = express.Router();
 
-
-/* ==========================================
-   VERIFICAR ADMIN / MODERADOR
-========================================== */
-
 function exigirModerador(req, res, next) {
-
     if (
         !req.user ||
-        (
-            req.user.role !== "admin" &&
-            req.user.role !== "moderator"
-        )
+        !["admin", "moderator"].includes(req.user.role)
     ) {
         return res.status(403).json({
-            error:
-                "Acesso permitido somente para administradores ou moderadores."
+            error: "Acesso restrito à moderação."
         });
     }
 
     next();
 }
 
-
-/* ==========================================
-   PRODUTOS PENDENTES
-   GET /api/moderation/products
-========================================== */
-
+/*
+ * PRODUTOS PARA MODERAÇÃO
+ */
 router.get(
     "/products",
     autenticar,
     exigirModerador,
     (req, res) => {
-
         try {
+            const status = String(
+                req.query.status || "pending"
+            );
 
-            const status =
-                String(
-                    req.query.status || "pending"
-                );
-
-            const statusPermitidos = [
+            const permitidos = [
                 "pending",
                 "approved",
                 "rejected",
                 "paused"
             ];
 
-            if (
-                !statusPermitidos.includes(status)
-            ) {
+            if (!permitidos.includes(status)) {
                 return res.status(400).json({
-                    error:
-                        "Status inválido."
+                    error: "Status inválido."
                 });
             }
 
-            const produtos =
-                db.prepare(`
-                    SELECT
-                        p.*,
+            const produtos = db.prepare(`
+                SELECT
+                    p.*,
 
-                        u.username
-                            AS seller_username,
+                    u.username AS seller_username,
+                    u.email AS seller_email,
+                    u.avatar_url AS seller_avatar_url,
+                    u.seller_verified
 
-                        u.email
-                            AS seller_email,
+                FROM products p
 
-                        u.seller_verified,
+                INNER JOIN users u
+                    ON u.id = p.seller_id
 
-                        u.verification_status
+                WHERE p.status = ?
 
-                    FROM products p
+                ORDER BY p.created_at ASC
+            `).all(status);
 
-                    INNER JOIN users u
-                        ON u.id = p.seller_id
-
-                    WHERE p.status = ?
-
-                    ORDER BY
-                        p.created_at ASC
-                `)
-                .all(status);
-
-            res.json({
-                products:
-                    produtos
+            return res.json({
+                products: produtos
             });
 
         } catch (erro) {
+            console.error(
+                "Erro ao carregar produtos para moderação:",
+                erro
+            );
 
-            console.error(erro);
-
-            res.status(500).json({
-                error:
-                    "Erro ao carregar produtos."
+            return res.status(500).json({
+                error: "Não foi possível carregar os produtos."
             });
         }
     }
 );
 
-
-/* ==========================================
-   APROVAR PRODUTO
-   POST /api/moderation/products/:id/approve
-========================================== */
-
+/*
+ * APROVAR PRODUTO
+ */
 router.post(
     "/products/:id/approve",
     autenticar,
     exigirModerador,
     (req, res) => {
-
         try {
+            const id = Number.parseInt(
+                req.params.id,
+                10
+            );
 
-            const id =
-                Number.parseInt(
-                    req.params.id,
-                    10
-                );
+            const resultado = db.prepare(`
+                UPDATE products
+                SET
+                    status = 'approved',
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                AND status = 'pending'
+            `).run(id);
 
-            const produto =
-                db.prepare(`
-                    SELECT *
-                    FROM products
-                    WHERE id = ?
-                `)
-                .get(id);
-
-            if (!produto) {
-
+            if (resultado.changes !== 1) {
                 return res.status(404).json({
-                    error:
-                        "Produto não encontrado."
+                    error: "Produto pendente não encontrado."
                 });
             }
 
-            db.prepare(`
-                UPDATE products
-
-                SET
-                    status = 'approved',
-                    updated_at = ?
-
-                WHERE id = ?
-            `)
-            .run(
-                Date.now(),
-                id
-            );
-
-            res.json({
-                message:
-                    "Produto aprovado com sucesso."
+            return res.json({
+                success: true,
+                message: "Produto aprovado."
             });
 
         } catch (erro) {
+            console.error(
+                "Erro ao aprovar produto:",
+                erro
+            );
 
-            console.error(erro);
-
-            res.status(500).json({
-                error:
-                    "Erro ao aprovar produto."
+            return res.status(500).json({
+                error: "Não foi possível aprovar o produto."
             });
         }
     }
 );
 
-
-/* ==========================================
-   REJEITAR PRODUTO
-   POST /api/moderation/products/:id/reject
-========================================== */
-
+/*
+ * REJEITAR PRODUTO
+ */
 router.post(
     "/products/:id/reject",
     autenticar,
     exigirModerador,
     (req, res) => {
-
         try {
-
-            const id =
-                Number.parseInt(
-                    req.params.id,
-                    10
-                );
-
-            const motivo =
-                String(
-                    req.body.reason || ""
-                ).trim();
-
-            if (!motivo) {
-
-                return res.status(400).json({
-                    error:
-                        "Informe o motivo da rejeição."
-                });
-            }
-
-            if (motivo.length > 2000) {
-
-                return res.status(400).json({
-                    error:
-                        "O motivo é muito grande."
-                });
-            }
-
-            const produto =
-                db.prepare(`
-                    SELECT *
-                    FROM products
-                    WHERE id = ?
-                `)
-                .get(id);
-
-            if (!produto) {
-
-                return res.status(404).json({
-                    error:
-                        "Produto não encontrado."
-                });
-            }
-
-            db.prepare(`
-                UPDATE products
-
-                SET
-                    status = 'rejected',
-                    updated_at = ?
-
-                WHERE id = ?
-            `)
-            .run(
-                Date.now(),
-                id
+            const id = Number.parseInt(
+                req.params.id,
+                10
             );
 
-            res.json({
-                message:
-                    "Produto rejeitado.",
-                reason:
-                    motivo
-            });
+            const motivo = String(
+                req.body.reason || ""
+            ).trim();
 
-        } catch (erro) {
-
-            console.error(erro);
-
-            res.status(500).json({
-                error:
-                    "Erro ao rejeitar produto."
-            });
-        }
-    }
-);
-
-
-/* ==========================================
-   DENÚNCIAS
-   GET /api/moderation/reports
-========================================== */
-
-router.get(
-    "/reports",
-    autenticar,
-    exigirModerador,
-    (req, res) => {
-
-        try {
-
-            const reports =
-                db.prepare(`
-                    SELECT
-                        r.*,
-
-                        reporter.username
-                            AS reporter_username,
-
-                        reported.username
-                            AS reported_username,
-
-                        p.title
-                            AS product_title
-
-                    FROM reports r
-
-                    INNER JOIN users reporter
-                        ON reporter.id = r.reporter_id
-
-                    LEFT JOIN users reported
-                        ON reported.id =
-                           r.reported_user_id
-
-                    LEFT JOIN products p
-                        ON p.id = r.product_id
-
-                    ORDER BY
-                        r.created_at DESC
-                `)
-                .all();
-
-            res.json({
-                reports
-            });
-
-        } catch (erro) {
-
-            console.error(erro);
-
-            res.status(500).json({
-                error:
-                    "Erro ao carregar denúncias."
-            });
-        }
-    }
-);
-
-
-/* ==========================================
-   RESOLVER DENÚNCIA
-   POST /api/moderation/reports/:id/resolve
-========================================== */
-
-router.post(
-    "/reports/:id/resolve",
-    autenticar,
-    exigirModerador,
-    (req, res) => {
-
-        try {
-
-            const id =
-                Number.parseInt(
-                    req.params.id,
-                    10
-                );
-
-            const report =
-                db.prepare(`
-                    SELECT *
-                    FROM reports
-                    WHERE id = ?
-                `)
-                .get(id);
-
-            if (!report) {
-
-                return res.status(404).json({
-                    error:
-                        "Denúncia não encontrada."
+            if (!motivo) {
+                return res.status(400).json({
+                    error: "Informe o motivo da rejeição."
                 });
             }
 
-            db.prepare(`
-                UPDATE reports
+            if (motivo.length > 1000) {
+                return res.status(400).json({
+                    error: "Motivo muito grande."
+                });
+            }
 
+            const resultado = db.prepare(`
+                UPDATE products
                 SET
-                    status = 'resolved'
-
+                    status = 'rejected',
+                    updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
-            `)
-            .run(id);
+                AND status = 'pending'
+            `).run(id);
 
-            res.json({
-                message:
-                    "Denúncia resolvida."
+            if (resultado.changes !== 1) {
+                return res.status(404).json({
+                    error: "Produto pendente não encontrado."
+                });
+            }
+
+            return res.json({
+                success: true,
+                message: "Produto rejeitado.",
+                reason: motivo
             });
 
         } catch (erro) {
+            console.error(
+                "Erro ao rejeitar produto:",
+                erro
+            );
 
-            console.error(erro);
-
-            res.status(500).json({
-                error:
-                    "Erro ao resolver denúncia."
+            return res.status(500).json({
+                error: "Não foi possível rejeitar o produto."
             });
         }
     }
 );
 
-
-/* ==========================================
-   VERIFICAÇÕES DE VENDEDORES
-   GET /api/moderation/verifications
-========================================== */
-
+/*
+ * SOLICITAÇÕES DE VERIFICAÇÃO
+ */
 router.get(
     "/verifications",
     autenticar,
     exigirModerador,
     (req, res) => {
-
         try {
+            const status = String(
+                req.query.status || "pending"
+            );
 
-            const requests =
-                db.prepare(`
-                    SELECT
-                        v.*,
+            const permitidos = [
+                "pending",
+                "approved",
+                "rejected"
+            ];
 
-                        u.username,
-                        u.email,
-                        u.seller_verified,
-                        u.verification_status
+            if (!permitidos.includes(status)) {
+                return res.status(400).json({
+                    error: "Status inválido."
+                });
+            }
 
-                    FROM verification_requests v
+            const verificacoes = db.prepare(`
+                SELECT
+                    vr.id,
+                    vr.user_id,
+                    vr.status,
+                    vr.note,
+                    vr.created_at,
+                    vr.reviewed_at,
 
-                    INNER JOIN users u
-                        ON u.id = v.user_id
+                    u.username,
+                    u.email,
+                    u.avatar_url,
+                    u.bio,
+                    u.seller_verified,
+                    u.verification_status
 
-                    ORDER BY
-                        v.created_at ASC
-                `)
-                .all();
+                FROM verification_requests vr
 
-            res.json({
-                verifications:
-                    requests
+                INNER JOIN users u
+                    ON u.id = vr.user_id
+
+                WHERE vr.status = ?
+
+                ORDER BY vr.created_at ASC
+            `).all(status);
+
+            return res.json({
+                verifications: verificacoes
             });
 
         } catch (erro) {
+            console.error(
+                "Erro ao carregar verificações:",
+                erro
+            );
 
-            console.error(erro);
-
-            res.status(500).json({
-                error:
-                    "Erro ao carregar verificações."
+            return res.status(500).json({
+                error: "Não foi possível carregar as verificações."
             });
         }
     }
 );
 
-
-/* ==========================================
-   APROVAR VERIFICAÇÃO
-   POST /api/moderation/verifications/:id/approve
-========================================== */
-
+/*
+ * APROVAR VENDEDOR
+ */
 router.post(
     "/verifications/:id/approve",
     autenticar,
     exigirModerador,
     (req, res) => {
-
         try {
+            const id = Number.parseInt(
+                req.params.id,
+                10
+            );
 
-            const id =
-                Number.parseInt(
-                    req.params.id,
-                    10
-                );
+            const verificacao = db.prepare(`
+                SELECT *
+                FROM verification_requests
+                WHERE id = ?
+            `).get(id);
 
-            const verification =
-                db.prepare(`
-                    SELECT *
-                    FROM verification_requests
-                    WHERE id = ?
-                `)
-                .get(id);
-
-            if (!verification) {
-
+            if (!verificacao) {
                 return res.status(404).json({
-                    error:
-                        "Solicitação não encontrada."
+                    error: "Solicitação não encontrada."
                 });
             }
 
-            const agora =
-                Date.now();
-
-            db.transaction(() => {
-
+            const aprovar = db.transaction(() => {
                 db.prepare(`
                     UPDATE verification_requests
-
                     SET
                         status = 'approved',
-                        updated_at = ?
-
+                        reviewed_at = CURRENT_TIMESTAMP
                     WHERE id = ?
-                `)
-                .run(
-                    agora,
-                    id
-                );
+                `).run(id);
 
                 db.prepare(`
                     UPDATE users
-
                     SET
                         seller_verified = 1,
                         verification_status = 'approved'
-
                     WHERE id = ?
-                `)
-                .run(
-                    verification.user_id
-                );
+                `).run(verificacao.user_id);
+            });
 
-            })();
+            aprovar();
 
-            res.json({
-                message:
-                    "Vendedor verificado com sucesso."
+            return res.json({
+                success: true,
+                message: "Vendedor aprovado."
             });
 
         } catch (erro) {
+            console.error(
+                "Erro ao aprovar vendedor:",
+                erro
+            );
 
-            console.error(erro);
-
-            res.status(500).json({
-                error:
-                    "Erro ao aprovar verificação."
+            return res.status(500).json({
+                error: "Não foi possível aprovar o vendedor."
             });
         }
     }
 );
 
-
-/* ==========================================
-   REJEITAR VERIFICAÇÃO
-   POST /api/moderation/verifications/:id/reject
-========================================== */
-
+/*
+ * REJEITAR VENDEDOR
+ */
 router.post(
     "/verifications/:id/reject",
     autenticar,
     exigirModerador,
     (req, res) => {
-
         try {
+            const id = Number.parseInt(
+                req.params.id,
+                10
+            );
 
-            const id =
-                Number.parseInt(
-                    req.params.id,
-                    10
-                );
-
-            const motivo =
-                String(
-                    req.body.reason || ""
-                ).trim();
+            const motivo = String(
+                req.body.reason || ""
+            ).trim();
 
             if (!motivo) {
-
                 return res.status(400).json({
-                    error:
-                        "Informe o motivo da rejeição."
+                    error: "Informe o motivo da rejeição."
                 });
             }
 
-            const verification =
-                db.prepare(`
-                    SELECT *
-                    FROM verification_requests
-                    WHERE id = ?
-                `)
-                .get(id);
+            const verificacao = db.prepare(`
+                SELECT *
+                FROM verification_requests
+                WHERE id = ?
+            `).get(id);
 
-            if (!verification) {
-
+            if (!verificacao) {
                 return res.status(404).json({
-                    error:
-                        "Solicitação não encontrada."
+                    error: "Solicitação não encontrada."
                 });
             }
 
-            const agora =
-                Date.now();
-
-            db.transaction(() => {
-
+            const rejeitar = db.transaction(() => {
                 db.prepare(`
                     UPDATE verification_requests
-
                     SET
                         status = 'rejected',
-                        moderator_note = ?,
-                        updated_at = ?
-
+                        note = ?,
+                        reviewed_at = CURRENT_TIMESTAMP
                     WHERE id = ?
-                `)
-                .run(
+                `).run(
                     motivo,
-                    agora,
                     id
                 );
 
                 db.prepare(`
                     UPDATE users
-
                     SET
                         seller_verified = 0,
                         verification_status = 'rejected'
-
                     WHERE id = ?
-                `)
-                .run(
-                    verification.user_id
+                `).run(
+                    verificacao.user_id
                 );
+            });
 
-            })();
+            rejeitar();
 
-            res.json({
-                message:
-                    "Verificação rejeitada."
+            return res.json({
+                success: true,
+                message: "Solicitação rejeitada."
             });
 
         } catch (erro) {
+            console.error(
+                "Erro ao rejeitar vendedor:",
+                erro
+            );
 
-            console.error(erro);
-
-            res.status(500).json({
-                error:
-                    "Erro ao rejeitar verificação."
+            return res.status(500).json({
+                error: "Não foi possível rejeitar o vendedor."
             });
         }
     }
 );
 
+/*
+ * DENÚNCIAS
+ */
+router.get(
+    "/reports",
+    autenticar,
+    exigirModerador,
+    (req, res) => {
+        try {
+            const status = String(
+                req.query.status || "pending"
+            );
 
-/* ==========================================
-   SUSPENDER USUÁRIO
-   POST /api/moderation/users/:id/suspend
-========================================== */
+            const permitidos = [
+                "pending",
+                "resolved"
+            ];
 
+            if (!permitidos.includes(status)) {
+                return res.status(400).json({
+                    error: "Status inválido."
+                });
+            }
+
+            const reports = db.prepare(`
+                SELECT
+                    r.*,
+
+                    reporter.username AS reporter_username,
+
+                    reported.username AS reported_username,
+
+                    p.title AS product_title
+
+                FROM reports r
+
+                INNER JOIN users reporter
+                    ON reporter.id = r.reporter_id
+
+                LEFT JOIN users reported
+                    ON reported.id = r.reported_user_id
+
+                LEFT JOIN products p
+                    ON p.id = r.product_id
+
+                WHERE r.status = ?
+
+                ORDER BY r.created_at ASC
+            `).all(status);
+
+            return res.json({
+                reports
+            });
+
+        } catch (erro) {
+            console.error(
+                "Erro ao carregar denúncias:",
+                erro
+            );
+
+            return res.status(500).json({
+                error: "Não foi possível carregar as denúncias."
+            });
+        }
+    }
+);
+
+/*
+ * RESOLVER DENÚNCIA
+ */
+router.post(
+    "/reports/:id/resolve",
+    autenticar,
+    exigirModerador,
+    (req, res) => {
+        try {
+            const id = Number.parseInt(
+                req.params.id,
+                10
+            );
+
+            const resultado = db.prepare(`
+                UPDATE reports
+                SET
+                    status = 'resolved',
+                    resolved_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                AND status = 'pending'
+            `).run(id);
+
+            if (resultado.changes !== 1) {
+                return res.status(404).json({
+                    error: "Denúncia pendente não encontrada."
+                });
+            }
+
+            return res.json({
+                success: true,
+                message: "Denúncia resolvida."
+            });
+
+        } catch (erro) {
+            console.error(
+                "Erro ao resolver denúncia:",
+                erro
+            );
+
+            return res.status(500).json({
+                error: "Não foi possível resolver a denúncia."
+            });
+        }
+    }
+);
+
+/*
+ * SUSPENDER USUÁRIO
+ */
 router.post(
     "/users/:id/suspend",
     autenticar,
     exigirModerador,
     (req, res) => {
-
         try {
+            const id = Number.parseInt(
+                req.params.id,
+                10
+            );
 
-            const id =
-                Number.parseInt(
-                    req.params.id,
-                    10
-                );
-
-            if (
-                id === req.user.id
-            ) {
+            if (id === req.user.id) {
                 return res.status(400).json({
-                    error:
-                        "Você não pode suspender sua própria conta."
+                    error: "Você não pode suspender sua própria conta."
                 });
             }
 
-            const usuario =
-                db.prepare(`
-                    SELECT
-                        id,
-                        username,
-                        role,
-                        suspended
-
-                    FROM users
-
-                    WHERE id = ?
-                `)
-                .get(id);
+            const usuario = db.prepare(`
+                SELECT id, role
+                FROM users
+                WHERE id = ?
+            `).get(id);
 
             if (!usuario) {
-
                 return res.status(404).json({
-                    error:
-                        "Usuário não encontrado."
+                    error: "Usuário não encontrado."
                 });
             }
 
@@ -684,293 +554,200 @@ router.post(
                 req.user.role !== "admin"
             ) {
                 return res.status(403).json({
-                    error:
-                        "Moderadores não podem suspender administradores."
+                    error: "Moderadores não podem suspender administradores."
                 });
             }
 
             db.prepare(`
                 UPDATE users
-
                 SET suspended = 1
-
                 WHERE id = ?
-            `)
-            .run(id);
+            `).run(id);
 
-            res.json({
-                message:
-                    "Usuário suspenso."
+            return res.json({
+                success: true,
+                message: "Usuário suspenso."
             });
 
         } catch (erro) {
+            console.error(
+                "Erro ao suspender usuário:",
+                erro
+            );
 
-            console.error(erro);
-
-            res.status(500).json({
-                error:
-                    "Erro ao suspender usuário."
+            return res.status(500).json({
+                error: "Não foi possível suspender o usuário."
             });
         }
     }
 );
 
-
-/* ==========================================
-   REATIVAR USUÁRIO
-   POST /api/moderation/users/:id/unsuspend
-========================================== */
-
+/*
+ * REATIVAR USUÁRIO
+ */
 router.post(
     "/users/:id/unsuspend",
     autenticar,
     exigirModerador,
     (req, res) => {
-
         try {
+            const id = Number.parseInt(
+                req.params.id,
+                10
+            );
 
-            const id =
-                Number.parseInt(
-                    req.params.id,
-                    10
-                );
-
-            const usuario =
-                db.prepare(`
-                    SELECT
-                        id,
-                        username,
-                        role
-
-                    FROM users
-
-                    WHERE id = ?
-                `)
-                .get(id);
-
-            if (!usuario) {
-
-                return res.status(404).json({
-                    error:
-                        "Usuário não encontrado."
-                });
-            }
-
-            if (
-                usuario.role === "admin" &&
-                req.user.role !== "admin"
-            ) {
-                return res.status(403).json({
-                    error:
-                        "Moderadores não podem alterar administradores."
-                });
-            }
-
-            db.prepare(`
+            const resultado = db.prepare(`
                 UPDATE users
-
                 SET suspended = 0
-
                 WHERE id = ?
-            `)
-            .run(id);
+            `).run(id);
 
-            res.json({
-                message:
-                    "Usuário reativado."
+            if (resultado.changes !== 1) {
+                return res.status(404).json({
+                    error: "Usuário não encontrado."
+                });
+            }
+
+            return res.json({
+                success: true,
+                message: "Usuário reativado."
             });
 
         } catch (erro) {
+            console.error(
+                "Erro ao reativar usuário:",
+                erro
+            );
 
-            console.error(erro);
-
-            res.status(500).json({
-                error:
-                    "Erro ao reativar usuário."
+            return res.status(500).json({
+                error: "Não foi possível reativar o usuário."
             });
         }
     }
 );
 
-
-/* ==========================================
-   CRIAR DENÚNCIA
-   POST /api/moderation/report
-========================================== */
-
+/*
+ * CRIAR DENÚNCIA
+ */
 router.post(
     "/report",
     autenticar,
     (req, res) => {
-
         try {
-
-            const {
-                product_id = null,
-                reported_user_id = null,
-                reason,
-                description = ""
-            } = req.body;
-
-            const motivo =
-                String(
-                    reason || ""
-                ).trim();
-
-            const detalhes =
-                String(
-                    description || ""
-                ).trim();
-
-            if (!motivo) {
-
-                return res.status(400).json({
-                    error:
-                        "Informe o motivo da denúncia."
-                });
-            }
-
-            if (motivo.length > 200) {
-
-                return res.status(400).json({
-                    error:
-                        "O motivo é muito grande."
-                });
-            }
-
-            if (detalhes.length > 2000) {
-
-                return res.status(400).json({
-                    error:
-                        "A descrição é muito grande."
-                });
-            }
-
-            let produtoId = null;
-            let usuarioId = null;
-
-            if (product_id !== null) {
-
-                produtoId =
-                    Number.parseInt(
-                        product_id,
+            const productId =
+                req.body.product_id
+                    ? Number.parseInt(
+                        req.body.product_id,
                         10
-                    );
-
-                if (
-                    !Number.isInteger(
-                        produtoId
                     )
-                ) {
-                    return res.status(400).json({
-                        error:
-                            "Produto inválido."
-                    });
-                }
+                    : null;
 
-                const produto =
-                    db.prepare(`
-                        SELECT id
-                        FROM products
-                        WHERE id = ?
-                    `)
-                    .get(produtoId);
+            const reportedUserId =
+                req.body.reported_user_id
+                    ? Number.parseInt(
+                        req.body.reported_user_id,
+                        10
+                    )
+                    : null;
 
-                if (!produto) {
+            const reason = String(
+                req.body.reason || ""
+            ).trim();
 
-                    return res.status(404).json({
-                        error:
-                            "Produto não encontrado."
-                    });
-                }
+            if (!reason) {
+                return res.status(400).json({
+                    error: "Informe o motivo da denúncia."
+                });
             }
 
-            if (reported_user_id !== null) {
+            if (reason.length > 2000) {
+                return res.status(400).json({
+                    error: "A denúncia é muito grande."
+                });
+            }
 
-                usuarioId =
-                    Number.parseInt(
-                        reported_user_id,
-                        10
-                    );
-
-                if (
-                    !Number.isInteger(
-                        usuarioId
-                    )
-                ) {
-                    return res.status(400).json({
-                        error:
-                            "Usuário inválido."
-                    });
-                }
-
-                const usuario =
-                    db.prepare(`
-                        SELECT id
-                        FROM users
-                        WHERE id = ?
-                    `)
-                    .get(usuarioId);
-
-                if (!usuario) {
-
-                    return res.status(404).json({
-                        error:
-                            "Usuário não encontrado."
-                    });
-                }
+            if (!productId && !reportedUserId) {
+                return res.status(400).json({
+                    error: "Informe o produto ou usuário denunciado."
+                });
             }
 
             if (
-                produtoId === null &&
-                usuarioId === null
+                productId &&
+                reportedUserId
             ) {
                 return res.status(400).json({
-                    error:
-                        "A denúncia precisa estar relacionada a um produto ou usuário."
+                    error: "Informe apenas um alvo."
                 });
             }
 
-            db.prepare(`
-                INSERT INTO reports
-                (
+            if (productId) {
+                const produto = db.prepare(`
+                    SELECT id
+                    FROM products
+                    WHERE id = ?
+                `).get(productId);
+
+                if (!produto) {
+                    return res.status(404).json({
+                        error: "Produto não encontrado."
+                    });
+                }
+            }
+
+            if (reportedUserId) {
+                const usuario = db.prepare(`
+                    SELECT id
+                    FROM users
+                    WHERE id = ?
+                `).get(reportedUserId);
+
+                if (!usuario) {
+                    return res.status(404).json({
+                        error: "Usuário não encontrado."
+                    });
+                }
+
+                if (reportedUserId === req.user.id) {
+                    return res.status(400).json({
+                        error: "Você não pode denunciar a si mesmo."
+                    });
+                }
+            }
+
+            const resultado = db.prepare(`
+                INSERT INTO reports (
                     reporter_id,
                     product_id,
                     reported_user_id,
                     reason,
-                    description,
-                    status,
-                    created_at
+                    status
                 )
-
-                VALUES
-                (?, ?, ?, ?, ?, 'pending', ?)
-            `)
-            .run(
+                VALUES (?, ?, ?, ?, 'pending')
+            `).run(
                 req.user.id,
-                produtoId,
-                usuarioId,
-                motivo,
-                detalhes,
-                Date.now()
+                productId,
+                reportedUserId,
+                reason
             );
 
-            res.status(201).json({
-                message:
-                    "Denúncia enviada para análise."
+            return res.status(201).json({
+                success: true,
+                report_id: resultado.lastInsertRowid,
+                message: "Denúncia enviada para análise."
             });
 
         } catch (erro) {
+            console.error(
+                "Erro ao criar denúncia:",
+                erro
+            );
 
-            console.error(erro);
-
-            res.status(500).json({
-                error:
-                    "Erro ao enviar denúncia."
+            return res.status(500).json({
+                error: "Não foi possível enviar a denúncia."
             });
         }
     }
 );
-
 
 module.exports = router;
