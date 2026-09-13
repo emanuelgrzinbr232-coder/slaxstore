@@ -8,7 +8,7 @@ const path = require("path");
 
 require("./database");
 
-const auth = require("./auth");
+const { router: auth } = require("./auth");
 
 const app = express();
 
