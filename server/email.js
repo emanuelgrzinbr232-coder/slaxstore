@@ -1,298 +1,198 @@
-const nodemailer = require("nodemailer");
+const https = require("https");
 
-let transporter = null;
-
-function createTransporter() {
-if (transporter) {
-return transporter;
+function getConfig() {
+return {
+apiKey: process.env.BREVO_API_KEY,
+fromEmail: process.env.EMAIL_FROM || "SlaxStore [noreply@example.com](mailto:noreply@example.com)",
+};
 }
 
-const host = process.env.SMTP_HOST;
-const port = Number(process.env.SMTP_PORT || 587);
-const user = process.env.SMTP_USER;
-const pass = process.env.SMTP_PASS;
+function parseFromEmail(value) {
+const match = value.match(/<([^>]+)>/);
 
-if (!host || !user || !pass) {
-return null;
+if (match) {
+return {
+email: match[1].trim(),
+name: value.replace(match[0], "").trim() || "SlaxStore",
+};
 }
 
-transporter = nodemailer.createTransport({
-host,
-port,
-secure: port === 465,
-auth: {
-user,
-pass
+return {
+email: value.trim(),
+name: "SlaxStore",
+};
 }
+
+function sendBrevoEmail({ to, subject, html }) {
+return new Promise((resolve, reject) => {
+const config = getConfig();
+
+```
+if (!config.apiKey) {
+  return reject(
+    new Error("BREVO_API_KEY não configurada no ambiente.")
+  );
+}
+
+const sender = parseFromEmail(config.fromEmail);
+
+const payload = JSON.stringify({
+  sender: {
+    name: sender.name,
+    email: sender.email,
+  },
+  to: [
+    {
+      email: to,
+    },
+  ],
+  subject,
+  htmlContent: html,
 });
 
-return transporter;
+const request = https.request(
+  {
+    hostname: "api.brevo.com",
+    path: "/v3/smtp/email",
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "api-key": config.apiKey,
+      "content-type": "application/json",
+      "content-length": Buffer.byteLength(payload),
+    },
+  },
+  (response) => {
+    let body = "";
+
+    response.on("data", (chunk) => {
+      body += chunk;
+    });
+
+    response.on("end", () => {
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        let data = {};
+
+        try {
+          data = body ? JSON.parse(body) : {};
+        } catch {}
+
+        resolve(data);
+        return;
+      }
+
+      reject(
+        new Error(
+          `Brevo retornou HTTP ${response.statusCode}: ${body}`
+        )
+      );
+    });
+  }
+);
+
+request.on("error", reject);
+
+request.write(payload);
+request.end();
+```
+
+});
 }
 
-async function sendVerificationEmail({
-to,
-name,
-code
-}) {
-const mailer = createTransporter();
+async function sendVerificationEmail(email, name, code) {
+const safeName = String(name || "usuário");
 
-/*
-
-* Se o SMTP ainda não estiver configurado,
-* mostramos o código no console para testes.
-  */
-  if (!mailer) {
-  console.log("=================================");
-  console.log("SLAXSTORE - CÓDIGO DE VERIFICAÇÃO");
-  console.log("E-mail:", to);
-  console.log("Código:", code);
-  console.log("=================================");
+return sendBrevoEmail({
+to: email,
+subject: "Seu código de verificação - SlaxStore",
+html: ` <div style="font-family:Arial,sans-serif;background:#080b12;padding:30px;"> <div style="max-width:520px;margin:auto;background:#111827;border-radius:16px;padding:30px;color:white;"> <h1 style="color:#3b82f6;">SLAXSTORE</h1>
 
 ```
-return {
-```
+      <p>Olá, ${safeName}!</p>
 
-```
-  sent: false,
-  development: true,
-  code
-};
-```
-
-}
-
-const from =
-process.env.SMTP_FROM ||
-process.env.SMTP_USER;
-
-await mailer.sendMail({
-from: `"SlaxStore" <${from}>`,
-to,
-subject: "Código de verificação - SlaxStore",
-text: `Olá ${name || ""}!
-
-Seu código de verificação do SlaxStore é:
-
-${code}
-
-Esse código expira em 15 minutos.
-
-Se você não criou uma conta no SlaxStore, ignore este e-mail.
-
-SlaxStore`,
-    html: ` <div style="
-     background:#05070d;
-     padding:40px 20px;
-     font-family:Arial,sans-serif;
-     color:#ffffff;
-   "> <div style="
-       max-width:520px;
-       margin:auto;
-       background:#0b1020;
-       border:1px solid #1d2b4d;
-       border-radius:18px;
-       padding:30px;
-       text-align:center;
-     "> <h1 style="
-         margin:0 0 10px;
-         color:#3b82f6;
-       ">
-SLAXSTORE </h1>
-
-```
-      <p style="
-        color:#b8c2d9;
-        font-size:16px;
-      ">
-        Olá ${name || ""}! Confirme seu endereço de e-mail.
-      </p>
+      <p>Seu código de verificação é:</p>
 
       <div style="
-        margin:30px 0;
-        padding:20px;
-        border-radius:14px;
-        background:#070b14;
-        border:1px solid #243657;
+        background:#0b1220;
+        border:1px solid #2563eb;
+        border-radius:12px;
+        padding:18px;
+        text-align:center;
+        font-size:32px;
+        font-weight:bold;
+        letter-spacing:8px;
+        color:#60a5fa;
       ">
-        <div style="
-          color:#8fa3c7;
-          font-size:13px;
-          margin-bottom:10px;
-        ">
-          SEU CÓDIGO
-        </div>
-
-        <strong style="
-          font-size:34px;
-          letter-spacing:8px;
-          color:#ffffff;
-        ">
-          ${code}
-        </strong>
+        ${code}
       </div>
 
-      <p style="
-        color:#8fa3c7;
-        font-size:13px;
-      ">
-        Este código expira em 15 minutos.
+      <p style="color:#9ca3af;">
+        Esse código é válido por alguns minutos.
       </p>
 
-      <p style="
-        color:#687895;
-        font-size:12px;
-        margin-top:25px;
-      ">
-        Se você não criou uma conta no SlaxStore,
-        ignore este e-mail.
+      <p style="color:#9ca3af;">
+        Se você não criou uma conta na SlaxStore, ignore este email.
       </p>
     </div>
   </div>
-`
+`,
 ```
 
 });
-
-return {
-sent: true,
-development: false
-};
 }
 
-async function sendPasswordResetEmail({
-to,
-name,
-code
-}) {
-const mailer = createTransporter();
+async function sendPasswordResetEmail(email, name, code) {
+const safeName = String(name || "usuário");
 
-if (!mailer) {
-console.log("=================================");
-console.log("SLAXSTORE - CÓDIGO DE RECUPERAÇÃO");
-console.log("E-mail:", to);
-console.log("Código:", code);
-console.log("=================================");
+return sendBrevoEmail({
+to: email,
+subject: "Código para redefinir sua senha - SlaxStore",
+html: ` <div style="font-family:Arial,sans-serif;background:#080b12;padding:30px;"> <div style="max-width:520px;margin:auto;background:#111827;border-radius:16px;padding:30px;color:white;"> <h1 style="color:#3b82f6;">SLAXSTORE</h1>
 
 ```
-return {
-  sent: false,
-  development: true,
-  code
-};
-```
+      <p>Olá, ${safeName}!</p>
 
-}
+      <p>Recebemos uma solicitação para redefinir sua senha.</p>
 
-const from =
-process.env.SMTP_FROM ||
-process.env.SMTP_USER;
-
-await mailer.sendMail({
-from: `"SlaxStore" <${from}>`,
-to,
-subject: "Recuperação de senha - SlaxStore",
-text: `Olá ${name || ""}!
-
-Seu código para recuperar sua senha do SlaxStore é:
-
-${code}
-
-Esse código expira em 15 minutos.
-
-Se você não solicitou a recuperação, ignore este e-mail.
-
-SlaxStore`,
-    html: ` <div style="
-     background:#05070d;
-     padding:40px 20px;
-     font-family:Arial,sans-serif;
-     color:#ffffff;
-   "> <div style="
-       max-width:520px;
-       margin:auto;
-       background:#0b1020;
-       border:1px solid #1d2b4d;
-       border-radius:18px;
-       padding:30px;
-       text-align:center;
-     "> <h1 style="
-         margin:0 0 10px;
-         color:#3b82f6;
-       ">
-SLAXSTORE </h1>
-
-```
-      <p style="color:#b8c2d9;">
-        Solicitação de recuperação de senha.
-      </p>
+      <p>Seu código é:</p>
 
       <div style="
-        margin:30px 0;
-        padding:20px;
-        border-radius:14px;
-        background:#070b14;
-        border:1px solid #243657;
+        background:#0b1220;
+        border:1px solid #2563eb;
+        border-radius:12px;
+        padding:18px;
+        text-align:center;
+        font-size:32px;
+        font-weight:bold;
+        letter-spacing:8px;
+        color:#60a5fa;
       ">
-        <div style="
-          color:#8fa3c7;
-          font-size:13px;
-          margin-bottom:10px;
-        ">
-          CÓDIGO
-        </div>
-
-        <strong style="
-          font-size:34px;
-          letter-spacing:8px;
-        ">
-          ${code}
-        </strong>
+        ${code}
       </div>
 
-      <p style="
-        color:#8fa3c7;
-        font-size:13px;
-      ">
-        Este código expira em 15 minutos.
+      <p style="color:#9ca3af;">
+        Se você não solicitou isso, ignore este email.
       </p>
     </div>
   </div>
-`
+`,
 ```
 
 });
-
-return {
-sent: true,
-development: false
-};
 }
 
 async function verifyEmailConnection() {
-const mailer = createTransporter();
-
-if (!mailer) {
+if (!process.env.BREVO_API_KEY) {
+console.warn("BREVO_API_KEY não configurada.");
 return false;
 }
 
-try {
-await mailer.verify();
+console.log("Configuração da Brevo encontrada.");
 return true;
-} catch (error) {
-console.error(
-"SMTP indisponível:",
-error.message
-);
-
-```
-return false;
-```
-
-}
 }
 
 module.exports = {
 sendVerificationEmail,
 sendPasswordResetEmail,
-verifyEmailConnection
+verifyEmailConnection,
 };
