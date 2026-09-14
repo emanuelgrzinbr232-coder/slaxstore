@@ -1,272 +1,291 @@
-const {
-readDb,
-writeDb,
-nextId,
-now
-} = require("./server-database");
+const { readDb, writeDb, nextId, now } = require("./database");
 
-const {
-authRequired
-} = require("./auth");
+function createModerationRecord({
+userId,
+action,
+reason = "",
+moderatorId = null,
+metadata = {}
+}) {
+const db = readDb();
 
-function adminRequired(
-req,
-res,
-next
+const record = {
+id: nextId("moderation"),
+userId: Number(userId),
+action: String(action || "unknown"),
+reason: String(reason || ""),
+moderatorId: moderatorId ? Number(moderatorId) : null,
+metadata,
+createdAt: now()
+};
+
+db.moderation.push(record);
+
+writeDb(db);
+
+return record;
+}
+
+function getModerationRecords(userId = null) {
+const db = readDb();
+
+if (userId === null || userId === undefined) {
+return db.moderation;
+}
+
+return db.moderation.filter(
+(record) => Number(record.userId) === Number(userId)
+);
+}
+
+function banUser(userId, reason, moderatorId = null) {
+const db = readDb();
+
+const user = db.users.find(
+(item) => Number(item.id) === Number(userId)
+);
+
+if (!user) {
+throw new Error("Usuário não encontrado.");
+}
+
+user.banned = true;
+user.banReason = String(reason || "Violação das regras.");
+user.bannedAt = now();
+user.updatedAt = now();
+
+writeDb(db);
+
+createModerationRecord({
+userId: user.id,
+action: "ban",
+reason: user.banReason,
+moderatorId
+});
+
+return user;
+}
+
+function unbanUser(userId, moderatorId = null) {
+const db = readDb();
+
+const user = db.users.find(
+(item) => Number(item.id) === Number(userId)
+);
+
+if (!user) {
+throw new Error("Usuário não encontrado.");
+}
+
+user.banned = false;
+user.banReason = null;
+user.bannedAt = null;
+user.updatedAt = now();
+
+writeDb(db);
+
+createModerationRecord({
+userId: user.id,
+action: "unban",
+reason: "Banimento removido.",
+moderatorId
+});
+
+return user;
+}
+
+function suspendUser(
+userId,
+durationMinutes,
+reason,
+moderatorId = null
 ) {
 const db = readDb();
 
-const user =
-db.users.find(
-item =>
-String(item.id) ===
-String(req.auth.id)
+const user = db.users.find(
+(item) => Number(item.id) === Number(userId)
 );
 
+if (!user) {
+throw new Error("Usuário não encontrado.");
+}
+
+const duration = Number(durationMinutes);
+
+if (!Number.isFinite(duration) || duration <= 0) {
+throw new Error("Duração da suspensão inválida.");
+}
+
+user.suspendedUntil =
+Date.now() + duration * 60 * 1000;
+
+user.suspensionReason =
+String(reason || "Violação das regras.");
+
+user.updatedAt = now();
+
+writeDb(db);
+
+createModerationRecord({
+userId: user.id,
+action: "suspend",
+reason: user.suspensionReason,
+moderatorId,
+metadata: {
+durationMinutes: duration,
+suspendedUntil: user.suspendedUntil
+}
+});
+
+return user;
+}
+
+function clearSuspension(userId, moderatorId = null) {
+const db = readDb();
+
+const user = db.users.find(
+(item) => Number(item.id) === Number(userId)
+);
+
+if (!user) {
+throw new Error("Usuário não encontrado.");
+}
+
+user.suspendedUntil = null;
+user.suspensionReason = null;
+user.updatedAt = now();
+
+writeDb(db);
+
+createModerationRecord({
+userId: user.id,
+action: "unsuspend",
+reason: "Suspensão removida.",
+moderatorId
+});
+
+return user;
+}
+
+function isUserBlocked(user) {
+if (!user) {
+return {
+blocked: true,
+reason: "Usuário não encontrado."
+};
+}
+
+if (user.banned === true) {
+return {
+blocked: true,
+reason:
+user.banReason ||
+"Sua conta foi banida."
+};
+}
+
 if (
-!user ||
-!user.isAdmin
+user.suspendedUntil &&
+Number(user.suspendedUntil) > Date.now()
 ) {
+const remainingMs =
+Number(user.suspendedUntil) - Date.now();
+
+```
+const remainingMinutes = Math.ceil(
+  remainingMs / 60000
+);
+
+return {
+  blocked: true,
+  reason:
+    user.suspensionReason ||
+    "Sua conta está temporariamente suspensa.",
+  remainingMinutes
+};
+```
+
+}
+
+return {
+blocked: false,
+reason: null
+};
+}
+
+function moderationMiddleware(req, res, next) {
+if (!req.user) {
+return next();
+}
+
+const status = isUserBlocked(req.user);
+
+if (!status.blocked) {
+return next();
+}
+
 return res.status(403).json({
-error:
-"Acesso restrito à administração."
+success: false,
+message: status.reason,
+moderation: {
+blocked: true,
+remainingMinutes:
+status.remainingMinutes || null
+}
 });
 }
 
-req.adminUser =
-user;
+function deleteProductForModeration(
+productId,
+moderatorId = null,
+reason = "Produto removido pela moderação."
+) {
+const db = readDb();
 
-next();
+const index = db.products.findIndex(
+(product) =>
+Number(product.id) === Number(productId)
+);
+
+if (index === -1) {
+throw new Error("Produto não encontrado.");
 }
 
-function register(app) {
-/*
+const product = db.products[index];
 
-* DENUNCIAR PRODUTO
-  */
-  app.post(
-  "/api/moderation/report",
-  authRequired,
-  (req, res) => {
-  const reason =
-  String(
-  req.body.reason || ""
-  ).trim();
+product.moderated = true;
+product.moderationReason = reason;
+product.moderatedAt = now();
+product.updatedAt = now();
 
-  const productId =
-  String(
-  req.body.productId || ""
-  ).trim();
+db.products[index] = product;
 
-  if (!reason) {
-  return res.status(400).json({
-  error:
-  "Informe o motivo da denúncia."
-  });
-  }
+writeDb(db);
 
-  const db = readDb();
+if (product.sellerId) {
+createModerationRecord({
+userId: product.sellerId,
+action: "product_removed",
+reason,
+moderatorId,
+metadata: {
+productId: product.id,
+productName: product.name
+}
+});
+}
 
-  const report = {
-  id:
-  nextId(
-  db,
-  "moderation"
-  ),
-
-  reporterId:
-  req.auth.id,
-
-  productId:
-  productId || null,
-
-  reason,
-
-  status:
-  "pending",
-
-  createdAt:
-  now()
-  };
-
-  db.moderation.push(
-  report
-  );
-
-  writeDb(db);
-
-  res.status(201).json({
-  message:
-  "Denúncia enviada.",
-
-  report
-  });
-  }
-  );
-
-/*
-
-* LISTAR DENÚNCIAS
-  */
-  app.get(
-  "/api/admin/moderation",
-  authRequired,
-  adminRequired,
-  (req, res) => {
-  const db = readDb();
-
-  res.json({
-  reports:
-  db.moderation
-  });
-  }
-  );
-
-/*
-
-* ALTERAR STATUS DA DENÚNCIA
-  */
-  app.patch(
-  "/api/admin/moderation/:id",
-  authRequired,
-  adminRequired,
-  (req, res) => {
-  const db = readDb();
-
-  const report =
-  db.moderation.find(
-  item =>
-  String(item.id) ===
-  String(req.params.id)
-  );
-
-  if (!report) {
-  return res.status(404).json({
-  error:
-  "Denúncia não encontrada."
-  });
-  }
-
-  const allowedStatuses = [
-  "pending",
-  "reviewing",
-  "resolved",
-  "rejected"
-  ];
-
-  const newStatus =
-  String(
-  req.body.status ||
-  report.status
-  );
-
-  if (
-  !allowedStatuses.includes(
-  newStatus
-  )
-  ) {
-  return res.status(400).json({
-  error:
-  "Status inválido."
-  });
-  }
-
-  report.status =
-  newStatus;
-
-  writeDb(db);
-
-  res.json({
-  message:
-  "Denúncia atualizada.",
-
-  report
-  });
-  }
-  );
-
-/*
-
-* ESTATÍSTICAS DO ADMIN
-  */
-  app.get(
-  "/api/admin/stats",
-  authRequired,
-  adminRequired,
-  (req, res) => {
-  const db = readDb();
-
-  res.json({
-  users:
-  db.users.length,
-
-  products:
-  db.products.filter(
-  product =>
-  product.status ===
-  "active"
-  ).length,
-
-  orders:
-  db.orders.length,
-
-  pendingReports:
-  db.moderation.filter(
-  report =>
-  report.status ===
-  "pending"
-  ).length,
-
-  withdrawals:
-  db.withdrawals.length
-  });
-  }
-  );
-
-/*
-
-* LISTAR USUÁRIOS PARA ADMIN
-  */
-  app.get(
-  "/api/admin/users",
-  authRequired,
-  adminRequired,
-  (req, res) => {
-  const db = readDb();
-
-  const users =
-  db.users.map(
-  user => ({
-  id: user.id,
-  username:
-  user.username,
-  email:
-  user.email,
-  balance:
-  Number(
-  user.balance || 0
-  ),
-  verified:
-  Boolean(
-  user.verified
-  ),
-  isAdmin:
-  Boolean(
-  user.isAdmin
-  ),
-  createdAt:
-  user.createdAt
-  })
-  );
-
-  res.json({
-  users
-  });
-  }
-  );
-  }
+return product;
+}
 
 module.exports = {
-register,
-adminRequired
+createModerationRecord,
+getModerationRecords,
+banUser,
+unbanUser,
+suspendUser,
+clearSuspension,
+isUserBlocked,
+moderationMiddleware,
+deleteProductForModeration
 };
