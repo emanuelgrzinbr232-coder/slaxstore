@@ -1,163 +1,250 @@
 const {
-readDb
-} = require("./server-database");
+readDb,
+writeDb,
+nextId,
+now
+} = require("./database");
 
 const {
-authRequired
-} = require("./auth");
+getRawProductById
+} = require("./products");
 
-function register(app) {
-/*
+const PURCHASE_FEE = 97; // R$ 0,97
 
-* PEDIDOS DO USUÁRIO
-  */
-  app.get(
-  "/api/orders",
-  authRequired,
-  (req, res) => {
-  const db = readDb();
+function publicOrder(order) {
+return {
+id: order.id,
+productId: order.productId,
+buyerId: order.buyerId,
+sellerId: order.sellerId,
+productName: order.productName,
+productPrice: order.productPrice,
+fee: order.fee,
+total: order.total,
+status: order.status,
+createdAt: order.createdAt,
+updatedAt: order.updatedAt
+};
+}
 
-  const orders =
-  db.orders
-  .filter(order =>
-  String(
-  order.buyerId
-  ) ===
-  String(
-  req.auth.id
-  ) ||
+function createOrder({
+buyerId,
+productId
+}) {
+const db = readDb();
 
-  ```
-     String(
-       order.sellerId
-     ) ===
-       String(
-         req.auth.id
-       )
-   )
-   .map(order => {
-     const product =
-       db.products.find(
-         product =>
-           String(
-             product.id
-           ) ===
-             String(
-               order.productId
-             )
-       );
+const buyer = db.users.find(
+(user) =>
+Number(user.id) === Number(buyerId)
+);
 
-     const buyer =
-       db.users.find(
-         user =>
-           String(
-             user.id
-           ) ===
-             String(
-               order.buyerId
-             )
-       );
+if (!buyer) {
+throw new Error("Comprador não encontrado.");
+}
 
-     const seller =
-       db.users.find(
-         user =>
-           String(
-             user.id
-           ) ===
-             String(
-               order.sellerId
-             )
-       );
+const product = getRawProductById(productId);
 
-     return {
-       ...order,
+if (!product) {
+throw new Error("Produto não encontrado.");
+}
 
-       productName:
-         product
-           ? product.name
-           : "Produto removido",
+if (product.sold) {
+throw new Error(
+"Este produto já foi vendido."
+);
+}
 
-       buyerName:
-         buyer
-           ? buyer.username
-           : "Usuário",
+if (product.moderated) {
+throw new Error(
+"Este produto não está disponível."
+);
+}
 
-       sellerName:
-         seller
-           ? seller.username
-           : "Usuário"
-     };
-   })
-   .sort(
-     (a, b) =>
-       new Date(
-         b.createdAt
-       ) -
-       new Date(
-         a.createdAt
-       )
-   );
-  ```
+if (
+Number(product.sellerId) ===
+Number(buyerId)
+) {
+throw new Error(
+"Você não pode comprar seu próprio produto."
+);
+}
 
-  res.json({
-  orders
-  });
-  }
-  );
+const productPrice = Number(product.price);
 
-/*
+if (
+!Number.isFinite(productPrice) ||
+productPrice <= 0
+) {
+throw new Error(
+"Preço do produto inválido."
+);
+}
 
-* PEDIDO ESPECÍFICO
-  */
-  app.get(
-  "/api/orders/:id",
-  authRequired,
-  (req, res) => {
-  const db = readDb();
+const fee = PURCHASE_FEE;
+const total = productPrice + fee;
 
-  const order =
-  db.orders.find(
-  item =>
-  String(item.id) ===
-  String(req.params.id)
-  );
+const buyerBalance = Number(
+buyer.balance || 0
+);
 
-  if (!order) {
-  return res.status(404).json({
-  error:
-  "Pedido não encontrado."
-  });
-  }
+if (buyerBalance < total) {
+throw new Error(
+`Saldo insuficiente. Você precisa de R$ ${(total / 100).toFixed(2).replace(".", ",")}.`
+);
+}
 
-  const canSee =
-  String(
-  order.buyerId
-  ) ===
-  String(
-  req.auth.id
-  ) ||
+const seller = db.users.find(
+(user) =>
+Number(user.id) ===
+Number(product.sellerId)
+);
 
-  String(
-  order.sellerId
-  ) ===
-  String(
-  req.auth.id
-  );
+if (!seller) {
+throw new Error(
+"Vendedor não encontrado."
+);
+}
 
-  if (!canSee) {
-  return res.status(403).json({
-  error:
-  "Você não tem acesso a este pedido."
-  });
-  }
+buyer.balance =
+buyerBalance - total;
 
-  res.json({
-  order
-  });
-  }
-  );
-  }
+seller.balance =
+Number(seller.balance || 0) +
+productPrice;
+
+product.sold = true;
+product.buyerId = Number(buyerId);
+product.soldAt = now();
+product.updatedAt = now();
+
+const order = {
+id: nextId("order"),
+productId: Number(product.id),
+buyerId: Number(buyerId),
+sellerId: Number(product.sellerId),
+productName: product.name,
+productPrice,
+fee,
+total,
+status: "completed",
+createdAt: now(),
+updatedAt: now()
+};
+
+db.orders.push(order);
+
+writeDb(db);
+
+return {
+order: publicOrder(order),
+product: {
+id: product.id,
+name: product.name,
+description: product.description,
+category: product.category,
+image: product.image || ""
+},
+buyerBalance: buyer.balance
+};
+}
+
+function getOrdersForUser(userId) {
+const db = readDb();
+
+return db.orders
+.filter(
+(order) =>
+Number(order.buyerId) ===
+Number(userId) ||
+Number(order.sellerId) ===
+Number(userId)
+)
+.sort(
+(a, b) =>
+new Date(b.createdAt).getTime() -
+new Date(a.createdAt).getTime()
+)
+.map(publicOrder);
+}
+
+function getPurchasedOrders(userId) {
+const db = readDb();
+
+return db.orders
+.filter(
+(order) =>
+Number(order.buyerId) ===
+Number(userId)
+)
+.sort(
+(a, b) =>
+new Date(b.createdAt).getTime() -
+new Date(a.createdAt).getTime()
+)
+.map(publicOrder);
+}
+
+function getSoldOrders(userId) {
+const db = readDb();
+
+return db.orders
+.filter(
+(order) =>
+Number(order.sellerId) ===
+Number(userId)
+)
+.sort(
+(a, b) =>
+new Date(b.createdAt).getTime() -
+new Date(a.createdAt).getTime()
+)
+.map(publicOrder);
+}
+
+function getOrderById(orderId, userId = null) {
+const db = readDb();
+
+const order = db.orders.find(
+(item) =>
+Number(item.id) === Number(orderId)
+);
+
+if (!order) {
+return null;
+}
+
+if (
+userId !== null &&
+Number(order.buyerId) !==
+Number(userId) &&
+Number(order.sellerId) !==
+Number(userId)
+) {
+return null;
+}
+
+return publicOrder(order);
+}
+
+function getAllOrders() {
+const db = readDb();
+
+return [...db.orders]
+.sort(
+(a, b) =>
+new Date(b.createdAt).getTime() -
+new Date(a.createdAt).getTime()
+)
+.map(publicOrder);
+}
 
 module.exports = {
-register
+PURCHASE_FEE,
+publicOrder,
+createOrder,
+getOrdersForUser,
+getPurchasedOrders,
+getSoldOrders,
+getOrderById,
+getAllOrders
 };
