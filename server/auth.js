@@ -1,42 +1,23 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-const {
-readDb,
-writeDb,
-nextId,
-now
-} = require("./server-database");
-
-const {
-sendVerificationCode,
-verifyCode
-} = require("./email");
+const { readDb, writeDb, nextId, now } = require("./database");
 
 const JWT_SECRET =
-process.env.JWT_SECRET ||
-"SLAXSTORE_CHANGE_THIS_SECRET_BEFORE_PRODUCTION";
+process.env.JWT_SECRET || "slaxstore-secret-change-this-in-production";
 
-function cleanUser(user) {
-if (!user) return null;
+const TOKEN_EXPIRES_IN = "7d";
 
-return {
-id: user.id,
-username: user.username,
-nome: user.username,
-email: user.email,
+function cleanEmail(email) {
+return String(email || "").trim().toLowerCase();
+}
 
-```
-balance: Number(user.balance || 0),
-saldo: Number(user.balance || 0),
+function cleanName(name) {
+return String(name || "").trim();
+}
 
-verified: Boolean(user.verified),
-isAdmin: Boolean(user.isAdmin),
-
-createdAt: user.createdAt
-```
-
-};
+function generateVerificationCode() {
+return String(Math.floor(100000 + Math.random() * 900000));
 }
 
 function createToken(user) {
@@ -47,474 +28,318 @@ email: user.email
 },
 JWT_SECRET,
 {
-expiresIn: "30d"
+expiresIn: TOKEN_EXPIRES_IN
 }
 );
 }
 
-function authRequired(req, res, next) {
-const authorization =
-req.headers.authorization || "";
+function publicUser(user) {
+if (!user) return null;
 
-if (!authorization.startsWith("Bearer ")) {
-return res.status(401).json({
-error: "Você precisa estar logado."
-});
+return {
+id: user.id,
+name: user.name,
+email: user.email,
+verified: !!user.verified,
+balance: Number(user.balance || 0),
+role: user.role || "user",
+createdAt: user.createdAt
+};
 }
 
-const token = authorization.substring(7);
+function findUserById(id) {
+const db = readDb();
 
-try {
-const decoded = jwt.verify(
-token,
-JWT_SECRET
+return (
+db.users.find(
+(user) => Number(user.id) === Number(id)
+) || null
+);
+}
+
+function findUserByEmail(email) {
+const db = readDb();
+const normalizedEmail = cleanEmail(email);
+
+return (
+db.users.find(
+(user) => cleanEmail(user.email) === normalizedEmail
+) || null
+);
+}
+
+function registerUser({ name, email, password }) {
+const cleanUserName = cleanName(name);
+const cleanUserEmail = cleanEmail(email);
+const cleanPassword = String(password || "");
+
+if (cleanUserName.length < 2) {
+throw new Error("Nome inválido.");
+}
+
+if (cleanUserName.length > 40) {
+throw new Error("O nome deve ter no máximo 40 caracteres.");
+}
+
+if (!cleanUserEmail || !cleanUserEmail.includes("@")) {
+throw new Error("E-mail inválido.");
+}
+
+if (cleanPassword.length < 6) {
+throw new Error("A senha deve ter pelo menos 6 caracteres.");
+}
+
+if (cleanPassword.length > 100) {
+throw new Error("A senha é muito longa.");
+}
+
+const existingUser = findUserByEmail(cleanUserEmail);
+
+if (existingUser) {
+throw new Error("Este e-mail já está cadastrado.");
+}
+
+const db = readDb();
+
+const passwordHash = bcrypt.hashSync(cleanPassword, 12);
+
+const verificationCode = generateVerificationCode();
+
+const user = {
+id: nextId("user"),
+name: cleanUserName,
+email: cleanUserEmail,
+passwordHash,
+verified: false,
+verificationCode,
+verificationExpiresAt: Date.now() + 15 * 60 * 1000,
+balance: 0,
+role: "user",
+createdAt: now(),
+updatedAt: now()
+};
+
+db.users.push(user);
+
+writeDb(db);
+
+return {
+user: publicUser(user),
+verificationCode
+};
+}
+
+function loginUser({ email, password }) {
+const cleanUserEmail = cleanEmail(email);
+const cleanPassword = String(password || "");
+
+const user = findUserByEmail(cleanUserEmail);
+
+if (!user) {
+throw new Error("E-mail ou senha incorretos.");
+}
+
+const validPassword = bcrypt.compareSync(
+cleanPassword,
+user.passwordHash
+);
+
+if (!validPassword) {
+throw new Error("E-mail ou senha incorretos.");
+}
+
+if (!user.verified) {
+const error = new Error(
+"Verifique seu e-mail antes de entrar."
 );
 
 ```
-req.auth = decoded;
+error.code = "EMAIL_NOT_VERIFIED";
+error.user = publicUser(user);
+
+throw error;
+```
+
+}
+
+const token = createToken(user);
+
+return {
+token,
+user: publicUser(user)
+};
+}
+
+function verifyEmail({ email, code }) {
+const cleanUserEmail = cleanEmail(email);
+const cleanCode = String(code || "").trim();
+
+const db = readDb();
+
+const user = db.users.find(
+(item) => cleanEmail(item.email) === cleanUserEmail
+);
+
+if (!user) {
+throw new Error("Usuário não encontrado.");
+}
+
+if (user.verified) {
+const token = createToken(user);
+
+```
+return {
+  token,
+  user: publicUser(user)
+};
+```
+
+}
+
+if (!user.verificationCode) {
+throw new Error("Código de verificação não encontrado.");
+}
+
+if (
+!user.verificationExpiresAt ||
+Date.now() > Number(user.verificationExpiresAt)
+) {
+throw new Error(
+"O código expirou. Solicite um novo código."
+);
+}
+
+if (cleanCode !== String(user.verificationCode)) {
+throw new Error("Código de verificação inválido.");
+}
+
+user.verified = true;
+user.verificationCode = null;
+user.verificationExpiresAt = null;
+user.updatedAt = now();
+
+writeDb(db);
+
+const token = createToken(user);
+
+return {
+token,
+user: publicUser(user)
+};
+}
+
+function resendVerificationCode(email) {
+const cleanUserEmail = cleanEmail(email);
+
+const db = readDb();
+
+const user = db.users.find(
+(item) => cleanEmail(item.email) === cleanUserEmail
+);
+
+if (!user) {
+throw new Error("Usuário não encontrado.");
+}
+
+if (user.verified) {
+throw new Error("Este e-mail já foi verificado.");
+}
+
+const verificationCode = generateVerificationCode();
+
+user.verificationCode = verificationCode;
+user.verificationExpiresAt =
+Date.now() + 15 * 60 * 1000;
+user.updatedAt = now();
+
+writeDb(db);
+
+return {
+user: publicUser(user),
+verificationCode
+};
+}
+
+function authenticateToken(req, res, next) {
+try {
+const authorization = req.headers.authorization || "";
+
+```
+if (!authorization.startsWith("Bearer ")) {
+  return res.status(401).json({
+    success: false,
+    message: "Token não fornecido."
+  });
+}
+
+const token = authorization.substring(7).trim();
+
+if (!token) {
+  return res.status(401).json({
+    success: false,
+    message: "Token inválido."
+  });
+}
+
+const decoded = jwt.verify(token, JWT_SECRET);
+
+const user = findUserById(decoded.id);
+
+if (!user) {
+  return res.status(401).json({
+    success: false,
+    message: "Usuário não encontrado."
+  });
+}
+
+req.user = user;
 
 next();
 ```
 
 } catch (error) {
 return res.status(401).json({
-error: "Sua sessão expirou."
+success: false,
+message: "Sessão inválida ou expirada."
 });
 }
 }
 
-function optionalAuth(req, res, next) {
-const authorization =
-req.headers.authorization || "";
+function requireAdmin(req, res, next) {
+if (!req.user) {
+return res.status(401).json({
+success: false,
+message: "Não autenticado."
+});
+}
 
-if (authorization.startsWith("Bearer ")) {
-const token = authorization.substring(7);
-
-```
-try {
-  req.auth = jwt.verify(
-    token,
-    JWT_SECRET
-  );
-} catch {}
-```
-
+if (req.user.role !== "admin") {
+return res.status(403).json({
+success: false,
+message: "Acesso permitido somente para administradores."
+});
 }
 
 next();
 }
 
-function findUser(db, id) {
-return db.users.find(
-user => String(user.id) === String(id)
-);
+function logoutUser() {
+return {
+success: true
+};
 }
 
-function register(app) {
-/*
-
-* CADASTRO
-  */
-  app.post(
-  "/api/auth/register",
-  async (req, res) => {
-  try {
-  const username =
-  String(req.body.username || "").trim();
-
-  const email =
-  String(req.body.email || "")
-  .trim()
-  .toLowerCase();
-
-  const password =
-  String(req.body.password || "");
-
-  if (username.length < 3) {
-  return res.status(400).json({
-  error:
-  "O nome de usuário precisa ter pelo menos 3 caracteres."
-  });
-  }
-
-  if (username.length > 30) {
-  return res.status(400).json({
-  error:
-  "O nome de usuário pode ter no máximo 30 caracteres."
-  });
-  }
-
-  if (
-  !/^[^\s@]+@[^\s@]+.[^\s@]+$/.test(
-  email
-  )
-  ) {
-  return res.status(400).json({
-  error: "Digite um e-mail válido."
-  });
-  }
-
-  if (password.length < 6) {
-  return res.status(400).json({
-  error:
-  "A senha precisa ter pelo menos 6 caracteres."
-  });
-  }
-
-  const db = readDb();
-
-  const emailExists = db.users.some(
-  user => user.email === email
-  );
-
-  if (emailExists) {
-  return res.status(409).json({
-  error:
-  "Este e-mail já está cadastrado."
-  });
-  }
-
-  const usernameExists = db.users.some(
-  user =>
-  user.username.toLowerCase() ===
-  username.toLowerCase()
-  );
-
-  if (usernameExists) {
-  return res.status(409).json({
-  error:
-  "Este nome de usuário já está em uso."
-  });
-  }
-
-  const passwordHash =
-  await bcrypt.hash(password, 12);
-
-  const user = {
-  id: nextId(db, "user"),
-
-  ```
-   username,
-   email,
-
-   passwordHash,
-
-   balance: 0,
-
-   verified: false,
-
-   isAdmin: false,
-
-   createdAt: now()
-  ```
-
-  };
-
-  db.users.push(user);
-
-  writeDb(db);
-
-  const emailResult =
-  await sendVerificationCode(email);
-
-  res.status(201).json({
-  message:
-  "Conta criada. Verifique seu e-mail.",
-
-  ```
-   email,
-
-   user: cleanUser(user),
-
-   /*
-    * Só aparece quando o SMTP não está configurado.
-    * Serve para desenvolvimento/testes.
-    */
-   developmentCode:
-     emailResult.developmentCode || null
-  ```
-
-  });
-  } catch (error) {
-  console.error(
-  "Erro no cadastro:",
-  error
-  );
-
-  res.status(500).json({
-  error: "Erro ao criar sua conta."
-  });
-  }
-  }
-  );
-
-/*
-
-* LOGIN
-  */
-  app.post(
-  "/api/auth/login",
-  async (req, res) => {
-  try {
-  const email =
-  String(req.body.email || "")
-  .trim()
-  .toLowerCase();
-
-  const password =
-  String(req.body.password || "");
-
-  const db = readDb();
-
-  const user = db.users.find(
-  item => item.email === email
-  );
-
-  if (!user) {
-  return res.status(401).json({
-  error:
-  "E-mail ou senha incorretos."
-  });
-  }
-
-  const passwordCorrect =
-  await bcrypt.compare(
-  password,
-  user.passwordHash
-  );
-
-  if (!passwordCorrect) {
-  return res.status(401).json({
-  error:
-  "E-mail ou senha incorretos."
-  });
-  }
-
-  const token =
-  createToken(user);
-
-  res.json({
-  message:
-  "Login realizado com sucesso.",
-
-  ```
-   token,
-
-   user: cleanUser(user),
-
-   requiresVerification:
-     !user.verified
-  ```
-
-  });
-  } catch (error) {
-  console.error(
-  "Erro no login:",
-  error
-  );
-
-  res.status(500).json({
-  error: "Erro ao entrar."
-  });
-  }
-  }
-  );
-
-/*
-
-* USUÁRIO LOGADO
-  */
-  app.get(
-  "/api/auth/me",
-  authRequired,
-  (req, res) => {
-  const db = readDb();
-
-  const user =
-  findUser(db, req.auth.id);
-
-  if (!user) {
-  return res.status(401).json({
-  error:
-  "Usuário não encontrado."
-  });
-  }
-
-  res.json({
-  user: cleanUser(user)
-  });
-  }
-  );
-
-/*
-
-* VERIFICAR E-MAIL
-  */
-  app.post(
-  "/api/auth/verify-email",
-  (req, res) => {
-  const email =
-  String(req.body.email || "")
-  .trim()
-  .toLowerCase();
-
-  const code =
-  String(req.body.code || "").trim();
-
-  if (
-  !verifyCode(
-  email,
-  code
-  )
-  ) {
-  return res.status(400).json({
-  error:
-  "Código inválido ou expirado."
-  });
-  }
-
-  const db = readDb();
-
-  const user = db.users.find(
-  item => item.email === email
-  );
-
-  if (!user) {
-  return res.status(404).json({
-  error:
-  "Usuário não encontrado."
-  });
-  }
-
-  user.verified = true;
-
-  writeDb(db);
-
-  const token =
-  createToken(user);
-
-  res.json({
-  message:
-  "E-mail verificado com sucesso.",
-
-  token,
-
-  user: cleanUser(user)
-  });
-  }
-  );
-
-/*
-
-* REENVIAR CÓDIGO
-  */
-  app.post(
-  "/api/auth/resend-code",
-  async (req, res) => {
-  try {
-  const email =
-  String(req.body.email || "")
-  .trim()
-  .toLowerCase();
-
-  const db = readDb();
-
-  const user = db.users.find(
-  item => item.email === email
-  );
-
-  if (!user) {
-  return res.status(404).json({
-  error:
-  "E-mail não encontrado."
-  });
-  }
-
-  if (user.verified) {
-  return res.status(400).json({
-  error:
-  "Este e-mail já foi verificado."
-  });
-  }
-
-  const result =
-  await sendVerificationCode(
-  email
-  );
-
-  res.json({
-  message:
-  "Novo código enviado.",
-
-  ```
-   developmentCode:
-     result.developmentCode || null
-  ```
-
-  });
-  } catch (error) {
-  console.error(error);
-
-  res.status(500).json({
-  error:
-  "Não foi possível enviar o código."
-  });
-  }
-  }
-  );
-
-/*
-
-* LOGOUT
-*
-* Como o login usa JWT, o logout no servidor
-* apenas confirma a saída. O index.html remove
-* o token do navegador.
-  */
-  app.post(
-  "/api/auth/logout",
-  authRequired,
-  (_req, res) => {
-  res.json({
-  message:
-  "Sessão encerrada."
-  });
-  }
-  );
-
-/*
-
-* PERFIL PÚBLICO
-  */
-  app.get(
-  "/api/auth/user/:id",
-  optionalAuth,
-  (req, res) => {
-  const db = readDb();
-
-  const user =
-  findUser(
-  db,
-  req.params.id
-  );
-
-  if (!user) {
-  return res.status(404).json({
-  error:
-  "Usuário não encontrado."
-  });
-  }
-
-  res.json({
-  user: cleanUser(user)
-  });
-  }
-  );
-  }
-
 module.exports = {
-register,
-authRequired,
-optionalAuth,
-cleanUser
+JWT_SECRET,
+createToken,
+publicUser,
+findUserById,
+findUserByEmail,
+registerUser,
+loginUser,
+verifyEmail,
+resendVerificationCode,
+authenticateToken,
+requireAdmin,
+logoutUser
 };
