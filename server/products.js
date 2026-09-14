@@ -1,557 +1,374 @@
-const {
-readDb,
-writeDb,
-nextId,
-now
-} = require("./server-database");
+const { readDb, writeDb, nextId, now } = require("./database");
 
-const {
-authRequired,
-cleanUser
-} = require("./auth");
+function normalizeText(value) {
+return String(value || "").trim();
+}
 
-function publicProduct(
-product,
-db
-) {
-const seller =
-db.users.find(
-user =>
-String(user.id) ===
-String(product.sellerId)
-);
+function normalizeCategory(value) {
+const category = normalizeText(value).toLowerCase();
 
+const allowed = [
+"roblox",
+"minecraft",
+"contas",
+"itens",
+"outros"
+];
+
+return allowed.includes(category)
+? category
+: "outros";
+}
+
+function normalizePrice(value) {
+const price = Number(value);
+
+if (!Number.isFinite(price)) {
+throw new Error("Preço inválido.");
+}
+
+const cents = Math.round(price);
+
+if (cents < 1) {
+throw new Error("O preço deve ser maior que R$ 0,01.");
+}
+
+if (cents > 100000000) {
+throw new Error("Preço muito alto.");
+}
+
+return cents;
+}
+
+function publicProduct(product) {
 return {
 id: product.id,
-_id: product.id,
-
-```
 name: product.name,
-nome: product.name,
-
-description:
-  product.description,
-descricao:
-  product.description,
-
-price:
-  Number(product.price || 0),
-
-preco:
-  Number(product.price || 0),
-
-category:
-  product.category,
-
-categoria:
-  product.category,
-
-image:
-  product.image || "",
-
-imageUrl:
-  product.image || "",
-
-imagem:
-  product.image || "",
-
-sellerId:
-  product.sellerId,
-
-sellerName:
-  seller
-    ? seller.username
-    : "Vendedor",
-
-seller:
-  seller
-    ? seller.username
-    : "Vendedor",
-
-status:
-  product.status,
-
-createdAt:
-  product.createdAt
-```
-
+description: product.description,
+price: product.price,
+category: product.category,
+image: product.image || "",
+sellerId: product.sellerId,
+sellerName: product.sellerName || "Vendedor",
+sold: !!product.sold,
+available: !product.sold && !product.moderated,
+createdAt: product.createdAt,
+updatedAt: product.updatedAt
 };
 }
 
-function register(app) {
-/*
+function getProducts({
+category = null,
+search = null,
+sellerId = null
+} = {}) {
+const db = readDb();
 
-* LISTAR PRODUTOS
-  */
-  app.get(
-  "/api/products",
-  (req, res) => {
-  const db = readDb();
+let products = db.products.filter(
+(product) =>
+product.moderated !== true &&
+product.sold !== true
+);
 
-  let products =
-  db.products.filter(
-  product =>
-  product.status ===
-  "active"
+if (category) {
+const normalizedCategory =
+normalizeCategory(category);
+
+```
+products = products.filter(
+  (product) =>
+    product.category === normalizedCategory
+);
+```
+
+}
+
+if (sellerId !== null && sellerId !== undefined) {
+products = products.filter(
+(product) =>
+Number(product.sellerId) === Number(sellerId)
+);
+}
+
+if (search) {
+const term = normalizeText(search).toLowerCase();
+
+```
+products = products.filter((product) => {
+  const name = normalizeText(product.name).toLowerCase();
+  const description = normalizeText(
+    product.description
+  ).toLowerCase();
+  const productCategory = normalizeText(
+    product.category
+  ).toLowerCase();
+
+  return (
+    name.includes(term) ||
+    description.includes(term) ||
+    productCategory.includes(term)
   );
-
-  const category =
-  String(
-  req.query.category || ""
-  ).trim();
-
-  if (
-  category &&
-  category !== "Todos"
-  ) {
-  products =
-  products.filter(
-  product =>
-  String(
-  product.category
-  ).toLowerCase() ===
-  category.toLowerCase()
-  );
-  }
-
-  products.sort(
-  (a, b) =>
-  new Date(b.createdAt) -
-  new Date(a.createdAt)
-  );
-
-  res.json({
-  products:
-  products.map(
-  product =>
-  publicProduct(
-  product,
-  db
-  )
-  )
-  });
-  }
-  );
-
-/*
-
-* PESQUISA
-  */
-  app.get(
-  "/api/products/search",
-  (req, res) => {
-  const q =
-  String(
-  req.query.q || ""
-  )
-  .trim()
-  .toLowerCase();
-
-  const db = readDb();
-
-  const products =
-  db.products
-  .filter(
-  product =>
-  product.status ===
-  "active"
-  )
-  .filter(product => {
-  if (!q) {
-  return true;
-  }
-
-  ```
-     return (
-       product.name
-         .toLowerCase()
-         .includes(q) ||
-
-       product.description
-         .toLowerCase()
-         .includes(q) ||
-
-       product.category
-         .toLowerCase()
-         .includes(q)
-     );
-   })
-   .map(
-     product =>
-       publicProduct(
-         product,
-         db
-       )
-   );
-  ```
-
-  res.json({
-  products
-  });
-  }
-  );
-
-/*
-
-* DETALHES DO PRODUTO
-  */
-  app.get(
-  "/api/products/:id",
-  (req, res) => {
-  const db = readDb();
-
-  const product =
-  db.products.find(
-  item =>
-  String(item.id) ===
-  String(req.params.id)
-  );
-
-  if (!product) {
-  return res.status(404).json({
-  error:
-  "Produto não encontrado."
-  });
-  }
-
-  res.json({
-  product:
-  publicProduct(
-  product,
-  db
-  )
-  });
-  }
-  );
-
-/*
-
-* CRIAR PRODUTO
-  */
-  app.post(
-  "/api/products",
-  authRequired,
-  (req, res) => {
-  const db = readDb();
-
-  const user =
-  db.users.find(
-  item =>
-  String(item.id) ===
-  String(req.auth.id)
-  );
-
-  if (!user) {
-  return res.status(401).json({
-  error:
-  "Usuário não encontrado."
-  });
-  }
-
-  if (!user.verified) {
-  return res.status(403).json({
-  error:
-  "Verifique seu e-mail antes de vender."
-  });
-  }
-
-  const name =
-  String(
-  req.body.name || ""
-  ).trim();
-
-  const description =
-  String(
-  req.body.description || ""
-  ).trim();
-
-  const category =
-  String(
-  req.body.category ||
-  "Outros"
-  ).trim();
-
-  const image =
-  String(
-  req.body.image || ""
-  ).trim();
-
-  const price =
-  Number(
-  req.body.price
-  );
-
-  if (name.length < 2) {
-  return res.status(400).json({
-  error:
-  "Nome do produto inválido."
-  });
-  }
-
-  if (name.length > 100) {
-  return res.status(400).json({
-  error:
-  "O nome do produto é muito grande."
-  });
-  }
-
-  if (
-  !Number.isInteger(price) ||
-  price < 0
-  ) {
-  return res.status(400).json({
-  error:
-  "Preço inválido."
-  });
-  }
-
-  const product = {
-  id:
-  nextId(
-  db,
-  "product"
-  ),
-
-  sellerId:
-  user.id,
-
-  name,
-
-  description,
-
-  category,
-
-  image,
-
-  /*
-  * CENTAVOS
-  * R$ 10,00 = 1000
-  */
-  price,
-
-  status:
-  "active",
-
-  createdAt:
-  now()
-  };
-
-  db.products.push(
-  product
-  );
-
-  writeDb(db);
-
-  res.status(201).json({
-  message:
-  "Produto publicado com sucesso.",
-
-  product:
-  publicProduct(
-  product,
-  db
-  )
-  });
-  }
-  );
-
-/*
-
-* EXCLUIR PRODUTO
-  */
-  app.delete(
-  "/api/products/:id",
-  authRequired,
-  (req, res) => {
-  const db = readDb();
-
-  const product =
-  db.products.find(
-  item =>
-  String(item.id) ===
-  String(req.params.id)
-  );
-
-  if (!product) {
-  return res.status(404).json({
-  error:
-  "Produto não encontrado."
-  });
-  }
-
-  const owner =
-  String(
-  product.sellerId
-  ) ===
-  String(req.auth.id);
-
-  const user =
-  db.users.find(
-  item =>
-  String(item.id) ===
-  String(req.auth.id)
-  );
-
-  if (
-  !owner &&
-  !user?.isAdmin
-  ) {
-  return res.status(403).json({
-  error:
-  "Você não pode excluir este produto."
-  });
-  }
-
-  product.status =
-  "deleted";
-
-  writeDb(db);
-
-  res.json({
-  message:
-  "Produto removido."
-  });
-  }
-  );
-
-/*
-
-* COMPRAR PRODUTO
-  */
-  app.post(
-  "/api/products/:id/buy",
-  authRequired,
-  (req, res) => {
-  const db = readDb();
-
-  const buyer =
-  db.users.find(
-  item =>
-  String(item.id) ===
-  String(req.auth.id)
-  );
-
-  const product =
-  db.products.find(
-  item =>
-  String(item.id) ===
-  String(req.params.id)
-  );
-
-  if (
-  !buyer ||
-  !product ||
-  product.status !==
-  "active"
-  ) {
-  return res.status(404).json({
-  error:
-  "Produto não encontrado."
-  });
-  }
-
-  if (!buyer.verified) {
-  return res.status(403).json({
-  error:
-  "Verifique seu e-mail antes de comprar."
-  });
-  }
-
-  if (
-  String(
-  product.sellerId
-  ) ===
-  String(buyer.id)
-  ) {
-  return res.status(400).json({
-  error:
-  "Você não pode comprar seu próprio produto."
-  });
-  }
-
-  const price =
-  Number(
-  product.price || 0
-  );
-
-  if (
-  Number(buyer.balance) <
-  price
-  ) {
-  return res.status(400).json({
-  error:
-  "Saldo insuficiente."
-  });
-  }
-
-  const seller =
-  db.users.find(
-  item =>
-  String(item.id) ===
-  String(product.sellerId)
-  );
-
-  if (!seller) {
-  return res.status(400).json({
-  error:
-  "Vendedor não encontrado."
-  });
-  }
-
-  buyer.balance -=
-  price;
-
-  seller.balance +=
-  price;
-
-  const order = {
-  id:
-  nextId(
-  db,
-  "order"
-  ),
-
-  productId:
-  product.id,
-
-  buyerId:
-  buyer.id,
-
-  sellerId:
-  seller.id,
-
-  amount:
-  price,
-
-  status:
-  "paid",
-
-  createdAt:
-  now()
-  };
-
-  db.orders.push(
-  order
-  );
-
-  writeDb(db);
-
-  res.json({
-  message:
-  "Compra realizada com sucesso.",
-
-  order,
-
-  user:
-  cleanUser(
-  buyer
-  )
-  });
-  }
-  );
-  }
+});
+```
+
+}
+
+products.sort(
+(a, b) =>
+new Date(b.createdAt).getTime() -
+new Date(a.createdAt).getTime()
+);
+
+return products.map(publicProduct);
+}
+
+function getProductById(productId) {
+const db = readDb();
+
+const product = db.products.find(
+(item) =>
+Number(item.id) === Number(productId)
+);
+
+if (!product) {
+return null;
+}
+
+return publicProduct(product);
+}
+
+function getRawProductById(productId) {
+const db = readDb();
+
+return (
+db.products.find(
+(item) =>
+Number(item.id) === Number(productId)
+) || null
+);
+}
+
+function createProduct({
+sellerId,
+sellerName,
+name,
+description,
+price,
+category,
+image = ""
+}) {
+const cleanName = normalizeText(name);
+const cleanDescription =
+normalizeText(description);
+
+if (!sellerId) {
+throw new Error("Vendedor inválido.");
+}
+
+if (cleanName.length < 2) {
+throw new Error(
+"O nome do produto deve ter pelo menos 2 caracteres."
+);
+}
+
+if (cleanName.length > 100) {
+throw new Error(
+"O nome do produto é muito longo."
+);
+}
+
+if (cleanDescription.length < 5) {
+throw new Error(
+"A descrição deve ter pelo menos 5 caracteres."
+);
+}
+
+if (cleanDescription.length > 2000) {
+throw new Error(
+"A descrição é muito longa."
+);
+}
+
+const normalizedPrice = normalizePrice(price);
+const normalizedCategory =
+normalizeCategory(category);
+
+const db = readDb();
+
+const product = {
+id: nextId("product"),
+sellerId: Number(sellerId),
+sellerName:
+normalizeText(sellerName) || "Vendedor",
+name: cleanName,
+description: cleanDescription,
+price: normalizedPrice,
+category: normalizedCategory,
+image: normalizeText(image),
+sold: false,
+moderated: false,
+createdAt: now(),
+updatedAt: now()
+};
+
+db.products.push(product);
+
+writeDb(db);
+
+return publicProduct(product);
+}
+
+function updateProduct(
+productId,
+sellerId,
+updates = {}
+) {
+const db = readDb();
+
+const product = db.products.find(
+(item) =>
+Number(item.id) === Number(productId)
+);
+
+if (!product) {
+throw new Error("Produto não encontrado.");
+}
+
+if (
+Number(product.sellerId) !==
+Number(sellerId)
+) {
+throw new Error(
+"Você não pode editar este produto."
+);
+}
+
+if (product.sold) {
+throw new Error(
+"Um produto vendido não pode ser editado."
+);
+}
+
+if (updates.name !== undefined) {
+const name = normalizeText(updates.name);
+
+```
+if (name.length < 2 || name.length > 100) {
+  throw new Error("Nome do produto inválido.");
+}
+
+product.name = name;
+```
+
+}
+
+if (updates.description !== undefined) {
+const description =
+normalizeText(updates.description);
+
+```
+if (
+  description.length < 5 ||
+  description.length > 2000
+) {
+  throw new Error("Descrição inválida.");
+}
+
+product.description = description;
+```
+
+}
+
+if (updates.price !== undefined) {
+product.price = normalizePrice(
+updates.price
+);
+}
+
+if (updates.category !== undefined) {
+product.category = normalizeCategory(
+updates.category
+);
+}
+
+if (updates.image !== undefined) {
+product.image = normalizeText(
+updates.image
+);
+}
+
+product.updatedAt = now();
+
+writeDb(db);
+
+return publicProduct(product);
+}
+
+function removeProduct(productId, sellerId) {
+const db = readDb();
+
+const index = db.products.findIndex(
+(item) =>
+Number(item.id) === Number(productId)
+);
+
+if (index === -1) {
+throw new Error("Produto não encontrado.");
+}
+
+const product = db.products[index];
+
+if (
+Number(product.sellerId) !==
+Number(sellerId)
+) {
+throw new Error(
+"Você não pode remover este produto."
+);
+}
+
+if (product.sold) {
+throw new Error(
+"Um produto vendido não pode ser removido."
+);
+}
+
+db.products.splice(index, 1);
+
+writeDb(db);
+
+return {
+success: true
+};
+}
+
+function markProductAsSold(productId) {
+const db = readDb();
+
+const product = db.products.find(
+(item) =>
+Number(item.id) === Number(productId)
+);
+
+if (!product) {
+throw new Error("Produto não encontrado.");
+}
+
+product.sold = true;
+product.updatedAt = now();
+
+writeDb(db);
+
+return publicProduct(product);
+}
 
 module.exports = {
-register,
-publicProduct
+publicProduct,
+getProducts,
+getProductById,
+getRawProductById,
+createProduct,
+updateProduct,
+removeProduct,
+markProductAsSold
 };
