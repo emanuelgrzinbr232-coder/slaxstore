@@ -4,7 +4,7 @@
 "description": "SlaxStore Marketplace",
 "main": "Servidor/server.js",
 "scripts": {
-"start": "node Servidor/server.js"
+"start": "node server.js"
 },
 "engines": {
 "node": ">=20"
