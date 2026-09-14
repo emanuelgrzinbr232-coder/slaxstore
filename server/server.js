@@ -1,15 +1,8 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-const dotenv = require("dotenv");
-
-dotenv.config();
-
-const {
-readDb,
-writeDb,
-now
-} = require("./database");
 
 const {
 registerUser,
@@ -19,40 +12,42 @@ resendVerificationCode,
 authenticateToken,
 requireAdmin,
 publicUser,
-findUserById,
-findUserByEmail
 } = require("./auth");
 
 const {
-sendVerificationEmail,
-sendPasswordResetEmail
-} = require("./email");
+readDb,
+writeDb,
+nextId,
+now,
+} = require("./database");
 
 const {
+createProduct,
 getProducts,
 getProductById,
-createProduct,
 updateProduct,
-removeProduct
+removeProduct,
+publicProduct,
 } = require("./products");
 
 const {
 createOrder,
-getOrdersForUser,
-getPurchasedOrders,
-getSoldOrders,
-getOrderById,
-getAllOrders
+getOrdersByUser,
+getAllOrders,
 } = require("./orders");
 
 const {
-moderationMiddleware,
+sendVerificationEmail,
+verifyEmailConnection,
+} = require("./email");
+
+const {
+isUserBlocked,
 banUser,
 unbanUser,
 suspendUser,
-clearSuspension,
+unsuspendUser,
 getModerationRecords,
-deleteProductForModeration
 } = require("./moderation");
 
 const app = express();
@@ -64,447 +59,437 @@ app.set("trust proxy", 1);
 app.use(
 cors({
 origin: true,
-credentials: true
+credentials: true,
 })
 );
 
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-app.use((req, res, next) => {
-res.setHeader(
-"X-Powered-By",
-"SlaxStore"
-);
+/* =========================
+FUNÇÕES AUXILIARES
+========================= */
 
-next();
-});
-
-app.use((req, res, next) => {
-if (
-req.path.startsWith("/api/") &&
-req.path !== "/api/health"
-) {
-return authenticateTokenOptional(
-req,
-res,
-next
-);
-}
-
-next();
-});
-
-function authenticateTokenOptional(
-req,
-res,
-next
-) {
-const authorization =
-req.headers.authorization || "";
-
-if (!authorization.startsWith("Bearer ")) {
-return next();
-}
-
-authenticateToken(req, res, () => {
-next();
-});
-}
-
-function errorMessage(error) {
-return (
-error?.message ||
-"Ocorreu um erro inesperado."
-);
-}
-
-function sendError(
-res,
-error,
-status = 400
-) {
-console.error(error);
-
+function sendError(res, status, message) {
 return res.status(status).json({
 success: false,
-message: errorMessage(error)
+message,
 });
 }
 
-function requireAuthenticated(
-req,
-res,
-next
-) {
-if (!req.user) {
-return res.status(401).json({
-success: false,
-message: "Você precisa estar logado."
+function sendSuccess(res, data = {}) {
+return res.json({
+success: true,
+...data,
 });
 }
 
-next();
-}
+/* =========================
+HEALTH CHECK
+========================= */
 
-app.get(
-"/api/health",
-(req, res) => {
-res.json({
+app.get("/api/health", async (req, res) => {
+return res.json({
 online: true,
 name: "SlaxStore API",
 version: "3.0.0",
-time: now()
 });
-}
-);
+});
 
 /* =========================
 AUTH
 ========================= */
 
-app.post(
-"/api/auth/register",
-async (req, res) => {
+app.post("/api/auth/register", async (req, res) => {
 try {
-const result = registerUser({
-name: req.body.name,
-email: req.body.email,
-password: req.body.password
+const { name, email, password } = req.body;
+
+```
+if (!name || !email || !password) {
+  return sendError(
+    res,
+    400,
+    "Nome, email e senha são obrigatórios."
+  );
+}
+
+const result = await registerUser({
+  name,
+  email,
+  password,
 });
 
-```
-  let emailResult = null;
-
-  try {
-    emailResult =
-      await sendVerificationEmail({
-        to: result.user.email,
-        name: result.user.name,
-        code: result.verificationCode
-      });
-  } catch (emailError) {
-    console.error(
-      "Erro ao enviar e-mail:",
-      emailError.message
-    );
-  }
-
-  res.status(201).json({
-    success: true,
-    message:
-      "Conta criada. Verifique seu e-mail.",
-    user: result.user,
-    emailSent:
-      emailResult?.sent || false,
-    developmentCode:
-      emailResult?.development
-        ? result.verificationCode
-        : undefined
-  });
-} catch (error) {
-  sendError(res, error);
+if (!result.success) {
+  return sendError(res, 400, result.message);
 }
-```
 
-}
-);
-
-app.post(
-"/api/auth/login",
-(req, res) => {
 try {
-const result = loginUser({
-email: req.body.email,
-password: req.body.password
+  await sendVerificationEmail(
+    result.user.email,
+    result.user.name,
+    result.code
+  );
+} catch (emailError) {
+  console.error(
+    "Erro ao enviar email de verificação:",
+    emailError.message
+  );
+}
+
+return res.status(201).json({
+  success: true,
+  message:
+    "Conta criada. Verifique seu email para ativar a conta.",
+  user: result.user,
+});
+```
+
+} catch (error) {
+console.error("REGISTER ERROR:", error);
+return sendError(res, 500, "Erro interno ao criar conta.");
+}
 });
 
-```
-  res.json({
-    success: true,
-    message:
-      "Login realizado com sucesso.",
-    token: result.token,
-    user: result.user
-  });
-} catch (error) {
-  if (
-    error.code ===
-    "EMAIL_NOT_VERIFIED"
-  ) {
-    return res.status(403).json({
-      success: false,
-      message: error.message,
-      code: "EMAIL_NOT_VERIFIED",
-      user: error.user
-    });
-  }
-
-  sendError(res, error, 401);
-}
-```
-
-}
-);
-
-app.post(
-"/api/auth/verify-email",
-async (req, res) => {
+app.post("/api/auth/login", async (req, res) => {
 try {
-const result = verifyEmail({
-email: req.body.email,
-code: req.body.code
+const { email, password } = req.body;
+
+```
+if (!email || !password) {
+  return sendError(
+    res,
+    400,
+    "Email e senha são obrigatórios."
+  );
+}
+
+const result = await loginUser(email, password);
+
+if (!result.success) {
+  return sendError(res, 401, result.message);
+}
+
+if (isUserBlocked(result.user.id)) {
+  return sendError(
+    res,
+    403,
+    "Sua conta está bloqueada."
+  );
+}
+
+return res.json({
+  success: true,
+  message: "Login realizado com sucesso.",
+  token: result.token,
+  user: result.user,
+});
+```
+
+} catch (error) {
+console.error("LOGIN ERROR:", error);
+return sendError(res, 500, "Erro interno ao fazer login.");
+}
 });
 
-```
-  res.json({
-    success: true,
-    message:
-      "E-mail verificado com sucesso.",
-    token: result.token,
-    user: result.user
-  });
-} catch (error) {
-  sendError(res, error);
-}
-```
-
-}
-);
-
-app.post(
-"/api/auth/resend-code",
-async (req, res) => {
+app.post("/api/auth/verify-email", async (req, res) => {
 try {
-const result =
-resendVerificationCode(
-req.body.email
-);
+const { email, code } = req.body;
 
 ```
-  let emailResult = null;
+if (!email || !code) {
+  return sendError(
+    res,
+    400,
+    "Email e código são obrigatórios."
+  );
+}
 
-  try {
-    emailResult =
-      await sendVerificationEmail({
-        to: result.user.email,
-        name: result.user.name,
-        code: result.verificationCode
-      });
-  } catch (emailError) {
-    console.error(
-      "Erro ao enviar código:",
-      emailError.message
-    );
-  }
+const result = await verifyEmail(email, code);
 
-  res.json({
-    success: true,
-    message:
-      "Novo código enviado.",
-    emailSent:
-      emailResult?.sent || false,
-    developmentCode:
-      emailResult?.development
-        ? result.verificationCode
-        : undefined
-  });
+if (!result.success) {
+  return sendError(res, 400, result.message);
+}
+
+return res.json({
+  success: true,
+  message: "Email verificado com sucesso.",
+  token: result.token,
+  user: result.user,
+});
+```
+
 } catch (error) {
-  sendError(res, error);
+console.error("VERIFY EMAIL ERROR:", error);
+return sendError(
+res,
+500,
+"Erro ao verificar email."
+);
 }
+});
+
+app.post("/api/auth/resend-code", async (req, res) => {
+try {
+const { email } = req.body;
+
+```
+if (!email) {
+  return sendError(
+    res,
+    400,
+    "Informe seu email."
+  );
+}
+
+const result = await resendVerificationCode(email);
+
+if (!result.success) {
+  return sendError(res, 400, result.message);
+}
+
+try {
+  await sendVerificationEmail(
+    result.user.email,
+    result.user.name,
+    result.code
+  );
+} catch (emailError) {
+  console.error(
+    "Erro ao reenviar email:",
+    emailError.message
+  );
+}
+
+return sendSuccess(res, {
+  message: "Novo código enviado.",
+});
 ```
 
-}
+} catch (error) {
+console.error("RESEND ERROR:", error);
+return sendError(
+res,
+500,
+"Erro ao reenviar código."
 );
+}
+});
 
-app.post(
-"/api/auth/logout",
-(req, res) => {
-res.json({
+app.post("/api/auth/logout", authenticateToken, (req, res) => {
+return sendSuccess(res, {
+message: "Logout realizado.",
+});
+});
+
+app.get("/api/auth/me", authenticateToken, (req, res) => {
+return res.json({
 success: true,
-message: "Logout realizado."
+user: publicUser(req.user),
 });
-}
-);
-
-app.get(
-"/api/auth/me",
-requireAuthenticated,
-(req, res) => {
-res.json({
-success: true,
-user: publicUser(req.user)
 });
-}
-);
 
 /* =========================
 PROFILE
 ========================= */
 
-app.get(
-"/api/profile",
-requireAuthenticated,
-moderationMiddleware,
-(req, res) => {
-res.json({
+app.get("/api/profile", authenticateToken, (req, res) => {
+return res.json({
 success: true,
-user: publicUser(req.user)
+user: publicUser(req.user),
 });
-}
-);
+});
 
 /* =========================
-PRODUCTS
+PRODUTOS
 ========================= */
 
-app.get(
-"/api/products",
-(req, res) => {
+app.get("/api/products", (req, res) => {
 try {
-const products = getProducts({
-category:
-req.query.category ||
-req.query.categoria ||
-null,
-search:
-req.query.search ||
-null,
-sellerId:
-req.query.sellerId ||
-null
+const products = getProducts();
+
+```
+return res.json({
+  success: true,
+  products: products.map(publicProduct),
+});
+```
+
+} catch (error) {
+console.error("PRODUCTS ERROR:", error);
+return sendError(
+res,
+500,
+"Erro ao carregar produtos."
+);
+}
 });
 
-```
-  res.json({
-    success: true,
-    products
-  });
-} catch (error) {
-  sendError(res, error, 500);
-}
-```
-
-}
-);
-
-app.get(
-"/api/products/search",
-(req, res) => {
+app.get("/api/products/search", (req, res) => {
 try {
-const products = getProducts({
-search:
-req.query.q ||
-req.query.search ||
-""
+const query = String(req.query.q || "")
+.trim()
+.toLowerCase();
+
+```
+if (!query) {
+  const products = getProducts();
+
+  return res.json({
+    success: true,
+    products: products.map(publicProduct),
+  });
+}
+
+const products = getProducts().filter((product) => {
+  const text = [
+    product.name,
+    product.description,
+    product.category,
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  return text.includes(query);
 });
 
+return res.json({
+  success: true,
+  products: products.map(publicProduct),
+});
 ```
-  res.json({
-    success: true,
-    products
-  });
+
 } catch (error) {
-  sendError(res, error, 500);
-}
-```
-
-}
+console.error("SEARCH PRODUCTS ERROR:", error);
+return sendError(
+res,
+500,
+"Erro ao pesquisar produtos."
 );
-
-app.get(
-"/api/products/:id",
-(req, res) => {
-try {
-const product =
-getProductById(req.params.id);
-
-```
-  if (!product) {
-    return res.status(404).json({
-      success: false,
-      message:
-        "Produto não encontrado."
-    });
-  }
-
-  res.json({
-    success: true,
-    product
-  });
-} catch (error) {
-  sendError(res, error, 500);
 }
-```
-
-}
-);
-
-app.post(
-"/api/products",
-requireAuthenticated,
-moderationMiddleware,
-(req, res) => {
-try {
-const product = createProduct({
-sellerId: req.user.id,
-sellerName: req.user.name,
-name:
-req.body.name ||
-req.body.nome,
-description:
-req.body.description ||
-req.body.descricao,
-price:
-req.body.price ??
-req.body.preco,
-category:
-req.body.category ||
-req.body.categoria,
-image:
-req.body.image ||
-req.body.imageUrl ||
-req.body.imagem ||
-""
 });
 
+app.get("/api/products/:id", (req, res) => {
+try {
+const product = getProductById(req.params.id);
+
 ```
-  res.status(201).json({
-    success: true,
-    message:
-      "Produto publicado com sucesso.",
-    product
-  });
-} catch (error) {
-  sendError(res, error);
+if (!product) {
+  return sendError(
+    res,
+    404,
+    "Produto não encontrado."
+  );
 }
+
+return res.json({
+  success: true,
+  product: publicProduct(product),
+});
 ```
 
-}
+} catch (error) {
+console.error("GET PRODUCT ERROR:", error);
+return sendError(
+res,
+500,
+"Erro ao carregar produto."
 );
+}
+});
+
+app.post("/api/products", authenticateToken, async (req, res) => {
+try {
+if (!req.user.verified) {
+return sendError(
+res,
+403,
+"Verifique seu email antes de vender."
+);
+}
+
+```
+if (isUserBlocked(req.user.id)) {
+  return sendError(
+    res,
+    403,
+    "Sua conta está bloqueada."
+  );
+}
+
+const result = createProduct({
+  ...req.body,
+  sellerId: req.user.id,
+});
+
+if (!result.success) {
+  return sendError(res, 400, result.message);
+}
+
+return res.status(201).json({
+  success: true,
+  message: "Produto publicado com sucesso.",
+  product: publicProduct(result.product),
+});
+```
+
+} catch (error) {
+console.error("CREATE PRODUCT ERROR:", error);
+return sendError(
+res,
+500,
+"Erro ao publicar produto."
+);
+}
+});
 
 app.put(
 "/api/products/:id",
-requireAuthenticated,
-moderationMiddleware,
-(req, res) => {
+authenticateToken,
+async (req, res) => {
 try {
-const product =
-updateProduct(
-req.params.id,
-req.user.id,
-req.body
-);
+const product = getProductById(req.params.id);
 
 ```
-  res.json({
+  if (!product) {
+    return sendError(
+      res,
+      404,
+      "Produto não encontrado."
+    );
+  }
+
+  if (
+    product.sellerId !== req.user.id &&
+    req.user.role !== "admin"
+  ) {
+    return sendError(
+      res,
+      403,
+      "Você não pode editar este produto."
+    );
+  }
+
+  const result = updateProduct(
+    req.params.id,
+    req.body
+  );
+
+  if (!result.success) {
+    return sendError(res, 400, result.message);
+  }
+
+  return res.json({
     success: true,
-    message:
-      "Produto atualizado.",
-    product
+    message: "Produto atualizado.",
+    product: publicProduct(result.product),
   });
 } catch (error) {
-  sendError(res, error);
+  console.error("UPDATE PRODUCT ERROR:", error);
+  return sendError(
+    res,
+    500,
+    "Erro ao atualizar produto."
+  );
 }
 ```
 
@@ -513,20 +498,47 @@ req.body
 
 app.delete(
 "/api/products/:id",
-requireAuthenticated,
-moderationMiddleware,
-(req, res) => {
+authenticateToken,
+async (req, res) => {
 try {
-const result =
-removeProduct(
-req.params.id,
-req.user.id
-);
+const product = getProductById(req.params.id);
 
 ```
-  res.json(result);
+  if (!product) {
+    return sendError(
+      res,
+      404,
+      "Produto não encontrado."
+    );
+  }
+
+  if (
+    product.sellerId !== req.user.id &&
+    req.user.role !== "admin"
+  ) {
+    return sendError(
+      res,
+      403,
+      "Você não pode remover este produto."
+    );
+  }
+
+  const result = removeProduct(req.params.id);
+
+  if (!result.success) {
+    return sendError(res, 400, result.message);
+  }
+
+  return sendSuccess(res, {
+    message: "Produto removido.",
+  });
 } catch (error) {
-  sendError(res, error);
+  console.error("DELETE PRODUCT ERROR:", error);
+  return sendError(
+    res,
+    500,
+    "Erro ao remover produto."
+  );
 }
 ```
 
@@ -534,233 +546,169 @@ req.user.id
 );
 
 /* =========================
-PURCHASES
+COMPRAS
 ========================= */
 
 app.post(
 "/api/products/:id/buy",
-requireAuthenticated,
-moderationMiddleware,
-(req, res) => {
+authenticateToken,
+async (req, res) => {
 try {
-const result = createOrder({
-buyerId: req.user.id,
-productId: req.params.id
-});
+if (!req.user.verified) {
+return sendError(
+res,
+403,
+"Verifique seu email antes de comprar."
+);
+}
 
 ```
-  res.json({
-    success: true,
-    message:
-      "Compra realizada com sucesso.",
-    order: result.order,
-    product: result.product,
-    balance:
-      result.buyerBalance
-  });
-} catch (error) {
-  sendError(res, error);
-}
-```
-
-}
-);
-
-/* =========================
-ORDERS
-========================= */
-
-app.get(
-"/api/orders",
-requireAuthenticated,
-(req, res) => {
-try {
-res.json({
-success: true,
-orders:
-getOrdersForUser(
-req.user.id
-)
-});
-} catch (error) {
-sendError(res, error, 500);
-}
-}
-);
-
-app.get(
-"/api/orders/purchases",
-requireAuthenticated,
-(req, res) => {
-try {
-res.json({
-success: true,
-orders:
-getPurchasedOrders(
-req.user.id
-)
-});
-} catch (error) {
-sendError(res, error, 500);
-}
-}
-);
-
-app.get(
-"/api/orders/sales",
-requireAuthenticated,
-(req, res) => {
-try {
-res.json({
-success: true,
-orders:
-getSoldOrders(
-req.user.id
-)
-});
-} catch (error) {
-sendError(res, error, 500);
-}
-}
-);
-
-app.get(
-"/api/orders/:id",
-requireAuthenticated,
-(req, res) => {
-try {
-const order =
-getOrderById(
-req.params.id,
-req.user.id
-);
-
-```
-  if (!order) {
-    return res.status(404).json({
-      success: false,
-      message:
-        "Pedido não encontrado."
-    });
+  if (isUserBlocked(req.user.id)) {
+    return sendError(
+      res,
+      403,
+      "Sua conta está bloqueada."
+    );
   }
 
-  res.json({
+  const result = createOrder(
+    req.user.id,
+    req.params.id
+  );
+
+  if (!result.success) {
+    return sendError(res, 400, result.message);
+  }
+
+  return res.json({
     success: true,
-    order
+    message: "Compra realizada com sucesso.",
+    order: result.order,
+    balance: result.balance,
   });
 } catch (error) {
-  sendError(res, error, 500);
+  console.error("BUY ERROR:", error);
+  return sendError(
+    res,
+    500,
+    "Erro ao realizar compra."
+  );
 }
 ```
 
 }
 );
 
+app.get("/api/orders", authenticateToken, (req, res) => {
+try {
+const orders = getOrdersByUser(req.user.id);
+
+```
+return res.json({
+  success: true,
+  orders,
+});
+```
+
+} catch (error) {
+console.error("ORDERS ERROR:", error);
+return sendError(
+res,
+500,
+"Erro ao carregar pedidos."
+);
+}
+});
+
 /* =========================
-WALLET
+CARTEIRA
 ========================= */
 
 app.post(
 "/api/wallet/withdraw",
-requireAuthenticated,
-moderationMiddleware,
+authenticateToken,
 (req, res) => {
 try {
-const amount = Math.round(
-Number(
-req.body.amount ??
-req.body.valor
-)
-);
+const { amount, pixKey } = req.body;
 
 ```
-  if (
-    !Number.isFinite(amount) ||
-    amount < 200
-  ) {
-    return res.status(400).json({
-      success: false,
-      message:
-        "O saque mínimo é R$ 2,00."
-    });
+  const value = Number(amount);
+
+  if (!Number.isInteger(value)) {
+    return sendError(
+      res,
+      400,
+      "Valor inválido."
+    );
   }
 
-  const pixKey = String(
-    req.body.pixKey ||
-    req.body.pix ||
-    ""
-  ).trim();
+  if (value < 200) {
+    return sendError(
+      res,
+      400,
+      "O saque mínimo é R$ 2,00."
+    );
+  }
 
-  if (!pixKey) {
-    return res.status(400).json({
-      success: false,
-      message:
-        "Informe sua chave Pix."
-    });
+  if (!pixKey || String(pixKey).trim().length < 3) {
+    return sendError(
+      res,
+      400,
+      "Informe uma chave Pix válida."
+    );
   }
 
   const db = readDb();
 
   const user = db.users.find(
-    (item) =>
-      Number(item.id) ===
-      Number(req.user.id)
+    (item) => item.id === req.user.id
   );
 
   if (!user) {
-    return res.status(404).json({
-      success: false,
-      message:
-        "Usuário não encontrado."
-    });
+    return sendError(
+      res,
+      404,
+      "Usuário não encontrado."
+    );
   }
 
-  const balance = Number(
-    user.balance || 0
-  );
-
-  if (balance < amount) {
-    return res.status(400).json({
-      success: false,
-      message:
-        "Saldo insuficiente."
-    });
+  if (user.balance < value) {
+    return sendError(
+      res,
+      400,
+      "Saldo insuficiente."
+    );
   }
 
-  user.balance =
-    balance - amount;
-
-  user.updatedAt = now();
+  user.balance -= value;
 
   const withdrawal = {
-    id:
-      Date.now().toString(36) +
-      Math.random()
-        .toString(36)
-        .slice(2, 8),
-    userId: Number(user.id),
-    amount,
-    pixKey,
+    id: nextId("withdrawal"),
+    userId: user.id,
+    amount: value,
+    pixKey: String(pixKey).trim(),
     status: "pending",
     createdAt: now(),
-    updatedAt: now()
+    updatedAt: now(),
   };
 
-  db.withdrawals.push(
-    withdrawal
-  );
+  db.withdrawals.push(withdrawal);
 
   writeDb(db);
 
-  res.json({
+  return res.json({
     success: true,
-    message:
-      "Solicitação de saque enviada.",
+    message: "Solicitação de saque enviada.",
+    withdrawal,
     balance: user.balance,
-    withdrawal
   });
 } catch (error) {
-  sendError(res, error);
+  console.error("WITHDRAW ERROR:", error);
+  return sendError(
+    res,
+    500,
+    "Erro ao solicitar saque."
+  );
 }
 ```
 
@@ -773,196 +721,63 @@ ADMIN
 
 app.get(
 "/api/admin/orders",
-requireAuthenticated,
+authenticateToken,
 requireAdmin,
 (req, res) => {
-try {
-res.json({
+return res.json({
 success: true,
-orders: getAllOrders()
+orders: getAllOrders(),
 });
-} catch (error) {
-sendError(res, error, 500);
-}
 }
 );
 
 app.get(
 "/api/admin/withdrawals",
-requireAuthenticated,
+authenticateToken,
 requireAdmin,
 (req, res) => {
-try {
 const db = readDb();
 
 ```
-  res.json({
-    success: true,
-    withdrawals:
-      db.withdrawals || []
-  });
-} catch (error) {
-  sendError(res, error, 500);
-}
+return res.json({
+  success: true,
+  withdrawals: db.withdrawals,
+});
 ```
 
 }
 );
 
-app.post(
-"/api/admin/withdrawals/:id/approve",
-requireAuthenticated,
+app.get(
+"/api/admin/moderation",
+authenticateToken,
 requireAdmin,
 (req, res) => {
-try {
-const db = readDb();
-
-```
-  const withdrawal =
-    db.withdrawals.find(
-      (item) =>
-        String(item.id) ===
-        String(req.params.id)
-    );
-
-  if (!withdrawal) {
-    return res.status(404).json({
-      success: false,
-      message:
-        "Saque não encontrado."
-    });
-  }
-
-  withdrawal.status = "approved";
-  withdrawal.approvedBy =
-    req.user.id;
-  withdrawal.updatedAt = now();
-
-  writeDb(db);
-
-  res.json({
-    success: true,
-    message:
-      "Saque aprovado.",
-    withdrawal
-  });
-} catch (error) {
-  sendError(res, error);
-}
-```
-
-}
-);
-
-app.post(
-"/api/admin/withdrawals/:id/reject",
-requireAuthenticated,
-requireAdmin,
-(req, res) => {
-try {
-const db = readDb();
-
-```
-  const withdrawal =
-    db.withdrawals.find(
-      (item) =>
-        String(item.id) ===
-        String(req.params.id)
-    );
-
-  if (!withdrawal) {
-    return res.status(404).json({
-      success: false,
-      message:
-        "Saque não encontrado."
-    });
-  }
-
-  if (
-    withdrawal.status ===
-    "rejected"
-  ) {
-    return res.status(400).json({
-      success: false,
-      message:
-        "Este saque já foi rejeitado."
-    });
-  }
-
-  if (
-    withdrawal.status ===
-    "approved"
-  ) {
-    return res.status(400).json({
-      success: false,
-      message:
-        "Este saque já foi aprovado."
-    });
-  }
-
-  const user = db.users.find(
-    (item) =>
-      Number(item.id) ===
-      Number(withdrawal.userId)
-  );
-
-  if (user) {
-    user.balance =
-      Number(user.balance || 0) +
-      Number(withdrawal.amount || 0);
-
-    user.updatedAt = now();
-  }
-
-  withdrawal.status = "rejected";
-  withdrawal.rejectedBy =
-    req.user.id;
-  withdrawal.reason =
-    String(
-      req.body.reason ||
-      "Saque rejeitado."
-    );
-  withdrawal.updatedAt = now();
-
-  writeDb(db);
-
-  res.json({
-    success: true,
-    message:
-      "Saque rejeitado e saldo devolvido.",
-    withdrawal
-  });
-} catch (error) {
-  sendError(res, error);
-}
-```
-
+return res.json({
+success: true,
+records: getModerationRecords(),
+});
 }
 );
 
 app.post(
 "/api/admin/users/:id/ban",
-requireAuthenticated,
+authenticateToken,
 requireAdmin,
 (req, res) => {
-try {
-const user =
-banUser(
+const result = banUser(
 req.params.id,
-req.body.reason,
-req.user.id
+req.body.reason || "Violação das regras."
 );
 
 ```
-  res.json({
-    success: true,
-    message:
-      "Usuário banido.",
-    user: publicUser(user)
-  });
-} catch (error) {
-  sendError(res, error);
+if (!result.success) {
+  return sendError(res, 400, result.message);
 }
+
+return sendSuccess(res, {
+  message: "Usuário banido.",
+});
 ```
 
 }
@@ -970,26 +785,19 @@ req.user.id
 
 app.post(
 "/api/admin/users/:id/unban",
-requireAuthenticated,
+authenticateToken,
 requireAdmin,
 (req, res) => {
-try {
-const user =
-unbanUser(
-req.params.id,
-req.user.id
-);
+const result = unbanUser(req.params.id);
 
 ```
-  res.json({
-    success: true,
-    message:
-      "Usuário desbanido.",
-    user: publicUser(user)
-  });
-} catch (error) {
-  sendError(res, error);
+if (!result.success) {
+  return sendError(res, 400, result.message);
 }
+
+return sendSuccess(res, {
+  message: "Usuário desbanido.",
+});
 ```
 
 }
@@ -997,28 +805,22 @@ req.user.id
 
 app.post(
 "/api/admin/users/:id/suspend",
-requireAuthenticated,
+authenticateToken,
 requireAdmin,
 (req, res) => {
-try {
-const user =
-suspendUser(
+const result = suspendUser(
 req.params.id,
-req.body.durationMinutes,
-req.body.reason,
-req.user.id
+req.body.reason || "Conta suspensa."
 );
 
 ```
-  res.json({
-    success: true,
-    message:
-      "Usuário suspenso.",
-    user: publicUser(user)
-  });
-} catch (error) {
-  sendError(res, error);
+if (!result.success) {
+  return sendError(res, 400, result.message);
 }
+
+return sendSuccess(res, {
+  message: "Usuário suspenso.",
+});
 ```
 
 }
@@ -1026,72 +828,67 @@ req.user.id
 
 app.post(
 "/api/admin/users/:id/unsuspend",
-requireAuthenticated,
+authenticateToken,
 requireAdmin,
 (req, res) => {
-try {
-const user =
-clearSuspension(
-req.params.id,
-req.user.id
-);
+const result = unsuspendUser(req.params.id);
 
 ```
-  res.json({
-    success: true,
-    message:
-      "Suspensão removida.",
-    user: publicUser(user)
-  });
-} catch (error) {
-  sendError(res, error);
+if (!result.success) {
+  return sendError(res, 400, result.message);
 }
+
+return sendSuccess(res, {
+  message: "Suspensão removida.",
+});
 ```
 
 }
 );
+
+app.delete(
+"/api/admin/products/:id",
+authenticateToken,
+requireAdmin,
+(req, res) => {
+const result = removeProduct(req.params.id);
+
+```
+if (!result.success) {
+  return sendError(res, 400, result.message);
+}
+
+return sendSuccess(res, {
+  message: "Produto removido pela administração.",
+});
+```
+
+}
+);
+
+/* =========================
+EMAIL
+========================= */
 
 app.get(
-"/api/admin/users/:id/moderation",
-requireAuthenticated,
+"/api/admin/email-status",
+authenticateToken,
 requireAdmin,
-(req, res) => {
+async (req, res) => {
 try {
-res.json({
-success: true,
-records:
-getModerationRecords(
-req.params.id
-)
-});
-} catch (error) {
-sendError(res, error, 500);
-}
-}
-);
-
-app.post(
-"/api/admin/products/:id/remove",
-requireAuthenticated,
-requireAdmin,
-(req, res) => {
-try {
-const product =
-deleteProductForModeration(
-req.params.id,
-req.user.id,
-req.body.reason
-);
+const configured = await verifyEmailConnection();
 
 ```
-  res.json({
+  return res.json({
     success: true,
-    message:
-      "Produto removido pela moderação.",
-    product
+    configured,
   });
 } catch (error) {
-  sendError(res, error);
+  return sendError(
+    res,
+    500,
+    "Erro ao verificar email."
+  );
 }
 ```
 
@@ -1099,78 +896,50 @@ req.body.reason
 );
 
 /* =========================
-ERROR HANDLERS
+FRONTEND
 ========================= */
 
-app.use(
-"/api",
-(req, res) => {
-res.status(404).json({
-success: false,
-message:
-"Endpoint da API não encontrado."
+const frontendPath = path.join(__dirname, "..");
+
+app.use(express.static(frontendPath));
+
+app.use((req, res, next) => {
+if (
+req.path.startsWith("/api/") ||
+req.method !== "GET"
+) {
+return next();
+}
+
+return res.sendFile(
+path.join(frontendPath, "index.html")
+);
 });
-}
-);
 
-const publicDirectory = path.join(
-__dirname,
-".."
-);
+/* =========================
+ERROS
+========================= */
 
-app.use(
-express.static(publicDirectory)
-);
+app.use((err, req, res, next) => {
+console.error("SERVER ERROR:", err);
 
-app.get(
-"/",
-(req, res) => {
-res.sendFile(
-path.join(
-publicDirectory,
-"index.html"
-)
-);
-}
-);
-
-app.use(
-(error, req, res, next) => {
-console.error(
-"Erro interno:",
-error
-);
-
-```
 if (res.headersSent) {
-  return next(error);
+return next(err);
 }
 
-res.status(500).json({
-  success: false,
-  message:
-    "Erro interno do servidor."
+return res.status(500).json({
+success: false,
+message: "Erro interno do servidor.",
 });
-```
+});
 
-}
-);
+/* =========================
+START
+========================= */
 
-app.listen(
-PORT,
-"0.0.0.0",
-() => {
-console.log(
-"================================="
-);
-console.log(
-"SLAXSTORE API ONLINE"
-);
-console.log(
-`Porta: ${PORT}`
-);
-console.log(
-"================================="
-);
-}
-);
+app.listen(PORT, "0.0.0.0", () => {
+console.log("=================================");
+console.log("SLAXSTORE API ONLINE");
+console.log(`Porta: ${PORT}`);
+console.log("=================================");
+});
